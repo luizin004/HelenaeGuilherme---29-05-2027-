@@ -1,0 +1,19 @@
+# Dependências
+node_modules/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Ambiente
+.env
+.env.local
+
+# Build / cache
+dist/
+.cache/
