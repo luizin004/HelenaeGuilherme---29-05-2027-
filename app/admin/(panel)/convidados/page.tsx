@@ -2,6 +2,7 @@
 import { Kpi, KpiGrid, Notice, PageTitle, Panel, StatusBadge } from "@/components/admin/ui";
 import { NovoConvidado } from "@/components/admin/NovoConvidado";
 import { ImportarConvidados } from "@/components/admin/ImportarConvidados";
+import { ConvidadoActions } from "@/components/admin/ConvidadoActions";
 import { getGuestStats, listGuests } from "@/lib/admin-data";
 import { conviteUrl, qrDataUrl } from "@/lib/qr-image";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -52,7 +53,7 @@ export default async function ConvidadosPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Nome", "Contato", "Status", "Link pessoal", "QR"].map((h) => (
+                {["Nome", "Contato", "Mesa", "Status", "Link pessoal", "QR", "Ações"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -62,17 +63,18 @@ export default async function ConvidadosPage() {
             <tbody>
               {comQr.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-muted">
+                  <td colSpan={7} className="px-6 py-10 text-center text-muted">
                     Nenhum convidado ainda. Adicione o primeiro acima.
                   </td>
                 </tr>
               )}
               {comQr.map((g) => (
-                <tr key={g.id} className="border-t border-line align-middle hover:bg-ivory">
+                <tr key={g.id} className="border-t border-line align-top hover:bg-ivory">
                   <td className="px-6 py-3">
                     {g.nome} {g.eh_crianca && <span className="text-xs text-muted">(criança)</span>}
                   </td>
                   <td className="px-6 py-3 text-muted">{g.email || g.telefone || "—"}</td>
+                  <td className="px-6 py-3 text-muted">{g.mesa || "—"}</td>
                   <td className="px-6 py-3"><StatusBadge status={g.status} /></td>
                   <td className="px-6 py-3">
                     <a href={g.link} target="_blank" rel="noopener" className="text-xs text-olive underline">
@@ -81,6 +83,11 @@ export default async function ConvidadosPage() {
                   </td>
                   <td className="px-6 py-3">
                     <img src={g.qr} alt={`QR de ${g.nome}`} className="h-16 w-16" />
+                  </td>
+                  <td className="px-6 py-3">
+                    <ConvidadoActions
+                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, eh_crianca: g.eh_crianca }}
+                    />
                   </td>
                 </tr>
               ))}

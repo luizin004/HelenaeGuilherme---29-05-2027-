@@ -70,6 +70,7 @@ export interface Guest {
   mesa: string | null;
   check_in_em: string | null;
   check_in_por: string | null;
+  deleted_at: string | null;
   criado_em: string;
   atualizado_em: string;
 }

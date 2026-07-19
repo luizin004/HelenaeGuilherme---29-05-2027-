@@ -35,6 +35,21 @@ test.describe("Site público", () => {
     await expect(page.getByRole("heading", { name: "Lista de presentes" })).toBeVisible();
   });
 
+  test("páginas informativas carregam (dúvidas, programação, privacidade, termos)", async ({ page }) => {
+    await page.goto("/duvidas");
+    await expect(page.getByRole("heading", { name: "Dúvidas frequentes" })).toBeVisible();
+    await expect(page.getByText("Esporte fino completo")).toBeVisible();
+
+    await page.goto("/programacao");
+    await expect(page.getByRole("heading", { name: "Programação" })).toBeVisible();
+
+    await page.goto("/privacidade");
+    await expect(page.getByRole("heading", { name: "Política de privacidade" })).toBeVisible();
+
+    await page.goto("/termos");
+    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible();
+  });
+
   test("página inexistente mostra 404", async ({ page }) => {
     const res = await page.goto("/rota-que-nao-existe");
     expect(res?.status()).toBe(404);

@@ -143,7 +143,7 @@ export async function getGuestStats(): Promise<GuestStats> {
   const empty = { total: 0, confirmados: 0, pendentes: 0, recusados: 0, criancas: 0 };
   if (!supabase) return empty;
 
-  const { data } = await supabase.from("hg_guests").select("*");
+  const { data } = await supabase.from("hg_guests").select("*").is("deleted_at", null);
   if (!data) return empty;
 
   return data.reduce<GuestStats>((acc, g) => {
@@ -342,7 +342,11 @@ export async function listCommunications(): Promise<CommRow[]> {
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const { data } = await supabase.from("hg_guests").select("*").order("criado_em", { ascending: false });
+  const { data } = await supabase
+    .from("hg_guests")
+    .select("*")
+    .is("deleted_at", null)
+    .order("criado_em", { ascending: false });
   return data ?? [];
 }
 

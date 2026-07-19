@@ -1,0 +1,72 @@
+"use client";
+
+import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+import { atualizarConvidado, excluirConvidado, type GuestFormState } from "@/app/actions/guests";
+
+const initial: GuestFormState = { ok: false, message: "" };
+
+export interface ConvidadoEditavel {
+  id: string;
+  nome: string;
+  email: string | null;
+  telefone: string | null;
+  mesa: string | null;
+  eh_crianca: boolean;
+}
+
+function SaveButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} className="btn btn-dark px-4 py-1.5 text-xs disabled:opacity-60">
+      {pending ? "Salvando…" : "Salvar"}
+    </button>
+  );
+}
+
+export function ConvidadoActions({ g }: { g: ConvidadoEditavel }) {
+  const [aberto, setAberto] = useState(false);
+  const [state, formAction] = useFormState(atualizarConvidado, initial);
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={() => setAberto((v) => !v)} className="text-xs text-olive underline">
+          {aberto ? "fechar" : "editar"}
+        </button>
+        <form
+          action={excluirConvidado}
+          onSubmit={(e) => {
+            if (!confirm(`Excluir ${g.nome} da lista? (exclusão lógica, reversível no banco)`)) e.preventDefault();
+          }}
+        >
+          <input type="hidden" name="id" value={g.id} />
+          <button type="submit" className="text-xs text-danger underline">excluir</button>
+        </form>
+      </div>
+
+      {aberto && (
+        <form action={formAction} className="mt-3 grid gap-2 rounded-lg border border-line bg-ivory p-3 text-left">
+          <input type="hidden" name="id" value={g.id} />
+          <input name="nome" defaultValue={g.nome} placeholder="Nome" required className="field-input py-1.5 text-sm" />
+          <div className="grid grid-cols-2 gap-2">
+            <input name="email" defaultValue={g.email ?? ""} placeholder="E-mail" className="field-input py-1.5 text-sm" />
+            <input name="telefone" defaultValue={g.telefone ?? ""} placeholder="Telefone" className="field-input py-1.5 text-sm" />
+          </div>
+          <div className="grid grid-cols-2 items-center gap-2">
+            <input name="mesa" defaultValue={g.mesa ?? ""} placeholder="Mesa" className="field-input py-1.5 text-sm" />
+            <label className="flex items-center gap-2 text-xs text-muted">
+              <input type="checkbox" name="eh_crianca" defaultChecked={g.eh_crianca} /> É criança
+            </label>
+          </div>
+          <div className="flex items-center gap-3">
+            <SaveButton />
+            {state.message && (
+              <span className={`text-xs ${state.ok ? "text-olive" : "text-danger"}`}>{state.message}</span>
+            )}
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
