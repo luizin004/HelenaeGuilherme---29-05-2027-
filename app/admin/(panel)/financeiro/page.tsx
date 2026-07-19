@@ -4,12 +4,37 @@ import {
   getCostCenters,
   getExpensePayers,
   getExpensesSummary,
+  getFinanceByCostCenter,
+  getFinanceByResponsible,
   getGiftTotals,
   getPayers,
   listExpenses,
 } from "@/lib/admin-data";
+import type { AggRow } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+
+function ResumoPanel({ titulo, linhas, vazio }: { titulo: string; linhas: AggRow[]; vazio: string }) {
+  return (
+    <section className="overflow-hidden rounded-lg bg-white shadow-card">
+      <div className="border-b border-line px-6 py-4 font-serif text-xl text-moss">{titulo}</div>
+      {linhas.length === 0 ? (
+        <p className="p-6 text-sm text-muted">{vazio}</p>
+      ) : (
+        <table className="w-full text-sm">
+          <tbody>
+            {linhas.map((l, i) => (
+              <tr key={i} className="border-t border-line first:border-0">
+                <td className="px-6 py-2.5">{l.nome}</td>
+                <td className="px-6 py-2.5 text-right font-serif text-base text-moss">{formatCents(l.totalCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -22,14 +47,17 @@ const ESTADO_BADGE: Record<string, string> = {
 };
 
 export default async function FinanceiroPage() {
-  const [summary, expenses, gifts, centros, responsaveis, expensePayers] = await Promise.all([
-    getExpensesSummary(),
-    listExpenses(),
-    getGiftTotals(),
-    getCostCenters(),
-    getPayers(),
-    getExpensePayers(),
-  ]);
+  const [summary, expenses, gifts, centros, responsaveis, expensePayers, porResp, porCentro] =
+    await Promise.all([
+      getExpensesSummary(),
+      listExpenses(),
+      getGiftTotals(),
+      getCostCenters(),
+      getPayers(),
+      getExpensePayers(),
+      getFinanceByResponsible(),
+      getFinanceByCostCenter(),
+    ]);
 
   const aPagar = summary.totalOrcadoCents - summary.pagoCents;
 
@@ -56,6 +84,11 @@ export default async function FinanceiroPage() {
         )}
         {summary.gratuitos > 0 && <><strong>{summary.gratuitos} itens gratuitos</strong> (não geram parcela).</>}
       </Notice>
+
+      <div className="mb-8 grid gap-6 md:grid-cols-2">
+        <ResumoPanel titulo="Por responsável (desembolso)" linhas={porResp} vazio="Classifique os responsáveis nas despesas." />
+        <ResumoPanel titulo="Por centro de custo (orçado)" linhas={porCentro} vazio="Sem despesas classificadas ainda." />
+      </div>
 
       <Panel title="Lançamentos">
         <div className="overflow-x-auto">

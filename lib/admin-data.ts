@@ -65,6 +65,49 @@ export async function listExpenses(): Promise<ExpenseRow[]> {
   }));
 }
 
+export interface AggRow {
+  nome: string;
+  totalCents: number;
+}
+
+/** Desembolso por responsável (soma dos splits). */
+export async function getFinanceByResponsible(): Promise<AggRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data: splits }, { data: payers }] = await Promise.all([
+    supabase.from("hg_expense_payer_splits").select("*"),
+    supabase.from("hg_payers").select("*"),
+  ]);
+  const nome = new Map((payers ?? []).map((p: { id: string; nome: string }) => [p.id, p.nome]));
+  const agg = new Map<string, number>();
+  for (const s of (splits ?? []) as { payer_id: string; valor_cents: number }[]) {
+    agg.set(s.payer_id, (agg.get(s.payer_id) ?? 0) + Number(s.valor_cents));
+  }
+  return [...agg.entries()]
+    .map(([id, totalCents]) => ({ nome: nome.get(id) ?? "?", totalCents }))
+    .sort((a, b) => b.totalCents - a.totalCents);
+}
+
+/** Orçado por centro de custo (despesas não gratuitas com valor). */
+export async function getFinanceByCostCenter(): Promise<AggRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data: expenses }, { data: centers }] = await Promise.all([
+    supabase.from("hg_expenses").select("*").is("deleted_at", null),
+    supabase.from("hg_cost_centers").select("*"),
+  ]);
+  const nome = new Map((centers ?? []).map((c: { id: string; nome: string }) => [c.id, c.nome]));
+  const agg = new Map<string, number>();
+  for (const e of (expenses ?? []) as { cost_center_id: string | null; valor_total_cents: number | null; gratuito: boolean }[]) {
+    if (e.gratuito || e.valor_total_cents === null) continue;
+    const key = e.cost_center_id ?? "sem";
+    agg.set(key, (agg.get(key) ?? 0) + Number(e.valor_total_cents));
+  }
+  return [...agg.entries()]
+    .map(([id, totalCents]) => ({ nome: id === "sem" ? "Não classificado" : nome.get(id) ?? "?", totalCents }))
+    .sort((a, b) => b.totalCents - a.totalCents);
+}
+
 export async function getExpensesSummary(): Promise<ExpensesSummary> {
   const rows = await listExpenses();
   const supabase = createClient();
