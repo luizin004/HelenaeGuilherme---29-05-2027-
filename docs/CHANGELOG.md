@@ -2,6 +2,19 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fase 4] Motor financeiro testado + schema v2 + testes
+### Adicionado
+- `domain/money.ts` (centavos), `domain/finance/installments.ts` (fechamento exato,
+  gratuito, vencimento, divisão por responsáveis), `domain/qr.ts` (token seguro).
+- Suíte Vitest: **19 testes passando**, incluindo o obrigatório
+  **R$ 1.893,50 em 6× = R$ 1.893,50** exato.
+- Migration `0003_finance_audit_authz.sql`: financeiro em centavos, `audit_log`,
+  soft-delete, 7 perfis + `role_permissions`, renegociação versionada.
+- `docs/FINANCIAL_RULES.md`, `docs/DATABASE.md`.
+### Corrigido
+- `parseBRLToCents` interpretava "1893.50" (formato US) como milhar — bug pego por
+  teste e corrigido (trata BR e US).
+
 ## [Fase 3] Governança de requisitos + dados reais + paleta natural
 ### Adicionado
 - `docs/PROJECT_SPEC.md` consolidado a partir das mensagens do cliente (PEND-001).
