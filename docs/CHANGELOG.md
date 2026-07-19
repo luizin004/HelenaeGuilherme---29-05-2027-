@@ -2,6 +2,41 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Correção] Login do painel
+- Corrigido o login que recusava a conta válida com "e-mail ou senha inválidos":
+  quatro colunas de token do usuário estavam `NULL` no `auth.users`
+  (`confirmation_token`, `recovery_token`, `email_change_token_new`,
+  `email_change`) — bug conhecido do GoTrue com usuários criados via SQL.
+  Normalizadas para string vazia. Sem mudança de código; correção de dados.
+
+## [Fase 24] Central de relacionamento e comunicação + Padrinhos
+Novo módulo (migration `0004`) para acompanhar convidados, famílias, padrinhos e
+madrinhas em toda a jornada. Nada envia sem canal validado; nada é inventado.
+- **Banco** (27 tabelas `hg_`, RLS `hg_is_member()`): perfis de comunicação e
+  contexto de família (herança), padrinhos (`hg_wedding_party` + duplas/grupos/
+  compromissos/tarefas), jornadas e fases de aquecimento, campanhas, mensagens
+  versionadas, entregas, caixa de entrada, tarefas, estúdio de prompts
+  versionado (`hg_ai_prompts` + versões/testes/logs), áudios (`hg_audio_assets`
+  em bucket privado `hg-audios`), respostas rápidas e canal WhatsApp oficial.
+- **Seeds**: 48 segmentos de relacionamento (§4), 4 jornadas com 14 fases,
+  2 prompts publicados (mensagem personalizada + roteiro de áudio), respostas
+  rápidas, papel **Evania** e permissões.
+- **Domínio testado** (`domain/comm/*`, 22 testes): personalização do nome sem
+  repetição artificial, sanitização do contexto da IA (remove dados sempre
+  proibidos), regras de envio (consentimento, opt-out, horário silencioso,
+  limite de frequência, telefone válido, aprovação), idempotência/deduplicação,
+  herança de contexto família→indivíduo. Inclui o cenário obrigatório "Carlos".
+- **Telas** (`/admin/comunicacao/*` e `/admin/padrinhos/*`): visão geral,
+  operação da Evania, jornadas (+fases), campanhas, mensagens, áudios (gravação
+  no navegador → cofre privado), caixa de entrada, respostas rápidas, estúdio de
+  prompts (+versionar/publicar), aprovações, relatórios, calendário, WhatsApp
+  oficial; padrinhos (lista/perfil/pendências/trajes/tarefas/compromissos/
+  duplas/grupos).
+- **Segurança/privacidade**: credenciais do WhatsApp só em variáveis de
+  ambiente; áudios em bucket privado com URL assinada; sem clonagem de voz;
+  transcrição automática marcada como "revisar"; a IA gera só rascunhos e nunca
+  altera dados críticos. Pendências reais (envio/IA reais) dependem de provedor.
+
 ## [Fase 23] Módulo financeiro completo + Evania
 Expansão do Financeiro para a "central de custos e pagamentos" da spec, tudo
 conectado (planejamento → orçamento → cotação → contrato → parcelas → contas →

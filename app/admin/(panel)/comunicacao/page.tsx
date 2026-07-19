@@ -1,73 +1,72 @@
-import { Notice, PageTitle, Panel } from "@/components/admin/ui";
-import { NovoComunicado } from "@/components/admin/NovoComunicado";
-import { ComunicadoActions } from "@/components/admin/ComunicadoActions";
-import { listCommunications } from "@/lib/admin-data";
+import Link from "next/link";
+import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
+import { getCommDashboard } from "@/lib/comm-data";
+import { getPadrinhosPendencias } from "@/lib/comm-data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-const fmt = (iso: string) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+const ATALHOS: { href: string; ico: string; titulo: string; desc: string }[] = [
+  { href: "/admin/comunicacao/evania", ico: "💌", titulo: "Operação da Evania", desc: "O dia a dia: pendências, respostas e tarefas." },
+  { href: "/admin/comunicacao/jornadas", ico: "🧭", titulo: "Jornadas", desc: "Fases de aquecimento por público." },
+  { href: "/admin/comunicacao/campanhas", ico: "📢", titulo: "Campanhas", desc: "Envios manuais, programados e condicionais." },
+  { href: "/admin/comunicacao/audios", ico: "🎙️", titulo: "Áudios", desc: "Gravar, aprovar e reutilizar áudios." },
+  { href: "/admin/comunicacao/caixa-de-entrada", ico: "📥", titulo: "Caixa de entrada", desc: "Respostas dos convidados." },
+  { href: "/admin/comunicacao/prompts", ico: "🪄", titulo: "Estúdio de prompts", desc: "Mensagens da IA, versionadas." },
+  { href: "/admin/padrinhos", ico: "👰", titulo: "Padrinhos & madrinhas", desc: "Cadastro, pendências e jornada." },
+  { href: "/admin/configuracoes/comunicacao/whatsapp", ico: "🟢", titulo: "WhatsApp oficial", desc: "Configurar o canal de envio." },
+];
 
-export default async function ComunicacaoPage() {
-  const mensagens = await listCommunications();
+export default async function ComunicacaoVisaoGeral() {
+  const [d, pend] = await Promise.all([getCommDashboard(), getPadrinhosPendencias()]);
 
   return (
     <>
-      <PageTitle>Comunicação</PageTitle>
+      <PageTitle>Central de comunicação</PageTitle>
 
-      {!isSupabaseConfigured && <Notice>Conecte o Supabase para criar mensagens.</Notice>}
+      {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para ver os dados.</Notice>}
+
+      {d.whatsappPendente && (
+        <Notice>
+          <strong>WhatsApp oficial pendente de configuração.</strong> É possível montar jornadas, campanhas e
+          mensagens, mas o envio só é liberado após validar o canal em{" "}
+          <Link href="/admin/configuracoes/comunicacao/whatsapp" className="underline">WhatsApp oficial</Link>.
+        </Notice>
+      )}
+
+      <KpiGrid>
+        <Kpi label="Campanhas ativas" value={d.campanhasAtivas} />
+        <Kpi label="Programadas" value={d.mensagensProgramadas} />
+        <Kpi label="Respostas pendentes" value={d.respostasPendentes} />
+        <Kpi label="Falhas de envio" value={d.falhas} />
+        <Kpi label="Tarefas abertas" value={d.tarefasAbertas} hint={`${d.tarefasUrgentes} urgentes`} />
+        <Kpi label="Áudios p/ aprovar" value={d.audiosAguardandoAprovacao} />
+        <Kpi label="Padrinhos" value={pend.total} hint={`${pend.semConfirmacao} sem confirmar`} />
+        <Kpi label="Padrinhos sem telefone" value={pend.semTelefone} />
+      </KpiGrid>
+
+      <Panel title="Atalhos">
+        <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          {ATALHOS.map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="flex items-start gap-3 rounded-lg border border-line bg-white p-4 transition hover:border-olive hover:shadow-card"
+            >
+              <span className="text-2xl" aria-hidden>{a.ico}</span>
+              <span>
+                <span className="block font-medium text-moss">{a.titulo}</span>
+                <span className="block text-sm text-muted">{a.desc}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </Panel>
 
       <Notice>
-        O <strong>envio automático</strong> (e-mail/WhatsApp) depende de um provedor ainda não configurado.
-        Aqui você já monta e guarda os modelos/rascunhos.
+        Toda mensagem crítica passa por <strong>revisão humana</strong> e aprovação. A IA cria apenas rascunhos e
+        nunca envia sozinha. Nada de dados inventados: parentesco, histórias e apelidos vêm só do cadastro autorizado.
       </Notice>
-
-      <Panel title="Nova mensagem">
-        <div className="p-6">
-          <NovoComunicado />
-        </div>
-      </Panel>
-
-      <Panel title="Mensagens">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                {["Quando", "Canal", "Público", "Assunto", "Status", "Ações"].map((h) => (
-                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {mensagens.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-muted">
-                    Nenhuma mensagem ainda.
-                  </td>
-                </tr>
-              )}
-              {mensagens.map((m) => (
-                <tr key={m.id} className="border-t border-line align-top hover:bg-ivory">
-                  <td className="whitespace-nowrap px-6 py-3 text-muted">{fmt(m.criado_em)}</td>
-                  <td className="px-6 py-3 capitalize">{m.canal}</td>
-                  <td className="px-6 py-3 capitalize text-muted">{m.publico}</td>
-                  <td className="px-6 py-3">{m.assunto || "—"}</td>
-                  <td className="px-6 py-3">
-                    <span className="inline-block rounded-full bg-cream px-3 py-0.5 text-xs uppercase tracking-wide text-muted">
-                      {m.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <ComunicadoActions m={{ id: m.id, canal: m.canal, assunto: m.assunto, corpo: m.corpo, publico: m.publico, status: m.status }} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Panel>
     </>
   );
 }
