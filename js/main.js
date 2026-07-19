@@ -119,7 +119,7 @@ function initRSVP() {
     feedback.textContent = vai
       ? `Obrigado, ${data.nome.split(' ')[0]}! Sua presença está confirmada. 🤍`
       : `Vamos sentir sua falta, ${data.nome.split(' ')[0]}. Obrigado por avisar!`;
-    feedback.style.color = vai ? 'var(--sage)' : 'var(--muted)';
+    feedback.style.color = vai ? 'var(--bronze)' : 'var(--muted)';
 
     form.reset();
   });
