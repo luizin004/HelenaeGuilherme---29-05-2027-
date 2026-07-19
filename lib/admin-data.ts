@@ -217,6 +217,22 @@ export async function listAuditLog(): Promise<AuditRow[]> {
   return (data ?? []) as AuditRow[];
 }
 
+export interface ChildRow {
+  id: string;
+  nome: string;
+  idade: number | null;
+  observacoes: string | null;
+  responsavel_id: string | null;
+  usara_espaco: boolean;
+}
+
+export async function listChildren(): Promise<ChildRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase.from("hg_children").select("*").order("nome");
+  return (data ?? []) as ChildRow[];
+}
+
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];
