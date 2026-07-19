@@ -46,14 +46,17 @@ resolução, solução temporária, procedimento para concluir, módulo afetado.
   vencimento(s), centro de custo, gratuito (sim/não); será convertida em seed idempotente.
 - **Módulo:** financeiro.
 
-## PEND-004 · Credenciais Supabase (projeto de produção)
-- **Descrição:** projeto Supabase dedicado ainda não criado (custo US$10/mês na org
-  OralAligner, aguardando OK explícito do cliente).
-- **Impacto:** ALTO — sem backend, app roda em **modo demonstração**.
-- **Solução temporária:** camada Supabase pronta; `.env.example` documentado;
-  migrations versionadas prontas para `supabase db push`.
-- **Procedimento:** aprovar custo → criar projeto → preencher `.env.local`.
-- **Módulo:** todos.
+## PEND-004 · Backend Supabase — ✅ RESOLVIDO
+- **Solução aplicada:** por decisão do cliente (reusar projeto existente, sem custo novo),
+  as tabelas do casamento foram criadas com **prefixo `hg_`** e **RLS em todas** no projeto
+  **"Sistema De Orçamentos"** (`wjsbyahzwdupsmopygkg`, org OralAligner, região sa-east-1).
+  Isolamento por nomenclatura → **zero colisão** com as tabelas existentes.
+- **Validado:** 28 tabelas `hg_`, 28/28 com RLS; anon lê apenas conteúdo público;
+  convidados/pagamentos/financeiro só autenticado; app conecta em runtime (auth ativa).
+- **Pendente do cliente:** `SUPABASE_SERVICE_ROLE_KEY` (para webhook Asaas/conciliação) —
+  copiar de Supabase → Settings → API e colocar em `.env.local` / variáveis da hospedagem.
+- **Nota:** `.env.local` (com a chave anon) fica fora do git; em produção, configurar as
+  variáveis na Vercel.
 
 ## PEND-005 · Credenciais Asaas (sandbox e produção)
 - **Descrição:** `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN` não fornecidos.

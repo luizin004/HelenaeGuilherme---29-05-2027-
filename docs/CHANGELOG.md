@@ -2,6 +2,20 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fase 6] Backend real provisionado (isolado + RLS) + importação de convidados
+### Adicionado
+- Schema do casamento aplicado no Supabase existente com **prefixo `hg_`** (28 tabelas,
+  RLS em todas), no projeto "Sistema De Orçamentos" — isolado, sem colisão. PEND-004 resolvido.
+- Seed real: locais de Itabira, 6 centros de custo, 4 responsáveis, 20 permissões.
+- App ligado ao banco: `.from()` prefixado; `.env.local` (fora do git); auth ativa validada.
+- `domain/guests/import.ts` + 6 testes (CSV/colar, mapeamento, deduplicação).
+### Segurança
+- Removidas políticas anônimas amplas em `hg_guests`/`hg_payments` (protege PII/financeiro —
+  regra 36 / LGPD). Anon lê apenas conteúdo público do site.
+### Achado (banco existente do cliente)
+- O projeto "guilherme.moura's Project" tem **71 tabelas com RLS desativado** (não é do
+  casamento) — reportado ao cliente para revisão separada.
+
 ## [Fase 4] Motor financeiro testado + schema v2 + testes
 ### Adicionado
 - `domain/money.ts` (centavos), `domain/finance/installments.ts` (fechamento exato,

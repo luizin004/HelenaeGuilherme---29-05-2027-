@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     const supabase = createAdminClient();
     if (supabase) {
-      await supabase.from("payments").insert({
+      await supabase.from("hg_payments").insert({
         gift_id: gift_id ?? null,
         pagador_nome: pagador.nome,
         pagador_email: pagador.email ?? null,

@@ -12,35 +12,35 @@ const STORY_FALLBACK: StoryEvent[] = [
 export async function getSettings(): Promise<WeddingSettings | null> {
   const supabase = createClient();
   if (!supabase) return null;
-  const { data } = await supabase.from("wedding_settings").select("*").eq("id", 1).single();
+  const { data } = await supabase.from("hg_wedding_settings").select("*").eq("id", 1).single();
   return data ?? null;
 }
 
 export async function getVenues(): Promise<Venue[]> {
   const supabase = createClient();
   if (!supabase) return VENUES_FALLBACK;
-  const { data } = await supabase.from("venues").select("*").order("ordem");
+  const { data } = await supabase.from("hg_venues").select("*").order("ordem");
   return data && data.length ? data : VENUES_FALLBACK;
 }
 
 export async function getStory(): Promise<StoryEvent[]> {
   const supabase = createClient();
   if (!supabase) return STORY_FALLBACK;
-  const { data } = await supabase.from("story_events").select("*").order("ordem");
+  const { data } = await supabase.from("hg_story_events").select("*").order("ordem");
   return data && data.length ? data : STORY_FALLBACK;
 }
 
 export async function getGallery(): Promise<GalleryPhoto[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const { data } = await supabase.from("gallery_photos").select("*").order("ordem");
+  const { data } = await supabase.from("hg_gallery_photos").select("*").order("ordem");
   return data ?? [];
 }
 
 export async function getGifts(): Promise<Gift[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const { data } = await supabase.from("gifts").select("*").order("ordem");
+  const { data } = await supabase.from("hg_gifts").select("*").order("ordem");
   return data ?? [];
 }
 

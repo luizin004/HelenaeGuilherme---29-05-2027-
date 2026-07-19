@@ -39,7 +39,7 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
     const observacao =
       acompanhantes > 0 ? `Acompanhantes: ${acompanhantes}. ${mensagem ?? ""}`.trim() : mensagem || null;
 
-    const { error } = await supabase.from("guests").insert({
+    const { error } = await supabase.from("hg_guests").insert({
       nome,
       email: email || null,
       telefone: telefone || null,

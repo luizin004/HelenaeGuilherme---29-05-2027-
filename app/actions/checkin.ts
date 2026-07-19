@@ -19,7 +19,7 @@ export async function registrarCheckin(token: string): Promise<CheckinResult> {
   }
 
   const { data: guest } = await supabase
-    .from("guests")
+    .from("hg_guests")
     .select("*")
     .eq("qr_token", t)
     .maybeSingle();
@@ -30,8 +30,8 @@ export async function registrarCheckin(token: string): Promise<CheckinResult> {
   }
 
   const agora = new Date().toISOString();
-  await supabase.from("guests").update({ check_in_em: agora }).eq("id", guest.id);
-  await supabase.from("checkins").insert({ guest_id: guest.id, check_in_em: agora });
+  await supabase.from("hg_guests").update({ check_in_em: agora }).eq("id", guest.id);
+  await supabase.from("hg_checkins").insert({ guest_id: guest.id, check_in_em: agora });
 
   return { ok: true, message: `✓ Bem-vindo(a), ${guest.nome}!`, nome: guest.nome };
 }

@@ -14,7 +14,7 @@ export async function getGuestStats(): Promise<GuestStats> {
   const empty = { total: 0, confirmados: 0, pendentes: 0, recusados: 0, criancas: 0 };
   if (!supabase) return empty;
 
-  const { data } = await supabase.from("guests").select("*");
+  const { data } = await supabase.from("hg_guests").select("*");
   if (!data) return empty;
 
   return data.reduce<GuestStats>((acc, g) => {
@@ -30,7 +30,7 @@ export async function getGuestStats(): Promise<GuestStats> {
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const { data } = await supabase.from("guests").select("*").order("criado_em", { ascending: false });
+  const { data } = await supabase.from("hg_guests").select("*").order("criado_em", { ascending: false });
   return data ?? [];
 }
 
@@ -43,7 +43,7 @@ export async function getGiftTotals(): Promise<GiftTotals> {
   const supabase = createClient();
   if (!supabase) return { recebido: 0, contribuicoes: 0 };
   const { data } = await supabase
-    .from("payments")
+    .from("hg_payments")
     .select("*")
     .in("status", ["confirmado", "recebido"]);
   if (!data) return { recebido: 0, contribuicoes: 0 };

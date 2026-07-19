@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   if (supabase) {
     const pago = novoStatus === "confirmado" || novoStatus === "recebido";
     await supabase
-      .from("payments")
+      .from("hg_payments")
       .update({ status: novoStatus, ...(pago ? { pago_em: new Date().toISOString() } : {}) })
       .eq("asaas_payment_id", asaasId);
   }
