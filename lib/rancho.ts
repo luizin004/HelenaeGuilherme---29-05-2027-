@@ -57,6 +57,25 @@ export const EVENTO_OPCOES: string[] = [
   "Outro",
 ];
 
+/**
+ * Fotos reais do Rancho (arquivos em `public/rancho/`). Enquanto o arquivo não
+ * existir, o componente Foto mostra o gradiente da paleta — assim que o arquivo
+ * for adicionado com o nome abaixo, a foto aparece automaticamente.
+ */
+export const FOTOS = {
+  hero: "/rancho/aerea-deck.jpg",
+  sobre: "/rancho/panoramica.jpg",
+  visita: "/rancho/lago-vertical.jpg",
+  recepcao: "/rancho/aerea-montanhas.jpg",
+  galeria: [
+    { src: "/rancho/aerea-deck.jpg", label: "Deck sobre o lago" },
+    { src: "/rancho/aerea-montanhas.jpg", label: "Vista com as montanhas" },
+    { src: "/rancho/lago-vertical.jpg", label: "Lago espelhado" },
+    { src: "/rancho/panoramica.jpg", label: "Vista panorâmica do sítio" },
+    { src: "/rancho/vista-geral.jpg", label: "Vista geral aérea" },
+  ],
+} as const;
+
 export const FAQ_RANCHO: { p: string; r: string }[] = [
   { p: "Como faço para conhecer o espaço?", r: "É só falar com a gente pelo WhatsApp (31) 9 9118-8181 e combinar uma visita." },
   { p: "É necessário agendar uma visita?", r: "Sim, as visitas devem ser combinadas previamente pelo WhatsApp ou telefone." },

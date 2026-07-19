@@ -3,9 +3,11 @@ import Link from "next/link";
 import { RanchoLeadForm } from "@/components/rancho/RanchoLeadForm";
 import { WhatsAppButton } from "@/components/rancho/WhatsAppButton";
 import { CopyButton } from "@/components/rancho/CopyButton";
+import { Foto } from "@/components/rancho/Foto";
+import { RanchoGallery } from "@/components/rancho/RanchoGallery";
 import { getVenues } from "@/lib/data";
 import { VENUES_FALLBACK } from "@/lib/constants";
-import { RANCHO, waLink, WA_MSG, ESTRUTURA, EVENTOS, FAQ_RANCHO } from "@/lib/rancho";
+import { RANCHO, waLink, WA_MSG, ESTRUTURA, EVENTOS, FAQ_RANCHO, FOTOS } from "@/lib/rancho";
 import type { Venue } from "@/lib/database.types";
 
 export const revalidate = 60;
@@ -31,14 +33,6 @@ function wazeHref(v: Venue | undefined): string {
   return `https://waze.com/ul?q=${encodeURIComponent(v?.endereco || "Sítio Rancho das Águas Itabira MG")}&navigate=yes`;
 }
 
-function Foto({ label, className = "" }: { label: string; className?: string }) {
-  return (
-    <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-olive to-moss text-center text-sm text-cream/80 ${className}`}>
-      <span className="px-4">📷 {label}</span>
-    </div>
-  );
-}
-
 export default async function RanchoPage() {
   const venues = (await getVenues()) ?? [];
   const lista = venues.length ? venues : VENUES_FALLBACK;
@@ -60,7 +54,7 @@ export default async function RanchoPage() {
 
       {/* Hero */}
       <section className="relative">
-        <Foto label="Foto de destaque do Rancho das Águas" className="h-[70vh] min-h-[420px] rounded-none" />
+        <Foto src={FOTOS.hero} label="Vista aérea do Rancho das Águas" className="h-[70vh] min-h-[420px] rounded-none" />
         <div className="absolute inset-0 flex items-center justify-center bg-moss-deep/45 px-6">
           <div className="max-w-2xl text-center text-cream">
             <p className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">{RANCHO.tagline}</p>
@@ -98,7 +92,7 @@ export default async function RanchoPage() {
       {/* Conheça o Rancho */}
       <section id="conhecer" className="bg-cream px-6 py-20">
         <div className="mx-auto grid max-w-content items-center gap-10 md:grid-cols-2">
-          <Foto label="Vista geral do espaço" className="aspect-[4/3]" />
+          <Foto src={FOTOS.sobre} label="Vista geral do espaço" className="aspect-[4/3]" />
           <div>
             <p className="eyebrow">O espaço</p>
             <h2 className="section-title text-left">Conheça o Rancho das Águas</h2>
@@ -145,12 +139,7 @@ export default async function RanchoPage() {
       <section className="mx-auto max-w-content px-6 py-20">
         <p className="eyebrow text-center">Um passeio pelo espaço</p>
         <h2 className="section-title text-center">Galeria</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {["Vista geral", "Natureza", "Área da cerimônia", "Área da festa", "Detalhes", "Entrada"].map((l) => (
-            <Foto key={l} label={l} className="aspect-square" />
-          ))}
-        </div>
-        <p className="mt-4 text-center text-xs text-muted">As fotos reais do Rancho entram aqui — placeholders temporários.</p>
+        <RanchoGallery fotos={FOTOS.galeria} />
       </section>
 
       {/* Tipos de evento */}
@@ -183,7 +172,7 @@ export default async function RanchoPage() {
             <a href={RANCHO.telefoneTel} className="font-serif text-lg text-olive">{RANCHO.telefoneDisplay}</a>
           </div>
         </div>
-        <Foto label="Entrada / vista do local" className="aspect-[4/3]" />
+        <Foto src={FOTOS.visita} label="Vista do local" className="aspect-[4/3]" />
       </section>
 
       {/* Planeje seu evento (sem preços) */}
