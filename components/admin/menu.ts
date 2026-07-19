@@ -13,7 +13,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Lista de convidados", ico: "📋", href: "/admin/convidados" },
   { label: "Espaço infantil", ico: "🧸", href: "/admin/infantil" },
   { label: "Check-in", ico: "📷", href: "/admin/checkin" },
-  { label: "Comunicação", ico: "✉️", href: "/admin", soon: true },
+  { label: "Comunicação", ico: "✉️", href: "/admin/comunicacao" },
   { section: "Presentes" },
   { label: "Lista de presentes", ico: "🎁", href: "/admin", soon: true },
   { label: "Pagamentos (Asaas)", ico: "💳", href: "/admin", soon: true },

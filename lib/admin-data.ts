@@ -233,6 +233,27 @@ export async function listChildren(): Promise<ChildRow[]> {
   return (data ?? []) as ChildRow[];
 }
 
+export interface CommRow {
+  id: string;
+  canal: string;
+  assunto: string | null;
+  corpo: string;
+  publico: string;
+  status: string;
+  criado_em: string;
+}
+
+export async function listCommunications(): Promise<CommRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_communications")
+    .select("*")
+    .order("criado_em", { ascending: false })
+    .limit(50);
+  return (data ?? []) as CommRow[];
+}
+
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];
