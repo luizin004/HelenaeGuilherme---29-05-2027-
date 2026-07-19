@@ -19,7 +19,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Pagamentos (Asaas)", ico: "💳", href: "/admin", soon: true },
   { section: "Gestão" },
   { label: "Controle financeiro", ico: "💰", href: "/admin/financeiro" },
-  { label: "Projeção mensal", ico: "📈", href: "/admin/financeiro", soon: true },
+  { label: "Parcelas", ico: "📆", href: "/admin/parcelas" },
   { label: "Fornecedores", ico: "🤝", href: "/admin/fornecedores" },
   { label: "Contratos", ico: "📄", href: "/admin/contratos" },
   { label: "Documentos", ico: "🗂️", href: "/admin/documentos" },

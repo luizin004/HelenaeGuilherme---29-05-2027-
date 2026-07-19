@@ -201,6 +201,68 @@ export async function listGifts(): Promise<GiftRow[]> {
   return (data ?? []) as GiftRow[];
 }
 
+export interface InstallmentItem {
+  id: string;
+  numero: number;
+  valor_cents: number;
+  vencimento: string | null;
+  pago: boolean;
+  pago_em: string | null;
+}
+
+export interface ParcelavelRow {
+  id: string;
+  descricao: string;
+  valor_total_cents: number;
+  parcelas: InstallmentItem[];
+  versoes: number;
+}
+
+/** Despesas com valor definido (parceláveis) + seus cronogramas. */
+export async function listParcelaveis(): Promise<ParcelavelRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+
+  const { data: expenses } = await supabase
+    .from("hg_expenses")
+    .select("id, descricao, valor_total_cents")
+    .is("deleted_at", null)
+    .eq("gratuito", false)
+    .not("valor_total_cents", "is", null)
+    .order("descricao");
+
+  if (!expenses || expenses.length === 0) return [];
+  const ids = expenses.map((e) => e.id);
+
+  const { data: inst } = await supabase
+    .from("hg_expense_installments")
+    .select("id, expense_id, numero, valor_cents, vencimento, pago, pago_em")
+    .in("expense_id", ids)
+    .order("numero");
+
+  const { data: vers } = await supabase
+    .from("hg_expense_schedule_versions")
+    .select("expense_id")
+    .in("expense_id", ids);
+
+  const byExpense = new Map<string, InstallmentItem[]>();
+  for (const i of inst ?? []) {
+    const arr = byExpense.get(i.expense_id) ?? [];
+    arr.push({ id: i.id, numero: i.numero, valor_cents: i.valor_cents, vencimento: i.vencimento, pago: i.pago, pago_em: i.pago_em });
+    byExpense.set(i.expense_id, arr);
+  }
+  const versCount = new Map<string, number>();
+  for (const v of vers ?? []) versCount.set(v.expense_id, (versCount.get(v.expense_id) ?? 0) + 1);
+
+  return expenses.map((e) => ({
+    id: e.id,
+    descricao: e.descricao,
+    valor_total_cents: Number(e.valor_total_cents),
+    parcelas: byExpense.get(e.id) ?? [],
+    versoes: versCount.get(e.id) ?? 0,
+  }));
+}
+
 export interface ContractRow {
   id: string;
   titulo: string;
