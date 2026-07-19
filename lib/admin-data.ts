@@ -52,6 +52,31 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface LeadRow {
+  id: string;
+  nome: string;
+  telefone: string | null;
+  email: string | null;
+  tipo_evento: string | null;
+  data_prevista: string | null;
+  convidados_aprox: string | null;
+  deseja_visita: boolean;
+  mensagem: string | null;
+  status: string;
+  criado_em: string;
+}
+
+export async function listLeads(): Promise<LeadRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_leads")
+    .select("id, nome, telefone, email, tipo_evento, data_prevista, convidados_aprox, deseja_visita, mensagem, status, criado_em")
+    .is("deleted_at", null)
+    .order("criado_em", { ascending: false });
+  return (data ?? []) as LeadRow[];
+}
+
 export interface GrupoRow {
   id: string;
   nome: string;
