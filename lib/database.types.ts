@@ -64,6 +64,7 @@ export interface Guest {
   respondeu_em: string | null;
   mensagem: string | null;
   restricao_alimentar: string | null;
+  transporte: string | null;
   qr_token: string;
   mesa: string | null;
   check_in_em: string | null;

@@ -17,6 +17,7 @@ export async function confirmarPresenca(_prev: RsvpState, formData: FormData): P
   const token = String(formData.get("token") ?? "").trim();
   const presenca = String(formData.get("presenca") ?? "");
   const mensagem = String(formData.get("mensagem") ?? "").trim();
+  const transporte = String(formData.get("transporte") ?? "").trim();
 
   if (!token) return { ok: false, message: "Link do convite inválido." };
   if (presenca !== "sim" && presenca !== "nao") {
@@ -37,6 +38,7 @@ export async function confirmarPresenca(_prev: RsvpState, formData: FormData): P
     p_token: token,
     p_status: status,
     p_mensagem: mensagem,
+    p_transporte: transporte,
   });
 
   if (error) {

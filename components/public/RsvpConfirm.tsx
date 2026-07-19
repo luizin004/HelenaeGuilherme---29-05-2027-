@@ -40,6 +40,18 @@ export function RsvpConfirm({ token, nome }: { token: string; nome: string }) {
         </label>
       </fieldset>
       <div className="flex flex-col gap-1.5">
+        <label htmlFor="transporte" className="field-label">Como você vai ao casamento? (opcional)</label>
+        <select id="transporte" name="transporte" className="field-input" defaultValue="">
+          <option value="">Prefiro não informar</option>
+          <option value="carro">Irei de carro</option>
+          <option value="com_outra_pessoa">Irei com outra pessoa</option>
+          <option value="oferece_vagas">Posso oferecer carona</option>
+          <option value="precisa_carona">Preciso de carona</option>
+          <option value="contratado">Usarei transporte contratado</option>
+          <option value="nao_definiu">Ainda não defini</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-1.5">
         <label htmlFor="mensagem" className="field-label">Mensagem para os noivos (opcional)</label>
         <textarea id="mensagem" name="mensagem" rows={3} placeholder="Deixe um recado carinhoso" className="field-input" />
       </div>
