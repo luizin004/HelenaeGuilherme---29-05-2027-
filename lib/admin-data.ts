@@ -8,6 +8,38 @@ export interface ExpenseRow {
   gratuito: boolean;
   valor_total_cents: number | null;
   observacao: string | null;
+  cost_center_id: string | null;
+}
+
+export interface Option {
+  id: string;
+  nome: string;
+}
+
+export async function getCostCenters(): Promise<Option[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase.from("hg_cost_centers").select("*").order("ordem");
+  return (data ?? []) as Option[];
+}
+
+export async function getPayers(): Promise<Option[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase.from("hg_payers").select("*").order("nome");
+  return (data ?? []) as Option[];
+}
+
+/** Mapa expense_id -> payer_id (responsável único, quando houver). */
+export async function getExpensePayers(): Promise<Record<string, string>> {
+  const supabase = createClient();
+  if (!supabase) return {};
+  const { data } = await supabase.from("hg_expense_payer_splits").select("*");
+  const map: Record<string, string> = {};
+  for (const s of (data ?? []) as { expense_id: string; payer_id: string }[]) {
+    map[s.expense_id] = s.payer_id;
+  }
+  return map;
 }
 
 export interface ExpensesSummary {

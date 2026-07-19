@@ -1,5 +1,13 @@
 import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
-import { getExpensesSummary, getGiftTotals, listExpenses } from "@/lib/admin-data";
+import { ClassificarDespesa } from "@/components/admin/ClassificarDespesa";
+import {
+  getCostCenters,
+  getExpensePayers,
+  getExpensesSummary,
+  getGiftTotals,
+  getPayers,
+  listExpenses,
+} from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -14,10 +22,13 @@ const ESTADO_BADGE: Record<string, string> = {
 };
 
 export default async function FinanceiroPage() {
-  const [summary, expenses, gifts] = await Promise.all([
+  const [summary, expenses, gifts, centros, responsaveis, expensePayers] = await Promise.all([
     getExpensesSummary(),
     listExpenses(),
     getGiftTotals(),
+    getCostCenters(),
+    getPayers(),
+    getExpensePayers(),
   ]);
 
   const aPagar = summary.totalOrcadoCents - summary.pagoCents;
@@ -51,7 +62,7 @@ export default async function FinanceiroPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Descrição", "Estado", "Valor", "Observações"].map((h) => (
+                {["Descrição", "Estado", "Valor", "Classificar (centro · responsável)"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -77,7 +88,15 @@ export default async function FinanceiroPage() {
                   <td className="whitespace-nowrap px-6 py-3 font-serif text-base text-moss">
                     {e.gratuito ? "Gratuito" : e.valor_total_cents === null ? "— a definir" : formatCents(e.valor_total_cents)}
                   </td>
-                  <td className="max-w-md px-6 py-3 text-xs text-muted">{e.observacao}</td>
+                  <td className="px-6 py-3" title={e.observacao ?? ""}>
+                    <ClassificarDespesa
+                      expenseId={e.id}
+                      centros={centros}
+                      responsaveis={responsaveis}
+                      centroAtual={e.cost_center_id}
+                      responsavelAtual={expensePayers[e.id] ?? null}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
