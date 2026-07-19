@@ -36,6 +36,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Comprovantes", ico: "🧾", href: "/admin/comprovantes" },
   { section: "Classificação" },
   { label: "Centros de custo", ico: "🗂️", href: "/admin/centros-custo" },
+  { label: "Categorias", ico: "🏷️", href: "/admin/categorias" },
   { label: "Divisão por responsável", ico: "➗", href: "/admin/divisao" },
   { label: "Responsáveis", ico: "👥", href: "/admin/responsaveis" },
   { section: "Fornecedores & contratos" },

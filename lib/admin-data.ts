@@ -52,6 +52,35 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface CategoriaResumo {
+  categoria: string;
+  itens: number;
+  previstoCents: number;
+  pagoCents: number;
+}
+
+/** Resumo por categoria (em uso): nº de itens, previsto e pago. */
+export async function getCategoriasResumo(): Promise<CategoriaResumo[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [expenses, parcelas] = await Promise.all([listExpenses(), listParcelasDetalhado()]);
+
+  const pagoPorExp = new Map<string, number>();
+  for (const p of parcelas) if (p.pago) pagoPorExp.set(p.expense_id, (pagoPorExp.get(p.expense_id) ?? 0) + p.valor_cents);
+
+  const map = new Map<string, CategoriaResumo>();
+  for (const e of expenses) {
+    if (e.gratuito) continue;
+    if (!e.categoria) continue;
+    const r = map.get(e.categoria) ?? { categoria: e.categoria, itens: 0, previstoCents: 0, pagoCents: 0 };
+    r.itens += 1;
+    r.previstoCents += e.valor_total_cents ?? 0;
+    r.pagoCents += pagoPorExp.get(e.id) ?? 0;
+    map.set(e.categoria, r);
+  }
+  return [...map.values()].sort((a, b) => b.previstoCents - a.previstoCents || a.categoria.localeCompare(b.categoria));
+}
+
 export interface EvaniaConfig {
   ativa: boolean;
   grupo_nome: string | null;

@@ -2,6 +2,35 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fase 23] Módulo financeiro completo + Evania
+Expansão do Financeiro para a "central de custos e pagamentos" da spec, tudo
+conectado (planejamento → orçamento → cotação → contrato → parcelas → contas →
+pagamento → comprovante → projeção/relatórios/caixa).
+- **Assistente de orçamento** (`/admin/orcamento`): catálogo de ~130 itens →
+  vira despesas "previstas / a definir" com categoria.
+- **Cotações & propostas** (`hg_quotes`): comparar fornecedores e converter a
+  escolhida em contratação (entrada + parcelas exatas).
+- **Comprovantes** (`hg_comprovantes`): recibo por despesa/parcela; vincular a
+  parcela marca como paga.
+- **Contas a pagar / pagas · Calendário · Projeção mensal · Relatórios**:
+  visões sobre parcelas (item + categoria + responsável).
+- **Centros de custo** (CRUD com cor/orçamento/inativar), **Categorias**
+  (renomear/mesclar), **Responsáveis** (resumo), **Divisão por responsável**
+  (fecha exato, regra 2).
+- **Aportes** (`hg_aportes`) + **Fluxo de caixa** (entradas × saídas, alerta),
+  **Reembolsos** (`hg_reembolsos`), **Cortesias** (valor de mercado/economia).
+- **Dashboard financeiro** executivo (16 cards clicáveis + participação por
+  categoria).
+- **Evania** (`hg_evania_config`): assistente financeira — agenda diária/semanal/
+  mensal e vencidas, diagnósticos proativos, mensagem pronta para o grupo e
+  configuração do Grupo Financeiro Oficial + lembretes. Envio automático
+  (WhatsApp/e-mail) e leitura por IA ficam pendentes de provedor externo.
+- Novas colunas: `hg_expenses.categoria`, `valor_mercado_cents`;
+  `hg_cost_centers.ativo/cor/orcamento_cents`.
+- Todas as tabelas novas com RLS por membro (`hg_is_member`).
+- **43 rotas** no build; tsc/lint/25 unit ✓; fluxos exercitados no banco
+  (cotação→contrato 12k=3k+6×1,5k; divisão 10k=3k+5k+2k; comprovante→parcela paga).
+
 ## [Fase 22] Construção das pendências do backlog
 Todas as 8 pendências de construção da matriz v2 foram entregues.
 ### RSVP — grupos familiares e prazo (spec regra 35 + prazo)
