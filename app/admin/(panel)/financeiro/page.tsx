@@ -1,5 +1,7 @@
 import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
 import { ClassificarDespesa } from "@/components/admin/ClassificarDespesa";
+import { NovaDespesa } from "@/components/admin/NovaDespesa";
+import { DespesaActions } from "@/components/admin/DespesaActions";
 import {
   getCostCenters,
   getExpensePayers,
@@ -90,12 +92,18 @@ export default async function FinanceiroPage() {
         <ResumoPanel titulo="Por centro de custo (orçado)" linhas={porCentro} vazio="Sem despesas classificadas ainda." />
       </div>
 
+      <Panel title="Nova despesa">
+        <div className="p-6">
+          <NovaDespesa />
+        </div>
+      </Panel>
+
       <Panel title="Lançamentos">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Descrição", "Estado", "Valor", "Classificar (centro · responsável)"].map((h) => (
+                {["Descrição", "Estado", "Valor", "Classificar (centro · responsável)", "Ações"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -105,7 +113,7 @@ export default async function FinanceiroPage() {
             <tbody>
               {expenses.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-muted">
+                  <td colSpan={5} className="px-6 py-10 text-center text-muted">
                     Faça login para visualizar os lançamentos (dados protegidos por RLS).
                   </td>
                 </tr>
@@ -128,6 +136,18 @@ export default async function FinanceiroPage() {
                       responsaveis={responsaveis}
                       centroAtual={e.cost_center_id}
                       responsavelAtual={expensePayers[e.id] ?? null}
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <DespesaActions
+                      d={{
+                        id: e.id,
+                        descricao: e.descricao,
+                        estado: e.estado,
+                        gratuito: e.gratuito,
+                        valor_total_cents: e.valor_total_cents,
+                        observacao: e.observacao,
+                      }}
                     />
                   </td>
                 </tr>

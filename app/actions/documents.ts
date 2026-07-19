@@ -32,3 +32,29 @@ export async function registrarDocumento(_prev: DocState, formData: FormData): P
   revalidatePath("/admin/documentos");
   return { ok: true, message: "Documento adicionado." };
 }
+
+const BUCKET = "hg-documentos";
+
+/** Exclusão LÓGICA do registro + remoção do arquivo no Storage privado. */
+export async function excluirDocumento(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  const path = String(formData.get("path") ?? "").trim();
+  if (!id) return;
+
+  const supabase = createClient();
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from("hg_documents")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
+
+  if (error) return;
+
+  // Remove o objeto do bucket (best-effort — o registro já saiu da listagem).
+  if (path) await supabase.storage.from(BUCKET).remove([path]);
+
+  await logAudit(supabase, { modulo: "documentos", acao: "delete", registro: `hg_documents:${id}` });
+  revalidatePath("/admin/documentos");
+}

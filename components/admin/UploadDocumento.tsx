@@ -6,6 +6,11 @@ import { registrarDocumento } from "@/app/actions/documents";
 
 const BUCKET = "hg-documentos";
 
+// Tipos aceitos e limite de tamanho (validação no cliente antes de subir).
+const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
+const ALLOWED_EXT = ["pdf", "png", "jpg", "jpeg", "webp", "doc", "docx", "xls", "xlsx"];
+const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx";
+
 export function UploadDocumento() {
   const formRef = useRef<HTMLFormElement>(null);
   const [msg, setMsg] = useState("");
@@ -22,6 +27,18 @@ export function UploadDocumento() {
     if (!file || !titulo) {
       setOk(false);
       setMsg("Escolha um arquivo e informe o título.");
+      return;
+    }
+
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_EXT.includes(ext)) {
+      setOk(false);
+      setMsg(`Tipo não permitido (.${ext}). Aceitos: ${ALLOWED_EXT.join(", ")}.`);
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setOk(false);
+      setMsg(`Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)} MB). Limite: 15 MB.`);
       return;
     }
 
@@ -64,7 +81,7 @@ export function UploadDocumento() {
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="d-arq" className="field-label">Arquivo</label>
-        <input id="d-arq" name="arquivo" type="file" className="text-sm" />
+        <input id="d-arq" name="arquivo" type="file" accept={ACCEPT} className="text-sm" />
       </div>
       <button type="submit" disabled={pending} className="btn btn-dark disabled:opacity-60">
         {pending ? "Enviando…" : "Enviar"}

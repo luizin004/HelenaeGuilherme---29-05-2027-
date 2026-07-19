@@ -1,5 +1,6 @@
 import { Notice, PageTitle, Panel } from "@/components/admin/ui";
 import { NovoContrato } from "@/components/admin/NovoContrato";
+import { ContratoActions } from "@/components/admin/ContratoActions";
 import { listContracts, listSuppliers } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -27,7 +28,7 @@ export default async function ContratosPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Título", "Fornecedor", "Valor", "Data do evento", "Status"].map((h) => (
+                {["Título", "Fornecedor", "Valor", "Data do evento", "Status", "Ações"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -37,13 +38,13 @@ export default async function ContratosPage() {
             <tbody>
               {contracts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-muted">
+                  <td colSpan={6} className="px-6 py-10 text-center text-muted">
                     Nenhum contrato ainda. Cadastre o primeiro acima.
                   </td>
                 </tr>
               )}
               {contracts.map((c) => (
-                <tr key={c.id} className="border-t border-line hover:bg-ivory">
+                <tr key={c.id} className="border-t border-line align-top hover:bg-ivory">
                   <td className="px-6 py-3 font-medium">{c.titulo}</td>
                   <td className="px-6 py-3 text-muted">{c.supplier_id ? supplierName.get(c.supplier_id) ?? "—" : "—"}</td>
                   <td className="px-6 py-3 font-serif text-base text-moss">{formatCents(Math.round(Number(c.valor) * 100))}</td>
@@ -52,6 +53,9 @@ export default async function ContratosPage() {
                     <span className="inline-block rounded-full bg-cream px-3 py-0.5 text-xs uppercase tracking-wide text-muted">
                       {c.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-3">
+                    <ContratoActions c={c} fornecedores={suppliers.map((s) => ({ id: s.id, nome: s.nome }))} />
                   </td>
                 </tr>
               ))}

@@ -314,7 +314,7 @@ export interface ChildRow {
 export async function listChildren(): Promise<ChildRow[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const { data } = await supabase.from("hg_children").select("*").order("nome");
+  const { data } = await supabase.from("hg_children").select("*").is("deleted_at", null).order("nome");
   return (data ?? []) as ChildRow[];
 }
 
@@ -334,6 +334,7 @@ export async function listCommunications(): Promise<CommRow[]> {
   const { data } = await supabase
     .from("hg_communications")
     .select("*")
+    .is("deleted_at", null)
     .order("criado_em", { ascending: false })
     .limit(50);
   return (data ?? []) as CommRow[];

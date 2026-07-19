@@ -10,9 +10,18 @@ export const dynamic = "force-dynamic";
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const MODULES = [
-  { ico: "📋", titulo: "Convidados", texto: "Lista, grupos, RSVP e QR Codes individuais.", href: "/admin/convidados" },
-  { ico: "📷", titulo: "Check-in", texto: "Recepção no dia do casamento via QR Code.", href: "/admin/checkin" },
-  { ico: "💰", titulo: "Financeiro", texto: "Despesas, receitas e projeção mensal.", href: "/admin/financeiro" },
+  { ico: "📋", titulo: "Convidados", texto: "Lista, mesas, RSVP e QR Codes individuais.", href: "/admin/convidados" },
+  { ico: "🧸", titulo: "Espaço infantil", texto: "Crianças, alergias e responsáveis.", href: "/admin/infantil" },
+  { ico: "📷", titulo: "Check-in", texto: "Recepção no dia via QR (câmera + offline).", href: "/admin/checkin" },
+  { ico: "✉️", titulo: "Comunicação", texto: "Modelos e rascunhos de mensagens.", href: "/admin/comunicacao" },
+  { ico: "🎁", titulo: "Presentes", texto: "Lista de presentes e cotas.", href: "/admin/presentes" },
+  { ico: "💰", titulo: "Financeiro", texto: "Despesas em centavos e classificação.", href: "/admin/financeiro" },
+  { ico: "📆", titulo: "Parcelas", texto: "Cronogramas, pagamentos e renegociação.", href: "/admin/parcelas" },
+  { ico: "🤝", titulo: "Fornecedores", texto: "Contatos e status de negociação.", href: "/admin/fornecedores" },
+  { ico: "📄", titulo: "Contratos", texto: "Contratos ligados a fornecedores.", href: "/admin/contratos" },
+  { ico: "🗂️", titulo: "Documentos", texto: "Arquivos privados (links assinados).", href: "/admin/documentos" },
+  { ico: "📝", titulo: "Conteúdo", texto: "História, hashtag e prazo do RSVP.", href: "/admin/conteudo" },
+  { ico: "🔎", titulo: "Auditoria", texto: "Trilha de ações críticas do painel.", href: "/admin/auditoria" },
 ];
 
 export default async function DashboardPage() {

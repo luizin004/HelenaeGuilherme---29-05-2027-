@@ -47,3 +47,72 @@ export async function criarContrato(
   revalidatePath("/admin/contratos");
   return { ok: true, message: `Contrato "${titulo}" cadastrado.` };
 }
+
+const CONTRACT_STATUS = ["rascunho", "pendente_assinatura", "assinado", "concluido", "cancelado"];
+
+/** Edita um contrato (título, fornecedor, valor, data, status). */
+export async function atualizarContrato(
+  _prev: ContractFormState,
+  formData: FormData,
+): Promise<ContractFormState> {
+  const id = String(formData.get("id") ?? "").trim();
+  const titulo = String(formData.get("titulo") ?? "").trim();
+  const supplierId = String(formData.get("supplier_id") ?? "");
+  const valorRaw = String(formData.get("valor") ?? "").trim();
+  const dataEvento = String(formData.get("data_evento") ?? "").trim();
+  const status = String(formData.get("status") ?? "rascunho");
+
+  if (!id) return { ok: false, message: "Contrato inválido." };
+  if (!titulo) return { ok: false, message: "Informe o título." };
+  if (!CONTRACT_STATUS.includes(status)) return { ok: false, message: "Status inválido." };
+
+  let valor = 0;
+  if (valorRaw) {
+    try {
+      valor = parseBRLToCents(valorRaw) / 100;
+    } catch {
+      return { ok: false, message: "Valor inválido." };
+    }
+  }
+
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+
+  const { error } = await supabase
+    .from("hg_contracts")
+    .update({
+      titulo,
+      supplier_id: supplierId || null,
+      valor,
+      data_evento: dataEvento || null,
+      status,
+    })
+    .eq("id", id)
+    .is("deleted_at", null);
+
+  if (error) return { ok: false, message: "Não foi possível salvar. Verifique o login." };
+
+  await logAudit(supabase, { modulo: "contratos", acao: "update", registro: `hg_contracts:${id}`, valorNovo: { titulo, status } });
+  revalidatePath("/admin/contratos");
+  return { ok: true, message: `Contrato "${titulo}" atualizado.` };
+}
+
+/** Exclusão LÓGICA (soft-delete) de um contrato. */
+export async function excluirContrato(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+
+  const supabase = createClient();
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from("hg_contracts")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
+
+  if (!error) {
+    await logAudit(supabase, { modulo: "contratos", acao: "delete", registro: `hg_contracts:${id}` });
+    revalidatePath("/admin/contratos");
+  }
+}

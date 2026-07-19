@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Notice, PageTitle, Panel } from "@/components/admin/ui";
 import { NovoPresente } from "@/components/admin/NovoPresente";
+import { PresenteEdit } from "@/components/admin/PresenteEdit";
 import { atualizarStatusPresente, excluirPresente } from "@/app/actions/gifts";
 import { listGifts } from "@/lib/admin-data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -85,11 +86,16 @@ export default async function PresentesAdminPage() {
                       <button type="submit" className="text-xs text-olive underline">salvar</button>
                     </form>
                   </td>
-                  <td className="px-6 py-3">
-                    <form action={excluirPresente}>
-                      <input type="hidden" name="id" value={g.id} />
-                      <button type="submit" className="text-xs text-danger underline">excluir</button>
-                    </form>
+                  <td className="px-6 py-3 align-top">
+                    <div className="flex items-center gap-3">
+                      <PresenteEdit
+                        g={{ id: g.id, nome: g.nome, descricao: g.descricao, imagem_url: g.imagem_url, preco: g.preco, permite_cota: g.permite_cota }}
+                      />
+                      <form action={excluirPresente}>
+                        <input type="hidden" name="id" value={g.id} />
+                        <button type="submit" className="text-xs text-danger underline">excluir</button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               ))}

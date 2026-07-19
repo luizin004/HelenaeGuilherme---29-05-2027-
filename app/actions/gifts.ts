@@ -53,6 +53,49 @@ export async function criarPresente(_prev: GiftFormState, formData: FormData): P
   return { ok: true, message: `${nome} foi adicionado à lista.` };
 }
 
+/** Edita um presente (nome, descrição, valor, imagem, cota). */
+export async function atualizarPresente(_prev: GiftFormState, formData: FormData): Promise<GiftFormState> {
+  const id = String(formData.get("id") ?? "").trim();
+  const nome = String(formData.get("nome") ?? "").trim();
+  const descricao = String(formData.get("descricao") ?? "").trim();
+  const precoRaw = String(formData.get("preco") ?? "").trim();
+  const imagem = String(formData.get("imagem_url") ?? "").trim();
+  const permiteCota = formData.get("permite_cota") === "on";
+
+  if (!id) return { ok: false, message: "Presente inválido." };
+  if (!nome) return { ok: false, message: "Informe o nome do presente." };
+
+  let cents = 0;
+  try {
+    cents = precoRaw ? parseBRLToCents(precoRaw) : 0;
+  } catch {
+    return { ok: false, message: "Valor inválido." };
+  }
+  if (cents < 0) return { ok: false, message: "Valor inválido." };
+
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+
+  const { error } = await supabase
+    .from("hg_gifts")
+    .update({
+      nome,
+      descricao: descricao || null,
+      imagem_url: imagem || null,
+      preco: cents / 100,
+      permite_cota: permiteCota,
+    })
+    .eq("id", id)
+    .is("deleted_at", null);
+
+  if (error) return { ok: false, message: "Não foi possível salvar. Verifique o login." };
+
+  await logAudit(supabase, { modulo: "presentes", acao: "update", registro: `hg_gifts:${id}`, valorNovo: { nome, preco: cents / 100 } });
+  revalidatePath("/admin/presentes");
+  revalidatePath("/presentes");
+  return { ok: true, message: `${nome} atualizado.` };
+}
+
 /** Altera o status de um presente (disponivel / reservado / adquirido). */
 export async function atualizarStatusPresente(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "").trim();
