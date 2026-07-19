@@ -4,6 +4,7 @@ import { NovoPresente } from "@/components/admin/NovoPresente";
 import { PresenteEdit } from "@/components/admin/PresenteEdit";
 import { atualizarStatusPresente, excluirPresente } from "@/app/actions/gifts";
 import { listGifts } from "@/lib/admin-data";
+import { giftVisual } from "@/domain/gifts/visual";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +63,12 @@ export default async function PresentesAdminPage() {
                       {g.imagem_url ? (
                         <img src={g.imagem_url} alt="" className="h-10 w-10 rounded object-cover" />
                       ) : (
-                        <span className="flex h-10 w-10 items-center justify-center rounded bg-gradient-to-br from-gold to-olive text-xs">🎁</span>
+                        <span
+                          className="flex h-10 w-10 items-center justify-center rounded text-base"
+                          style={{ background: `linear-gradient(135deg, ${giftVisual(g.nome).from}, ${giftVisual(g.nome).to})` }}
+                        >
+                          {giftVisual(g.nome).emoji}
+                        </span>
                       )}
                       <div>
                         <div className="font-medium">{g.nome}</div>

@@ -4,6 +4,7 @@ import { Footer } from "@/components/public/Footer";
 import { Logo } from "@/components/public/Logo";
 import { getGifts, getSettings, resolveCouple } from "@/lib/data";
 import { WEDDING } from "@/lib/constants";
+import { giftVisual } from "@/domain/gifts/visual";
 import type { Gift } from "@/lib/database.types";
 
 export const revalidate = 60;
@@ -46,10 +47,21 @@ export default async function PresentesPage() {
         </p>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((g) => (
+          {rows.map((g) => {
+            const v = giftVisual(g.nome);
+            return (
             <article key={g.id} className="flex flex-col overflow-hidden rounded-lg bg-white text-left shadow-card">
-              <div className="aspect-[4/3] bg-gradient-to-br from-gold to-olive">
-                {g.imagem_url && <img src={g.imagem_url} alt={g.nome} className="h-full w-full object-cover" />}
+              <div
+                className="relative aspect-[4/5]"
+                style={{ background: `linear-gradient(135deg, ${v.from}, ${v.to})` }}
+              >
+                {g.imagem_url ? (
+                  <img src={g.imagem_url} alt={g.nome} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="absolute inset-0 flex items-center justify-center text-6xl opacity-90 drop-shadow-sm">
+                    {v.emoji}
+                  </span>
+                )}
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <h3 className="font-serif text-2xl text-moss">{g.nome}</h3>
@@ -60,7 +72,8 @@ export default async function PresentesPage() {
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
 
         <p className="mt-10 text-sm text-muted">
