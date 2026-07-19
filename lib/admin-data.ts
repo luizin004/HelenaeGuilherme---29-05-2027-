@@ -52,6 +52,94 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface FinanceDashboard {
+  previstoCents: number;
+  contratadoCents: number;
+  pagoCents: number;
+  abertoCents: number;
+  vencidoCents: number;
+  aPagarHojeCents: number;
+  aPagarSemanaCents: number;
+  aPagarMesCents: number;
+  semValor: number;
+  cortesias: number;
+  economiaCents: number;
+  contratos: number;
+  parcelas: number;
+  confirmados: number;
+  custoPorConvidadoCents: number | null;
+  aportesCents: number;
+  saldoCaixaCents: number;
+  compromissosFuturosCents: number;
+  participacao: { categoria: string; cents: number; pct: number }[];
+}
+
+/** Agregado executivo do financeiro (cards do dashboard + participação por categoria). */
+export async function getFinanceDashboard(): Promise<FinanceDashboard> {
+  const [expenses, parcelas, cortesias, aportes, guestStats, contracts] = await Promise.all([
+    listExpenses(),
+    listParcelasDetalhado(),
+    listCortesias(),
+    listAportes(),
+    getGuestStats(),
+    listContracts(),
+  ]);
+  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const ymAtual = hoje.slice(0, 7);
+  const dias = (iso: string | null): number | null => {
+    if (!iso) return null;
+    const a = Date.parse(`${iso.slice(0, 10)}T00:00:00-03:00`);
+    const b = Date.parse(`${hoje}T00:00:00-03:00`);
+    return Number.isNaN(a) || Number.isNaN(b) ? null : Math.round((a - b) / 86_400_000);
+  };
+
+  const naoGrat = expenses.filter((e) => !e.gratuito);
+  const previstoCents = naoGrat.reduce((n, e) => n + (e.valor_total_cents ?? 0), 0);
+  const contratadoCents = naoGrat
+    .filter((e) => e.estado === "contratado" || e.estado === "pago")
+    .reduce((n, e) => n + (e.valor_total_cents ?? 0), 0);
+  const semValor = naoGrat.filter((e) => e.valor_total_cents === null).length;
+
+  let pagoCents = 0, abertoCents = 0, vencidoCents = 0, aPagarHojeCents = 0, aPagarSemanaCents = 0, aPagarMesCents = 0, compromissosFuturosCents = 0;
+  for (const p of parcelas) {
+    if (p.pago) { pagoCents += p.valor_cents; continue; }
+    abertoCents += p.valor_cents;
+    compromissosFuturosCents += p.valor_cents;
+    const d = dias(p.vencimento);
+    if (d !== null && d < 0) vencidoCents += p.valor_cents;
+    if (d === 0) aPagarHojeCents += p.valor_cents;
+    if (d !== null && d >= 0 && d <= 7) aPagarSemanaCents += p.valor_cents;
+    if (p.vencimento && p.vencimento.slice(0, 7) === ymAtual) aPagarMesCents += p.valor_cents;
+  }
+
+  const economiaCents = cortesias.reduce((n, c) => n + (c.valor_mercado_cents ?? 0), 0);
+  const aportesCents = aportes.reduce((n, a) => n + a.valor_cents, 0);
+  const custoPorConvidadoCents = guestStats.confirmados > 0 ? Math.round(previstoCents / guestStats.confirmados) : null;
+
+  // Participação por categoria (previsto).
+  const cat = new Map<string, number>();
+  for (const e of naoGrat) {
+    const k = e.categoria || "Sem categoria";
+    cat.set(k, (cat.get(k) ?? 0) + (e.valor_total_cents ?? 0));
+  }
+  const totalCat = [...cat.values()].reduce((n, v) => n + v, 0) || 1;
+  const participacao = [...cat.entries()]
+    .map(([categoria, cents]) => ({ categoria, cents, pct: Math.round((cents / totalCat) * 100) }))
+    .filter((x) => x.cents > 0)
+    .sort((a, b) => b.cents - a.cents);
+
+  return {
+    previstoCents, contratadoCents, pagoCents, abertoCents, vencidoCents,
+    aPagarHojeCents, aPagarSemanaCents, aPagarMesCents,
+    semValor, cortesias: cortesias.length, economiaCents,
+    contratos: contracts.length, parcelas: parcelas.length,
+    confirmados: guestStats.confirmados,
+    custoPorConvidadoCents,
+    aportesCents, saldoCaixaCents: aportesCents - pagoCents, compromissosFuturosCents,
+    participacao,
+  };
+}
+
 export interface DivisaoRow {
   id: string;
   descricao: string;
