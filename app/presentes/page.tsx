@@ -1,0 +1,74 @@
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
+import { Footer } from "@/components/public/Footer";
+import { Logo } from "@/components/public/Logo";
+import { getGifts, getSettings, resolveCouple } from "@/lib/data";
+import { WEDDING } from "@/lib/constants";
+import type { Gift } from "@/lib/database.types";
+
+export const revalidate = 60;
+const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const DEMO: Gift[] = [
+  gift("Cota da lua de mel", "Ajude a realizar a viagem dos sonhos.", 250),
+  gift("Jantar romântico", "Um brinde ao nosso primeiro ano.", 180),
+  gift("Jogo de panelas", "Para os banquetes do novo lar.", 600),
+  gift("Cota livre", "Contribua com o valor que desejar.", 100),
+];
+
+function gift(nome: string, descricao: string, preco: number): Gift {
+  return {
+    id: nome, category_id: null, nome, descricao, imagem_url: null, preco,
+    permite_cota: true, quantidade: 1, status: "disponivel", ordem: 0, criado_em: "",
+  };
+}
+
+export default async function PresentesPage() {
+  const [gifts, settings] = await Promise.all([getGifts(), getSettings()]);
+  const couple = resolveCouple(settings);
+  const rows = gifts.length ? gifts : DEMO;
+
+  return (
+    <main className="min-h-screen bg-ivory">
+      <header className="bg-bronze-deep px-6 py-5">
+        <div className="mx-auto flex max-w-content items-center justify-between">
+          <Link href="/"><Logo className="h-10 w-auto" white /></Link>
+          <Link href="/" className="text-xs uppercase tracking-[0.1em] text-champagne">← Voltar ao site</Link>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-content px-6 py-16 text-center">
+        <p className="eyebrow">Com carinho</p>
+        <h1 className="section-title">Lista de presentes</h1>
+        <p className="mx-auto mb-12 max-w-xl text-[1.05rem] text-muted">
+          Sua presença é o nosso maior presente. Se quiser nos ajudar a começar essa nova fase,
+          escolha uma opção abaixo — pagamento seguro via Pix ou cartão.
+        </p>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map((g) => (
+            <article key={g.id} className="flex flex-col overflow-hidden rounded-lg bg-white text-left shadow-card">
+              <div className="aspect-[4/3] bg-gradient-to-br from-champagne to-bronze">
+                {g.imagem_url && <img src={g.imagem_url} alt={g.nome} className="h-full w-full object-cover" />}
+              </div>
+              <div className="flex flex-1 flex-col p-5">
+                <h3 className="font-serif text-2xl text-bronze-dark">{g.nome}</h3>
+                {g.descricao && <p className="mt-1 flex-1 text-sm text-muted">{g.descricao}</p>}
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="font-serif text-xl text-bronze">{brl(Number(g.preco))}</span>
+                  <button className="btn btn-dark px-5 py-2.5">Presentear</button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <p className="mt-10 text-sm text-muted">
+          O checkout via Asaas (Pix/cartão) é ativado ao configurar as chaves em <code>.env.local</code>.
+        </p>
+      </section>
+
+      <Footer noiva={couple.noiva} noivo={couple.noivo} dataExtenso={WEDDING.dataExtenso} />
+    </main>
+  );
+}

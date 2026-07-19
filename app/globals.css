@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ivory text-ink font-sans font-light antialiased;
+    line-height: 1.7;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* Botões */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded uppercase tracking-[0.14em] text-xs font-normal transition-all duration-200 cursor-pointer border border-transparent px-8 py-3.5;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-light { @apply bg-white text-bronze-dark hover:bg-cream; }
+  .btn-dark { @apply bg-bronze text-white hover:bg-bronze-dark; }
+  .btn-outline { @apply bg-transparent text-bronze-dark border-bronze hover:bg-bronze hover:text-white; }
+
+  /* Rótulos / eyebrows */
+  .eyebrow { @apply uppercase tracking-[0.35em] text-xs text-bronze mb-3; }
+  .section-title { @apply font-serif font-medium text-bronze-dark text-4xl md:text-5xl mb-8; }
+
+  /* Campos de formulário */
+  .field-label { @apply text-xs uppercase tracking-[0.12em] text-bronze-dark; }
+  .field-input {
+    @apply w-full rounded border border-line bg-white px-4 py-3 text-base text-ink transition
+      focus:border-bronze focus:outline-none focus:ring-4 focus:ring-bronze/15;
+  }
+}
+
+/* Revelação ao rolar */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity .8s ease, transform .8s ease; }
+.reveal.is-visible { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .animate-fadeUp { animation: none !important; }
+}

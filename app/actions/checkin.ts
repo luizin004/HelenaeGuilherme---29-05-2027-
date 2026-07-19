@@ -1,0 +1,37 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+
+export interface CheckinResult {
+  ok: boolean;
+  message: string;
+  nome?: string;
+}
+
+/** Valida o token do QR e registra a chegada do convidado. */
+export async function registrarCheckin(token: string): Promise<CheckinResult> {
+  const t = token.trim();
+  if (!t) return { ok: false, message: "Informe ou leia um código." };
+
+  const supabase = createClient();
+  if (!supabase) {
+    return { ok: true, message: "✓ Check-in registrado (modo demonstração).", nome: "Convidado" };
+  }
+
+  const { data: guest } = await supabase
+    .from("guests")
+    .select("*")
+    .eq("qr_token", t)
+    .maybeSingle();
+
+  if (!guest) return { ok: false, message: "Código não encontrado." };
+  if (guest.check_in_em) {
+    return { ok: false, message: `${guest.nome} já fez check-in.`, nome: guest.nome };
+  }
+
+  const agora = new Date().toISOString();
+  await supabase.from("guests").update({ check_in_em: agora }).eq("id", guest.id);
+  await supabase.from("checkins").insert({ guest_id: guest.id, check_in_em: agora });
+
+  return { ok: true, message: `✓ Bem-vindo(a), ${guest.nome}!`, nome: guest.nome };
+}

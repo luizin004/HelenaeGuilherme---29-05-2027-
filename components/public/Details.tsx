@@ -1,0 +1,75 @@
+import { Reveal } from "./Reveal";
+import type { Venue } from "@/lib/database.types";
+
+function mapsHref(v: Venue) {
+  if (v.maps_url) return v.maps_url;
+  const q = encodeURIComponent(v.endereco || v.nome);
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
+export function Details({ venues }: { venues: Venue[] }) {
+  const cerimonia = venues.find((v) => v.tipo === "cerimonia");
+  const recepcao = venues.find((v) => v.tipo === "recepcao");
+
+  return (
+    <section id="detalhes" className="bg-cream">
+      <div className="mx-auto max-w-content px-6 py-24 text-center">
+        <Reveal>
+          <p className="eyebrow">Guarde a data</p>
+          <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-champagne after:content-['']">
+            O grande dia
+          </h2>
+          <div className="grid gap-8 md:grid-cols-3">
+            <Card
+              icon="⛪"
+              titulo="Cerimônia"
+              tempo={cerimonia?.horario ?? "16h00"}
+              linha1={cerimonia?.nome ?? "Local a definir"}
+              linha2={cerimonia?.endereco ?? "Endereço completo aqui"}
+              href={cerimonia ? mapsHref(cerimonia) : undefined}
+            />
+            <Card
+              icon="🥂"
+              titulo="Recepção"
+              tempo={recepcao?.horario ?? "18h00"}
+              linha1={recepcao?.nome ?? "Espaço a definir"}
+              linha2={recepcao?.endereco ?? "Endereço completo aqui"}
+              href={recepcao ? mapsHref(recepcao) : undefined}
+            />
+            <Card
+              icon="👗"
+              titulo="Traje"
+              tempo="Passeio completo"
+              linha1="Sugestões de cores"
+              linha2="e dicas para os convidados"
+            />
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function Card({
+  icon, titulo, tempo, linha1, linha2, href,
+}: {
+  icon: string; titulo: string; tempo: string; linha1: string; linha2: string; href?: string;
+}) {
+  return (
+    <article className="rounded bg-white p-9 shadow-soft transition-transform hover:-translate-y-1.5">
+      <div className="mb-4 text-4xl">{icon}</div>
+      <h3 className="mb-1 font-serif text-2xl font-semibold text-bronze-dark">{titulo}</h3>
+      <p className="mb-3 text-sm uppercase tracking-[0.1em] text-bronze">{tempo}</p>
+      <p className="text-sm text-muted">
+        {linha1}
+        <br />
+        {linha2}
+      </p>
+      {href && (
+        <a href={href} target="_blank" rel="noopener" className="btn btn-outline mt-5">
+          Ver rota
+        </a>
+      )}
+    </article>
+  );
+}
