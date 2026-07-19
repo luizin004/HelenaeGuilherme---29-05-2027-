@@ -40,6 +40,17 @@ Status: `não iniciado` · `em desenvolvimento` · `implementado` · `testado` �
 | 31 | Documentação | implementado | 17 docs; **PRODUCTION_CHECKLIST + WEDDING_DAY_CHECKLIST** adicionados. Opcionais: DATA_DICTIONARY, PERMISSIONS, TESTING detalhados |
 | 32 | Plano de contingência | em desenvolvimento | Esboço em DISASTER_RECOVERY; consolidar |
 
+## Fase 24 — cobertura total do construível (51 rotas)
+Público: **A festa** (cardápio+atrações), **/como-chegar** (rota do mapa), **/cerimonia**,
+**/recepcao**. RSVP: **Instagram** + **restrição por integrante**. Painel:
+**Grupos familiares**, **Transporte**, **regenerar QR**, **Locais & mapa** (coordenadas →
+Maps/Waze/QR), **Plano de chuva**, **Usuários & acesso**. Financeiro completo (Dashboard,
+Orçamento, Cotações, Contas a pagar/pagas, Calendário, Parcelas, Projeção, Fluxo de caixa,
+Aportes, Reembolsos, Cortesias, Relatórios, Comprovantes, Centros de custo, Categorias,
+Divisão, Responsáveis) + **Evania** (agenda/diagnósticos/mensagem/config).
+Pendências reais: **credenciais** (Asaas, WhatsApp/e-mail, IA), **dados** (coordenadas do
+portão, fotos, valores), **deploy Vercel** e **RBAC granular** (depende de Auth).
+
 ## Contagem honesta
 - **Testado (evidência executada): 6** · **Implementado: 19** · **Em desenvolvimento: 3**
 - **Bloqueado por dependência EXTERNA: 3** (Asaas, provedor de mensagens, permissão Vercel)

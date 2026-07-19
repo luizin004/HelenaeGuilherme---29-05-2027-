@@ -45,9 +45,12 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Fornecedores", ico: "🤝", href: "/admin/fornecedores" },
   { label: "Contratos", ico: "📄", href: "/admin/contratos" },
   { label: "Documentos", ico: "🗂️", href: "/admin/documentos" },
-  { section: "Site" },
+  { section: "Site & operação" },
   { label: "Conteúdo (CMS)", ico: "📝", href: "/admin/conteudo" },
+  { label: "Locais & mapa", ico: "📍", href: "/admin/locais" },
+  { label: "Plano de chuva", ico: "🌧️", href: "/admin/plano-chuva" },
   { section: "Segurança" },
+  { label: "Usuários & acesso", ico: "🔐", href: "/admin/usuarios" },
   { label: "Auditoria", ico: "🔎", href: "/admin/auditoria" },
 ];
 
