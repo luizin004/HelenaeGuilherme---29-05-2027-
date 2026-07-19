@@ -54,7 +54,7 @@ function initCountdown() {
     const diff = target - Date.now();
     if (diff <= 0) {
       Object.values(units).forEach((u) => u && (u.textContent = '00'));
-      if (title) title.textContent = 'É hoje! 💚';
+      if (title) title.textContent = 'É hoje! 🤍';
       clearInterval(timer);
       return;
     }
@@ -117,7 +117,7 @@ function initRSVP() {
 
     const vai = data.presenca === 'sim';
     feedback.textContent = vai
-      ? `Obrigado, ${data.nome.split(' ')[0]}! Sua presença está confirmada. 💚`
+      ? `Obrigado, ${data.nome.split(' ')[0]}! Sua presença está confirmada. 🤍`
       : `Vamos sentir sua falta, ${data.nome.split(' ')[0]}. Obrigado por avisar!`;
     feedback.style.color = vai ? 'var(--sage)' : 'var(--muted)';
 

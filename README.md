@@ -1,51 +1,93 @@
-# 💚 Helena & Guilherme · 29.05.2027
+# 🤍 Helena & Guilherme · 29.05.2027
 
-Site do casamento de **Helena e Guilherme** — 29 de maio de 2027.
+Plataforma de **gestão do casamento** de Helena e Guilherme — mais que um site:
+a central de organização e operação do grande dia.
 
-Campo preparado: base pronta pra receber conteúdo, fotos e a história do casal.
+Identidade visual: monograma **HG** em bronze/champanhe sobre off-white.
 
-## Estrutura
+## 🎨 Paleta (extraída do monograma)
+
+| Token | Cor | Uso |
+|-------|-----|-----|
+| Bronze | `#8a7359` | Primária |
+| Bronze escuro | `#5c4a38` | Títulos, rodapé |
+| Bronze profundo | `#45372a` | Sidebar admin |
+| Champanhe | `#c9b79c` | Detalhes, destaques |
+| Off-white | `#faf8f3` | Fundo |
+| Creme | `#f0ebe2` | Seções alternadas |
+| Tinta | `#3a3129` | Texto |
+
+## 🗂️ Estrutura
 
 ```
 .
-├── index.html          # Página única com todas as seções
+├── index.html              # Site público (convidados)
+├── assets/logo.svg         # Monograma HG
 ├── css/
-│   └── styles.css      # Estilos (paleta sálvia · off-white · dourado)
+│   ├── styles.css          # Design system + site público
+│   └── admin.css           # Painel administrativo
 ├── js/
-│   └── main.js         # Contagem regressiva, menu, animações e RSVP
-└── assets/
-    └── images/         # Fotos do casal (adicionar aqui)
+│   ├── main.js             # Site público (contagem, RSVP, animações)
+│   ├── admin.js            # Layout compartilhado do painel
+│   └── supabase.js         # Config do cliente Supabase
+├── admin/
+│   ├── index.html          # Dashboard
+│   ├── convidados.html     # Lista de convidados + QR
+│   ├── financeiro.html     # Controle financeiro + projeção
+│   └── checkin.html        # Check-in do dia
+└── supabase/
+    ├── migrations/
+    │   ├── 0001_init.sql   # Todas as tabelas (21 tabelas)
+    │   └── 0002_rls.sql    # Políticas de segurança
+    └── functions/
+        └── asaas-payment/  # Edge Function de pagamento (Asaas)
 ```
 
-## Seções já montadas
+## 🧩 Módulos (escopo)
 
-- **Hero** — nomes, data e chamada para confirmar presença
-- **Contagem regressiva** — conta os dias até 29/05/2027
-- **Nossa história** — texto + linha do tempo do casal
-- **O grande dia** — cerimônia, recepção e traje
-- **Galeria** — grade de fotos (placeholders prontos)
-- **Lista de presentes** — botões para lista e Pix
-- **RSVP** — formulário de confirmação de presença
-- **Rodapé**
+**Site público (convidados)**
+- ✅ História do casal · informações · rota até os locais (Google Maps)
+- ✅ Confirmação de presença (RSVP) · espaço infantil
+- ✅ Lista de presentes · estrutura de pagamento via Asaas
+- 🔜 QR Code individual por convidado
 
-## Como visualizar
+**Painel administrativo**
+- ✅ Dashboard · lista de convidados · financeiro · check-in (telas)
+- 🔜 Fornecedores · contratos · projeção mensal · documentos · comunicação
+- 🔜 Pagamentos (Asaas) · relatórios
 
-Abra o `index.html` no navegador, ou rode um servidor local:
+## 🗄️ Banco de dados
+
+O schema (`supabase/migrations/0001_init.sql`) cobre os 18 módulos com **21 tabelas**:
+perfis, configurações, locais, história, galeria, grupos, convidados, crianças,
+categorias e itens de presente, pagamentos, fornecedores, contratos, parcelas,
+documentos, categorias e lançamentos financeiros, projeção mensal, comunicações,
+logs e check-ins.
+
+## 🚀 Como visualizar
 
 ```bash
 python3 -m http.server 8000
-# depois acesse http://localhost:8000
+# Site:   http://localhost:8000
+# Painel: http://localhost:8000/admin/
 ```
 
-## Próximos passos (a definir com o casal)
+## 🔌 Ativar o backend (Supabase + Asaas)
 
-- [ ] Substituir os textos de exemplo pela história real
-- [ ] Adicionar as fotos em `assets/images/` e ligar na galeria
-- [ ] Preencher local, endereço e horários da cerimônia/recepção
-- [ ] Configurar a lista de presentes e a chave Pix
-- [ ] Conectar o RSVP a um backend (ex.: Supabase) para salvar as confirmações
-- [ ] Publicar (ex.: Vercel) e, se quiser, um domínio próprio
+1. Criar projeto no Supabase e rodar as migrations (`supabase db push`).
+2. Preencher `SUPABASE_URL` e `SUPABASE_ANON_KEY` em `js/supabase.js`.
+3. Configurar os segredos do Asaas e publicar a Edge Function `asaas-payment`.
+4. Publicar o frontend (ex.: Vercel) — opcionalmente com domínio próprio.
+
+## 🗺️ Roadmap por fases
+
+- [x] **Fase 1 — Fundação:** identidade visual, site público, schema completo, shell do admin
+- [ ] **Fase 2 — Convidados:** CRUD, RSVP conectado, geração de QR Code
+- [ ] **Fase 3 — Presentes & Asaas:** checkout PIX/cartão e webhook de confirmação
+- [ ] **Fase 4 — Gestão:** financeiro, fornecedores, contratos, projeção, documentos
+- [ ] **Fase 5 — Operação:** comunicação e check-in por câmera no dia
+- [ ] **Fase 6 — Deploy:** autenticação, publicação e domínio
 
 ---
 
-Feito com carinho. Nos vemos lá 💚
+Feito com carinho. Nos vemos lá 🤍

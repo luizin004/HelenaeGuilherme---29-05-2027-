@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Check-in · Painel dos noivos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" aria-label="Menu">☰</button>
+      <h1 class="topbar__title">Check-in</h1>
+      <div class="topbar__actions">
+        <span class="badge badge--ok" id="checkinCount">0 presentes</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="checkin-box">
+        <div class="checkin-scan">
+          <p style="color: var(--muted); margin-bottom: 1rem;">Aponte o QR Code do convidado ou digite o código:</p>
+          <input type="text" id="qrInput" placeholder="Código do convidado" autofocus />
+          <div class="checkin-result" id="checkinResult" style="margin-top: 1.2rem;"></div>
+        </div>
+        <p style="color: var(--muted); font-size: 0.9rem;">
+          No dia do casamento, a leitura pela câmera valida o <code>qr_token</code> e registra a
+          chegada na tabela <code>checkins</code>.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/admin.js"></script>
+  <script>
+    renderShell('checkin', 'Check-in');
+    const input = document.getElementById('qrInput');
+    const result = document.getElementById('checkinResult');
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || !input.value.trim()) return;
+      // Demonstração — na fase de backend, valida no Supabase e grava o check-in.
+      result.innerHTML = '<span style="color: var(--success);">✓ Bem-vindo(a)! Check-in registrado.</span>';
+      input.value = '';
+      setTimeout(() => (result.textContent = ''), 3000);
+    });
+  </script>
+</body>
+</html>

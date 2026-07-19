@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Helena & Guilherme — 29 de Maio de 2027. Acompanhe cada detalhe do nosso grande dia." />
-  <meta name="theme-color" content="#5c6b52" />
+  <meta name="theme-color" content="#8a7359" />
 
   <title>Helena & Guilherme · 29.05.2027</title>
 
@@ -25,7 +25,7 @@
   <!-- ===== Navegação ===== -->
   <header class="nav" id="nav">
     <div class="nav__inner">
-      <a href="#inicio" class="nav__brand">H <span>&amp;</span> G</a>
+      <a href="#inicio" class="nav__brand"><img src="assets/logo.svg" alt="HG" /></a>
       <button class="nav__toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -33,6 +33,7 @@
         <a href="#historia">Nossa história</a>
         <a href="#detalhes">O grande dia</a>
         <a href="#galeria">Galeria</a>
+        <a href="#infantil">Espaço infantil</a>
         <a href="#presentes">Presentes</a>
         <a href="#rsvp" class="nav__cta">Confirmar presença</a>
       </nav>
@@ -43,6 +44,7 @@
   <section class="hero" id="inicio">
     <div class="hero__overlay"></div>
     <div class="hero__content">
+      <img src="assets/logo.svg" alt="Monograma Helena e Guilherme" class="hero__logo" />
       <p class="hero__eyebrow">Vamos nos casar</p>
       <h1 class="hero__names">Helena <span>&amp;</span> Guilherme</h1>
       <p class="hero__date">29 · Maio · 2027</p>
@@ -92,12 +94,14 @@
         <h3>Cerimônia</h3>
         <p class="detail-card__time">16h00</p>
         <p>Local a definir<br />Endereço completo aqui</p>
+        <a href="https://www.google.com/maps/search/?api=1&query=local+da+cerimonia" target="_blank" rel="noopener" class="btn btn--outline">Ver rota</a>
       </article>
       <article class="detail-card">
         <div class="detail-card__icon">🥂</div>
         <h3>Recepção</h3>
         <p class="detail-card__time">18h00</p>
         <p>Espaço a definir<br />Endereço completo aqui</p>
+        <a href="https://www.google.com/maps/search/?api=1&query=local+da+recepcao" target="_blank" rel="noopener" class="btn btn--outline">Ver rota</a>
       </article>
       <article class="detail-card">
         <div class="detail-card__icon">👗</div>
@@ -119,6 +123,19 @@
       <figure class="gallery__item gallery__item--placeholder">Foto 4</figure>
       <figure class="gallery__item gallery__item--placeholder">Foto 5</figure>
       <figure class="gallery__item gallery__item--placeholder">Foto 6</figure>
+    </div>
+  </section>
+
+  <!-- ===== Espaço infantil ===== -->
+  <section class="section kids" id="infantil">
+    <p class="section__eyebrow">Para os pequenos</p>
+    <h2 class="section__title">Espaço infantil</h2>
+    <p class="kids__intro">Para que os pais aproveitem cada momento com tranquilidade,
+      preparamos um espaço especial e monitorado para as crianças.</p>
+    <div class="kids__features">
+      <div class="kids__feature"><span class="icon">🧸</span><h4>Monitoria</h4><p>Equipe dedicada cuidando da diversão com segurança.</p></div>
+      <div class="kids__feature"><span class="icon">🎨</span><h4>Atividades</h4><p>Brincadeiras, recreação e cantinho de descanso.</p></div>
+      <div class="kids__feature"><span class="icon">🍬</span><h4>Cardápio kids</h4><p>Opções pensadas especialmente para as crianças.</p></div>
     </div>
   </section>
 
@@ -167,9 +184,11 @@
 
   <!-- ===== Rodapé ===== -->
   <footer class="footer">
+    <img src="assets/logo.svg" alt="Monograma Helena e Guilherme" class="footer__logo" />
     <p class="footer__names">Helena <span>&amp;</span> Guilherme</p>
     <p class="footer__date">29 de Maio de 2027</p>
-    <p class="footer__note">Feito com carinho · Nos vemos lá 💚</p>
+    <p class="footer__note">Feito com carinho · Nos vemos lá 🤍</p>
+    <a href="admin/index.html" class="footer__admin">Painel dos noivos</a>
   </footer>
 
   <script src="js/main.js"></script>

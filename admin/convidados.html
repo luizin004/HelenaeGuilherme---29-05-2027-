@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convidados · Painel dos noivos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" aria-label="Menu">☰</button>
+      <h1 class="topbar__title">Convidados</h1>
+      <div class="topbar__actions">
+        <button class="btn btn--primary">+ Novo convidado</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi__label">Total</div><div class="kpi__value">0</div></div>
+        <div class="kpi"><div class="kpi__label">Confirmados</div><div class="kpi__value">0</div></div>
+        <div class="kpi"><div class="kpi__label">Pendentes</div><div class="kpi__value">0</div></div>
+        <div class="kpi"><div class="kpi__label">Crianças</div><div class="kpi__value">0</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">
+          <span class="panel__title">Lista de convidados</span>
+          <button class="btn btn--ghost">Exportar</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr><th>Nome</th><th>Grupo</th><th>Contato</th><th>Status</th><th>Mesa</th><th>QR / Check-in</th></tr>
+            </thead>
+            <tbody id="guestBody">
+              <!-- Exemplo ilustrativo (substituído pelos dados do banco) -->
+              <tr>
+                <td>Maria Souza</td><td>Família Souza</td><td>(00) 90000-0000</td>
+                <td><span class="badge badge--ok">Confirmado</span></td><td>12</td>
+                <td><button class="btn btn--ghost">Ver QR</button></td>
+              </tr>
+              <tr>
+                <td>João Pereira</td><td>Amigos do noivo</td><td>joao@email.com</td>
+                <td><span class="badge badge--pend">Pendente</span></td><td>—</td>
+                <td><button class="btn btn--ghost">Ver QR</button></td>
+              </tr>
+              <tr>
+                <td>Lucas (criança)</td><td>Família Souza</td><td>—</td>
+                <td><span class="badge badge--ok">Confirmado</span></td><td>12</td>
+                <td><button class="btn btn--ghost">Ver QR</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="notice">
+        Cada convidado tem um <strong>token de QR Code único</strong> (campo <code>qr_token</code>) usado na
+        confirmação e no check-in do dia. A geração da imagem do QR será ligada ao banco na próxima fase.
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/admin.js"></script>
+  <script>renderShell('convidados', 'Convidados');</script>
+</body>
+</html>

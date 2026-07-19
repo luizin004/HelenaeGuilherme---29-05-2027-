@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financeiro · Painel dos noivos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" aria-label="Menu">☰</button>
+      <h1 class="topbar__title">Financeiro</h1>
+      <div class="topbar__actions">
+        <button class="btn btn--primary">+ Lançamento</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi__label">Orçamento total</div><div class="kpi__value">R$ 0</div></div>
+        <div class="kpi"><div class="kpi__label">Pago</div><div class="kpi__value">R$ 0</div></div>
+        <div class="kpi"><div class="kpi__label">A pagar</div><div class="kpi__value">R$ 0</div></div>
+        <div class="kpi"><div class="kpi__label">Recebido (presentes)</div><div class="kpi__value">R$ 0</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><span class="panel__title">Projeção mensal</span></div>
+        <div class="content" style="padding: 1.5rem;">
+          <p style="color: var(--muted); margin-bottom: 0.6rem;">Maio 2027 — Orçado x Realizado</p>
+          <div class="progress"><div class="progress__bar" style="width: 0%"></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><span class="panel__title">Lançamentos</span></div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Descrição</th><th>Categoria</th><th>Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Sinal do buffet</td><td>Buffet</td><td>A definir</td><td>R$ 0,00</td><td>—</td>
+                <td><span class="badge badge--pend">Previsto</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="notice">
+        O financeiro integra <strong>contratos, parcelas e pagamentos de presentes</strong> — tudo alimentado
+        pelas tabelas <code>finance_transactions</code>, <code>contract_installments</code> e <code>budget_projections</code>.
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/admin.js"></script>
+  <script>renderShell('financeiro', 'Financeiro');</script>
+</body>
+</html>
