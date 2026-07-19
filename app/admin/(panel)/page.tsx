@@ -16,6 +16,7 @@ const MODULES = [
   { ico: "✉️", titulo: "Comunicação", texto: "Modelos e rascunhos de mensagens.", href: "/admin/comunicacao" },
   { ico: "🎁", titulo: "Presentes", texto: "Lista de presentes e cotas.", href: "/admin/presentes" },
   { ico: "🧮", titulo: "Montar orçamento", texto: "Catálogo de itens → vira lista de custos.", href: "/admin/orcamento" },
+  { ico: "📝", titulo: "Cotações", texto: "Propostas por item, comparar e contratar.", href: "/admin/cotacoes" },
   { ico: "💰", titulo: "Financeiro", texto: "Despesas em centavos e classificação.", href: "/admin/financeiro" },
   { ico: "📆", titulo: "Parcelas", texto: "Cronogramas, pagamentos e renegociação.", href: "/admin/parcelas" },
   { ico: "🤝", titulo: "Fornecedores", texto: "Contatos e status de negociação.", href: "/admin/fornecedores" },

@@ -264,6 +264,80 @@ export async function listParcelaveis(): Promise<ParcelavelRow[]> {
   }));
 }
 
+export interface PropostaItem {
+  id: string;
+  supplier_id: string | null;
+  fornecedor_nome: string | null;
+  valor_cents: number;
+  entrada_cents: number | null;
+  parcelas: number | null;
+  prazo: string | null;
+  inclui: string | null;
+  observacao: string | null;
+  status: string;
+  escolhida: boolean;
+}
+
+export interface CotacaoRow {
+  id: string;
+  descricao: string;
+  categoria: string | null;
+  estado: string;
+  valor_total_cents: number | null;
+  propostas: PropostaItem[];
+}
+
+/** Itens do casamento (despesas não gratuitas) + suas propostas de fornecedores. */
+export async function listCotacoes(): Promise<CotacaoRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+
+  const { data: expenses } = await supabase
+    .from("hg_expenses")
+    .select("id, descricao, categoria, estado, valor_total_cents")
+    .is("deleted_at", null)
+    .eq("gratuito", false)
+    .order("categoria", { nullsFirst: false })
+    .order("descricao");
+  if (!expenses || expenses.length === 0) return [];
+
+  const ids = expenses.map((e) => e.id);
+  const { data: quotes } = await supabase
+    .from("hg_quotes")
+    .select("id, expense_id, supplier_id, fornecedor_nome, valor_cents, entrada_cents, parcelas, prazo, inclui, observacao, status, escolhida")
+    .in("expense_id", ids)
+    .is("deleted_at", null)
+    .order("valor_cents");
+
+  const byExpense = new Map<string, PropostaItem[]>();
+  for (const q of quotes ?? []) {
+    const arr = byExpense.get(q.expense_id) ?? [];
+    arr.push({
+      id: q.id,
+      supplier_id: q.supplier_id,
+      fornecedor_nome: q.fornecedor_nome,
+      valor_cents: Number(q.valor_cents),
+      entrada_cents: q.entrada_cents === null ? null : Number(q.entrada_cents),
+      parcelas: q.parcelas,
+      prazo: q.prazo,
+      inclui: q.inclui,
+      observacao: q.observacao,
+      status: q.status,
+      escolhida: q.escolhida,
+    });
+    byExpense.set(q.expense_id, arr);
+  }
+
+  return expenses.map((e) => ({
+    id: e.id,
+    descricao: e.descricao,
+    categoria: e.categoria,
+    estado: e.estado,
+    valor_total_cents: e.valor_total_cents === null ? null : Number(e.valor_total_cents),
+    propostas: byExpense.get(e.id) ?? [],
+  }));
+}
+
 export interface ContractRow {
   id: string;
   titulo: string;
