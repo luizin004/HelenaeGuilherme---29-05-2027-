@@ -19,6 +19,7 @@ const MODULES = [
   { ico: "📝", titulo: "Cotações", texto: "Propostas por item, comparar e contratar.", href: "/admin/cotacoes" },
   { ico: "💰", titulo: "Financeiro", texto: "Despesas em centavos e classificação.", href: "/admin/financeiro" },
   { ico: "📆", titulo: "Parcelas", texto: "Cronogramas, pagamentos e renegociação.", href: "/admin/parcelas" },
+  { ico: "📈", titulo: "Projeção mensal", texto: "Custo mês a mês por responsável.", href: "/admin/projecao" },
   { ico: "🧾", titulo: "Comprovantes", texto: "Recibos e notas por despesa/parcela.", href: "/admin/comprovantes" },
   { ico: "🤝", titulo: "Fornecedores", texto: "Contatos e status de negociação.", href: "/admin/fornecedores" },
   { ico: "📄", titulo: "Contratos", texto: "Contratos ligados a fornecedores.", href: "/admin/contratos" },

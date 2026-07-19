@@ -52,6 +52,103 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface ProjecaoMes {
+  ym: string; // "2026-07"
+  label: string; // "jul/2026"
+  previstoCents: number;
+  pagoCents: number;
+  abertoCents: number;
+  porResp: Record<string, number>;
+}
+
+export interface ProjecaoResult {
+  meses: ProjecaoMes[];
+  semData: { previstoCents: number; pagoCents: number; abertoCents: number; porResp: Record<string, number> };
+  responsaveis: string[];
+  totalPrevistoCents: number;
+  totalPagoCents: number;
+}
+
+const MES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+/**
+ * Projeção mês a mês: distribui as PARCELAS pelos meses de vencimento e mostra
+ * previsto, pago e em aberto — no total e por responsável (Helena, Guilherme,
+ * Toninho). Parcela sem data cai no bloco "sem data" (regra 5: não é vencida).
+ */
+export async function getProjecaoMensal(): Promise<ProjecaoResult> {
+  const vazio: ProjecaoResult = {
+    meses: [],
+    semData: { previstoCents: 0, pagoCents: 0, abertoCents: 0, porResp: {} },
+    responsaveis: [],
+    totalPrevistoCents: 0,
+    totalPagoCents: 0,
+  };
+  const supabase = createClient();
+  if (!supabase) return vazio;
+
+  const { data: expenses } = await supabase.from("hg_expenses").select("id").is("deleted_at", null);
+  const ids = (expenses ?? []).map((e) => e.id);
+  if (ids.length === 0) return vazio;
+
+  const [{ data: inst }, expensePayers, payers] = await Promise.all([
+    supabase
+      .from("hg_expense_installments")
+      .select("expense_id, valor_cents, vencimento, pago")
+      .in("expense_id", ids),
+    getExpensePayers(),
+    getPayers(),
+  ]);
+  const payerNome = new Map(payers.map((p) => [p.id, p.nome]));
+  const respDe = (expenseId: string) => {
+    const pid = expensePayers[expenseId];
+    return (pid && payerNome.get(pid)) || "Não atribuído";
+  };
+
+  const buckets = new Map<string, ProjecaoMes>();
+  const semData = { previstoCents: 0, pagoCents: 0, abertoCents: 0, porResp: {} as Record<string, number> };
+  const respSet = new Set<string>();
+
+  const add = (alvo: { previstoCents: number; pagoCents: number; abertoCents: number; porResp: Record<string, number> }, valor: number, pago: boolean, resp: string) => {
+    alvo.previstoCents += valor;
+    if (pago) alvo.pagoCents += valor;
+    else alvo.abertoCents += valor;
+    alvo.porResp[resp] = (alvo.porResp[resp] ?? 0) + valor;
+  };
+
+  for (const p of inst ?? []) {
+    const valor = Number(p.valor_cents);
+    const resp = respDe(p.expense_id);
+    respSet.add(resp);
+    if (!p.vencimento) {
+      add(semData, valor, p.pago, resp);
+      continue;
+    }
+    const ym = String(p.vencimento).slice(0, 7);
+    let mes = buckets.get(ym);
+    if (!mes) {
+      const [y, m] = ym.split("-").map(Number);
+      mes = { ym, label: `${MES_CURTO[m - 1]}/${y}`, previstoCents: 0, pagoCents: 0, abertoCents: 0, porResp: {} };
+      buckets.set(ym, mes);
+    }
+    add(mes, valor, p.pago, resp);
+  }
+
+  const meses = [...buckets.values()].sort((a, b) => a.ym.localeCompare(b.ym));
+  // Ordena responsáveis: Helena, Guilherme, Toninho primeiro; resto alfabético.
+  const ordem = ["Helena", "Guilherme", "Toninho"];
+  const responsaveis = [...respSet].sort((a, b) => {
+    const ia = ordem.indexOf(a), ib = ordem.indexOf(b);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    return a.localeCompare(b);
+  });
+
+  const totalPrevistoCents = meses.reduce((n, m) => n + m.previstoCents, 0) + semData.previstoCents;
+  const totalPagoCents = meses.reduce((n, m) => n + m.pagoCents, 0) + semData.pagoCents;
+
+  return { meses, semData, responsaveis, totalPrevistoCents, totalPagoCents };
+}
+
 export async function listExpenses(): Promise<ExpenseRow[]> {
   const supabase = createClient();
   if (!supabase) return [];
