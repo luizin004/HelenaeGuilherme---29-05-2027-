@@ -103,7 +103,7 @@ export default async function FinanceiroPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Descrição", "Estado", "Valor", "Classificar (centro · responsável)", "Ações"].map((h) => (
+                {["Descrição", "Categoria", "Estado", "Valor", "Classificar (centro · responsável)", "Ações"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -113,7 +113,7 @@ export default async function FinanceiroPage() {
             <tbody>
               {expenses.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-muted">
+                  <td colSpan={6} className="px-6 py-10 text-center text-muted">
                     Faça login para visualizar os lançamentos (dados protegidos por RLS).
                   </td>
                 </tr>
@@ -121,6 +121,7 @@ export default async function FinanceiroPage() {
               {expenses.map((e) => (
                 <tr key={e.id} className="border-t border-line align-top hover:bg-ivory">
                   <td className="px-6 py-3 font-medium">{e.descricao}</td>
+                  <td className="px-6 py-3 text-xs text-muted">{e.categoria || "—"}</td>
                   <td className="px-6 py-3">
                     <span className={`inline-block rounded-full px-3 py-0.5 text-xs uppercase tracking-wide ${ESTADO_BADGE[e.estado] ?? "bg-cream text-muted"}`}>
                       {e.estado}
@@ -147,6 +148,7 @@ export default async function FinanceiroPage() {
                         gratuito: e.gratuito,
                         valor_total_cents: e.valor_total_cents,
                         observacao: e.observacao,
+                        categoria: e.categoria,
                       }}
                     />
                   </td>

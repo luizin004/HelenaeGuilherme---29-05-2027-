@@ -30,6 +30,7 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
   const estado = String(formData.get("estado") ?? "previsto");
   const gratuito = formData.get("gratuito") === "on";
   const observacao = String(formData.get("observacao") ?? "").trim();
+  const categoria = String(formData.get("categoria") ?? "").trim();
 
   if (!descricao) return { ok: false, message: "Informe a descrição da despesa." };
   if (!ESTADOS.includes(estado)) return { ok: false, message: "Estado inválido." };
@@ -50,6 +51,7 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
     gratuito,
     valor_total_cents: gratuito ? null : valorCents ?? null,
     observacao: observacao || null,
+    categoria: categoria || null,
   });
 
   if (error) return { ok: false, message: "Não foi possível salvar. Verifique se você está autenticado." };
@@ -67,6 +69,7 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
   const estado = String(formData.get("estado") ?? "previsto");
   const gratuito = formData.get("gratuito") === "on";
   const observacao = String(formData.get("observacao") ?? "").trim();
+  const categoria = String(formData.get("categoria") ?? "").trim();
 
   if (!id) return { ok: false, message: "Despesa inválida." };
   if (!descricao) return { ok: false, message: "Informe a descrição." };
@@ -88,6 +91,7 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
     estado: gratuito ? "gratuito" : estado,
     gratuito,
     observacao: observacao || null,
+    categoria: categoria || null,
   };
   if (gratuito) patch.valor_total_cents = null;
   else if (valorCents !== undefined) patch.valor_total_cents = valorCents;

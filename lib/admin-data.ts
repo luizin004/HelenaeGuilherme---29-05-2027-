@@ -8,6 +8,7 @@ export interface ExpenseRow {
   gratuito: boolean;
   valor_total_cents: number | null;
   observacao: string | null;
+  categoria: string | null;
   cost_center_id: string | null;
 }
 

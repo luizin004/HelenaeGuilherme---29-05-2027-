@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { criarDespesa, type ExpenseFormState } from "@/app/actions/expenses";
+import { CATEGORIAS } from "@/domain/orcamento/catalogo";
 
 const initial: ExpenseFormState = { ok: false, message: "" };
 
@@ -35,6 +36,15 @@ export function NovaDespesa() {
           <option value="contratado">Contratado</option>
           <option value="pago">Pago</option>
         </select>
+      </div>
+      <div className="flex flex-col gap-1 md:col-span-2">
+        <label htmlFor="d-cat" className="field-label">Categoria (opcional)</label>
+        <input id="d-cat" name="categoria" list="cat-list" placeholder="Buffet, Música…" className="field-input" />
+        <datalist id="cat-list">
+          {CATEGORIAS.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
       </div>
       <div className="flex flex-col gap-1 md:col-span-2">
         <label htmlFor="d-obs" className="field-label">Observação (opcional)</label>
