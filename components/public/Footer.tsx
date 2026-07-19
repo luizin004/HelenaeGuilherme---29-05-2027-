@@ -15,6 +15,7 @@ export function Footer({ noiva, noivo, dataExtenso }: { noiva: string; noivo: st
         <Link href="/cerimonia" className="transition hover:text-gold">Cerimônia</Link>
         <Link href="/recepcao" className="transition hover:text-gold">Recepção</Link>
         <Link href="/como-chegar" className="transition hover:text-gold">Como chegar</Link>
+        <Link href="/hospedagem" className="transition hover:text-gold">Hospedagem</Link>
         <Link href="/programacao" className="transition hover:text-gold">Programação</Link>
         <Link href="/duvidas" className="transition hover:text-gold">Dúvidas</Link>
         <Link href="/presentes" className="transition hover:text-gold">Presentes</Link>
