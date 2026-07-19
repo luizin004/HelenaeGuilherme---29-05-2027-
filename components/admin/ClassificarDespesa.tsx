@@ -15,17 +15,18 @@ function Save() {
   );
 }
 
+/** Campo ÚNICO de classificação financeira (§5) + responsável pelo desembolso. */
 export function ClassificarDespesa({
   expenseId,
-  centros,
+  classificacoes,
   responsaveis,
-  centroAtual,
+  classificacaoAtual,
   responsavelAtual,
 }: {
   expenseId: string;
-  centros: Option[];
+  classificacoes: Option[];
   responsaveis: Option[];
-  centroAtual: string | null;
+  classificacaoAtual: string | null;
   responsavelAtual: string | null;
 }) {
   const [state, formAction] = useFormState(classificarDespesa, initial);
@@ -33,13 +34,13 @@ export function ClassificarDespesa({
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-1.5">
       <input type="hidden" name="expense_id" value={expenseId} />
-      <select name="cost_center_id" defaultValue={centroAtual ?? ""} className="rounded border border-line px-1.5 py-1 text-xs">
-        <option value="">Centro…</option>
-        {centros.map((c) => (
+      <select name="classification_id" defaultValue={classificacaoAtual ?? ""} className="rounded border border-line px-1.5 py-1 text-xs" aria-label="Classificação financeira">
+        <option value="">Classificação…</option>
+        {classificacoes.map((c) => (
           <option key={c.id} value={c.id}>{c.nome}</option>
         ))}
       </select>
-      <select name="payer_id" defaultValue={responsavelAtual ?? ""} className="rounded border border-line px-1.5 py-1 text-xs">
+      <select name="payer_id" defaultValue={responsavelAtual ?? ""} className="rounded border border-line px-1.5 py-1 text-xs" aria-label="Responsável">
         <option value="">Responsável…</option>
         {responsaveis.map((r) => (
           <option key={r.id} value={r.id}>{r.nome}</option>

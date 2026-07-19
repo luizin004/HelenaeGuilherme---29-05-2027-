@@ -10,6 +10,7 @@ export interface ExpenseRow {
   observacao: string | null;
   categoria: string | null;
   cost_center_id: string | null;
+  classification_id: string | null;
 }
 
 export interface Option {
@@ -818,24 +819,42 @@ export async function getFinanceByResponsible(): Promise<AggRow[]> {
     .sort((a, b) => b.totalCents - a.totalCents);
 }
 
-/** Orçado por centro de custo (despesas não gratuitas com valor). */
+/** Orçado por CLASSIFICAÇÃO financeira (cadastro unificado — migração 0005). */
 export async function getFinanceByCostCenter(): Promise<AggRow[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const [{ data: expenses }, { data: centers }] = await Promise.all([
+  const [{ data: expenses }, { data: classes }] = await Promise.all([
     supabase.from("hg_expenses").select("*").is("deleted_at", null),
-    supabase.from("hg_cost_centers").select("*"),
+    supabase.from("hg_financial_classifications").select("id, nome"),
   ]);
-  const nome = new Map((centers ?? []).map((c: { id: string; nome: string }) => [c.id, c.nome]));
+  const nome = new Map((classes ?? []).map((c: { id: string; nome: string }) => [c.id, c.nome]));
   const agg = new Map<string, number>();
-  for (const e of (expenses ?? []) as { cost_center_id: string | null; valor_total_cents: number | null; gratuito: boolean }[]) {
+  for (const e of (expenses ?? []) as { classification_id: string | null; valor_total_cents: number | null; gratuito: boolean }[]) {
     if (e.gratuito || e.valor_total_cents === null) continue;
-    const key = e.cost_center_id ?? "sem";
+    const key = e.classification_id ?? "sem";
     agg.set(key, (agg.get(key) ?? 0) + Number(e.valor_total_cents));
   }
   return [...agg.entries()]
     .map(([id, totalCents]) => ({ nome: id === "sem" ? "Não classificado" : nome.get(id) ?? "?", totalCents }))
     .sort((a, b) => b.totalCents - a.totalCents);
+}
+
+/** Opções de classificação financeira ativas (para selects — §5). */
+export async function getClassificacoesOptions(): Promise<Option[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_financial_classifications")
+    .select("id, nome, parent_id")
+    .eq("ativo", true)
+    .order("ordem")
+    .order("nome");
+  const rows = (data ?? []) as { id: string; nome: string; parent_id: string | null }[];
+  const nomePai = new Map(rows.filter((r) => !r.parent_id).map((r) => [r.id, r.nome]));
+  return rows.map((r) => ({
+    id: r.id,
+    nome: r.parent_id ? `${nomePai.get(r.parent_id) ?? ""} › ${r.nome}` : r.nome,
+  }));
 }
 
 export async function getExpensesSummary(): Promise<ExpensesSummary> {

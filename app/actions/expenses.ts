@@ -167,7 +167,8 @@ export async function excluirDespesa(formData: FormData): Promise<void> {
  */
 export async function classificarDespesa(_prev: ClassifyState, formData: FormData): Promise<ClassifyState> {
   const expenseId = String(formData.get("expense_id") ?? "");
-  const costCenterId = String(formData.get("cost_center_id") ?? "");
+  // Campo ÚNICO de classificação financeira (§5) — substitui centro de custo.
+  const classificationId = String(formData.get("classification_id") ?? "");
   const payerId = String(formData.get("payer_id") ?? "");
   if (!expenseId) return { ok: false, message: "Despesa inválida." };
 
@@ -179,7 +180,7 @@ export async function classificarDespesa(_prev: ClassifyState, formData: FormDat
 
   const { error: upErr } = await supabase
     .from("hg_expenses")
-    .update({ cost_center_id: costCenterId || null })
+    .update({ classification_id: classificationId || null })
     .eq("id", expenseId);
   if (upErr) return { ok: false, message: "Não foi possível salvar (verifique o login)." };
 
@@ -196,8 +197,11 @@ export async function classificarDespesa(_prev: ClassifyState, formData: FormDat
     modulo: "financeiro",
     acao: "classify",
     registro: `hg_expenses:${expenseId}`,
-    valorNovo: { cost_center_id: costCenterId || null, payer_id: payerId || null },
+    valorNovo: { classification_id: classificationId || null, payer_id: payerId || null },
   });
   revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/contas");
+  revalidatePath("/admin/financeiro-dashboard");
+  revalidatePath("/admin/classificacoes");
   return { ok: true, message: "Classificação salva." };
 }

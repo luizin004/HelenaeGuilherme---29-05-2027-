@@ -1,74 +1,145 @@
 import Link from "next/link";
-import { Notice, PageTitle, Panel } from "@/components/admin/ui";
-import { getFinanceDashboard } from "@/lib/admin-data";
+import { Notice, Panel } from "@/components/admin/ui";
+import { PageHeader, SummaryCard, EmptyState, Bar, FinanceStatusBadge } from "@/components/admin/finance/ui";
+import { loadFinance, dashboardFinanceiro } from "@/lib/finance-core";
+import { listCortesias } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
+import { fmtDateBR } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-// Paleta para as barras de participação.
-const CORES = ["#6f7352", "#8a7359", "#b89b6a", "#4b5540", "#8f9470", "#c79a4a", "#6f8a5e"];
-
-function Card({ label, value, hint, href, tone }: { label: string; value: string; hint?: string; href?: string; tone?: "danger" | "warn" | "success" }) {
-  const toneCls = tone === "danger" ? "text-danger" : tone === "warn" ? "text-warn" : tone === "success" ? "text-success" : "text-moss";
-  const inner = (
-    <div className="rounded-lg bg-white p-5 shadow-card transition-transform hover:-translate-y-0.5">
-      <p className="text-xs uppercase tracking-wide text-muted">{label}</p>
-      <p className={`mt-1 font-serif text-2xl ${toneCls}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
-    </div>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
-}
-
-export default async function FinanceDashboardPage() {
-  const d = await getFinanceDashboard();
+export default async function FinanceiroDashboardPage() {
+  const [d, cortesias] = await Promise.all([loadFinance(), listCortesias()]);
+  const economia = cortesias.reduce((n, c) => n + (c.valor_mercado_cents ?? 0), 0);
+  const dash = dashboardFinanceiro(d, economia);
+  const vazio = d.contas.length === 0;
 
   return (
     <>
-      <PageTitle>Dashboard financeiro</PageTitle>
+      <PageHeader
+        title="Dashboard financeiro"
+        description="Visão executiva do casamento — todos os números vêm da mesma fonte das telas de Contas, Projeção e Fluxo de caixa. Clique num card para abrir a tela filtrada."
+        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }]}
+        actions={
+          <>
+            <Link href="/admin/financeiro" className="btn btn-outline text-xs">Lançamentos</Link>
+            <Link href="/admin/contas?aba=a_pagar" className="btn btn-dark text-xs">Contas a pagar</Link>
+          </>
+        }
+      />
 
-      {!isSupabaseConfigured ? (
-        <Notice>Conecte o Supabase e faça login para ver o painel.</Notice>
+      {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para ver o painel.</Notice>}
+
+      {vazio ? (
+        <Panel title="Comece por aqui">
+          <EmptyState title="Ainda não há movimentações financeiras.">
+            1. Monte o <Link href="/admin/orcamento" className="underline">Orçamento</Link> · 2. Registre valores em{" "}
+            <Link href="/admin/financeiro" className="underline">Lançamentos</Link> · 3. Compare propostas em{" "}
+            <Link href="/admin/cotacoes" className="underline">Cotações</Link> — o dashboard preenche sozinho.
+          </EmptyState>
+        </Panel>
       ) : (
-        <Notice>Visão executiva. Clique num card para abrir a lista correspondente. Presentes ficam fora destes números.</Notice>
+        <>
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SummaryCard label="Previsto total" value={formatCents(dash.previstoCents)} tooltip="Soma de todas as contas ativas (sem cortesias)." href="/admin/contas?aba=todas" />
+            <SummaryCard label="Contratado" value={formatCents(dash.contratadoCents)} tooltip="Despesas em estado contratado ou pago." href="/admin/financeiro" />
+            <SummaryCard label="Pago" value={formatCents(dash.pagoCents)} tone="success" tooltip="Pagamentos válidos registrados (estornos não contam)." href="/admin/contas?aba=pagas" />
+            <SummaryCard label="Pendente" value={formatCents(dash.pendenteCents)} tone="warn" tooltip="Saldo em aberto de todas as contas." href="/admin/contas?aba=a_pagar" />
+            <SummaryCard label="Vencido" value={formatCents(dash.vencidoCents)} tone={dash.vencidoCents > 0 ? "danger" : "default"} tooltip="Saldo pendente com vencimento no passado." href="/admin/contas?aba=vencidas" />
+            <SummaryCard label="Aportes" value={formatCents(dash.aportesCents)} tooltip="Entradas registradas pelos responsáveis." href="/admin/aportes" />
+            <SummaryCard
+              label="Saldo disponível"
+              value={formatCents(dash.saldoDisponivelCents)}
+              tone={dash.saldoDisponivelCents < 0 ? "danger" : "success"}
+              tooltip="Aportes − pagamentos realizados."
+              href="/admin/fluxo-caixa"
+            />
+            <SummaryCard label="Economia (cortesias)" value={formatCents(dash.economiaCents)} tooltip="Valor de mercado dos itens gratuitos — não é saída de caixa." href="/admin/cortesias" />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Panel title="Gastos por classificação">
+              {dash.porClassificacao.length === 0 ? (
+                <EmptyState title="Classifique as despesas para ver a distribuição.">
+                  Defina a classificação de cada despesa em <Link href="/admin/financeiro" className="underline">Lançamentos</Link>.
+                </EmptyState>
+              ) : (
+                <div className="space-y-3 p-6">
+                  {dash.porClassificacao.map((c) => (
+                    <div key={c.nome}>
+                      <div className="mb-0.5 flex items-center justify-between text-xs">
+                        <span className="font-medium text-moss">{c.nome}</span>
+                        <span className="text-muted">{formatCents(c.cents)} · {c.pct}%</span>
+                      </div>
+                      <Bar pct={c.pct} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Próximas contas" action={<Link href="/admin/contas?aba=vencendo" className="text-xs text-olive underline">ver todas</Link>}>
+              {dash.proximasContas.length === 0 ? (
+                <EmptyState title="Nada vencendo em breve." />
+              ) : (
+                <ul className="divide-y divide-line">
+                  {dash.proximasContas.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3 px-6 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-moss">{c.descricao}{c.numero ? ` · ${c.numero}/${c.totalParcelas}` : ""}</p>
+                        <p className="text-xs text-muted">{c.vencimento ? fmtDateBR(c.vencimento) : "—"}{c.classificacao ? ` · ${c.classificacao}` : ""}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-serif text-moss">{formatCents(c.saldoCents)}</span>
+                        <FinanceStatusBadge status={c.status} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel title="Contas vencidas" action={<Link href="/admin/contas?aba=vencidas" className="text-xs text-olive underline">ver todas</Link>}>
+              {dash.contasVencidas.length === 0 ? (
+                <EmptyState title="Nenhuma conta vencida. 🤍" />
+              ) : (
+                <ul className="divide-y divide-line">
+                  {dash.contasVencidas.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3 px-6 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-moss">{c.descricao}</p>
+                        <p className="text-xs text-danger">venceu {c.vencimento ? fmtDateBR(c.vencimento) : ""}</p>
+                      </div>
+                      <span className="font-serif text-danger">{formatCents(c.saldoCents)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel title="Últimas movimentações" action={<Link href="/admin/comprovantes" className="text-xs text-olive underline">comprovantes</Link>}>
+              {dash.ultimosPagamentos.length === 0 ? (
+                <EmptyState title="Nenhum pagamento registrado ainda.">
+                  Registre pagamentos em <Link href="/admin/contas?aba=a_pagar" className="underline">Contas a pagar</Link> — inclusive parciais.
+                </EmptyState>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {dash.ultimosPagamentos.map((p) => (
+                    <li key={p.id} className="flex items-center justify-between gap-3 px-6 py-3">
+                      <div>
+                        <p className="text-sm text-moss">{fmtDateBR(p.data)}</p>
+                        {p.responsavel && <p className="text-xs text-muted">{p.responsavel}</p>}
+                      </div>
+                      <span className="font-serif text-success">{formatCents(p.valor_cents)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+          </div>
+        </>
       )}
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card label="Previsto (com valor)" value={formatCents(d.previstoCents)} hint={`${d.semValor} item(ns) sem valor`} href="/admin/financeiro" />
-        <Card label="Contratado" value={formatCents(d.contratadoCents)} href="/admin/cotacoes" />
-        <Card label="Pago" value={formatCents(d.pagoCents)} tone="success" href="/admin/contas-pagas" />
-        <Card label="Em aberto" value={formatCents(d.abertoCents)} tone="warn" href="/admin/contas-a-pagar" />
-        <Card label="Vencido" value={formatCents(d.vencidoCents)} tone="danger" href="/admin/contas-a-pagar" />
-        <Card label="A pagar hoje" value={formatCents(d.aPagarHojeCents)} href="/admin/calendario" />
-        <Card label="A pagar (7 dias)" value={formatCents(d.aPagarSemanaCents)} href="/admin/calendario" />
-        <Card label="A pagar este mês" value={formatCents(d.aPagarMesCents)} href="/admin/projecao" />
-        <Card label="Saldo de caixa" value={formatCents(d.saldoCaixaCents)} tone={d.saldoCaixaCents < 0 ? "danger" : undefined} href="/admin/fluxo-caixa" />
-        <Card label="Compromissos futuros" value={formatCents(d.compromissosFuturosCents)} href="/admin/parcelas" />
-        <Card label="Aportes" value={formatCents(d.aportesCents)} href="/admin/aportes" />
-        <Card label="Economia (cortesias)" value={formatCents(d.economiaCents)} hint={`${d.cortesias} item(ns)`} href="/admin/cortesias" />
-        <Card label="Contratos" value={String(d.contratos)} href="/admin/contratos" />
-        <Card label="Parcelas" value={String(d.parcelas)} href="/admin/parcelas" />
-        <Card label="Confirmados" value={String(d.confirmados)} href="/admin/convidados" />
-        <Card label="Custo por convidado" value={d.custoPorConvidadoCents !== null ? formatCents(d.custoPorConvidadoCents) : "—"} hint="previsto ÷ confirmados" />
-      </div>
-
-      <Panel title="Participação por categoria (previsto)">
-        <div className="space-y-3 p-6">
-          {d.participacao.length === 0 && <p className="text-sm text-muted">Defina valores e categorias no Financeiro para ver a distribuição.</p>}
-          {d.participacao.map((p, i) => (
-            <div key={p.categoria}>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-medium">{p.categoria}</span>
-                <span className="text-muted">{formatCents(p.cents)} · {p.pct}%</span>
-              </div>
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-cream">
-                <div className="h-full rounded-full" style={{ width: `${Math.max(2, p.pct)}%`, background: CORES[i % CORES.length] }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Panel>
     </>
   );
 }

@@ -2,6 +2,40 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fase 25] Reforma do painel financeiro — fonte única + classificações + pagamentos parciais
+Migration `0005` (aplicada ao banco vivo, nada antigo apagado):
+- **Classificações financeiras** (`hg_financial_classifications`): unifica
+  Centros de custo + Categorias num cadastro único hierárquico (nome, descrição,
+  principal opcional, cor, ordem, ativo, orçamento). Migração automática dos 6
+  centros existentes + dedupe por nome + backfill de `classification_id` nas
+  despesas. Telas antigas redirecionam para `/admin/classificacoes`.
+- **Pagamentos parciais** (`hg_expense_payments`): múltiplos pagamentos por
+  conta/parcela com valor, data, método, conta financeira, responsável e
+  estorno (histórico preservado; estorno devolve saldo). Backfill das parcelas
+  já pagas. **Métodos de pagamento** (10 seeds) e **Contas financeiras** novas.
+- **Datas financeiras**: competência e data de contratação na despesa; previsão
+  na parcela (§9).
+Motor único (`domain/finance/status.ts`, 14 testes): status automáticos
+(pago/parcial/vencido/vence hoje/a pagar/previsto/cancelado/cortesia), saldo
+nunca negativo, dias de atraso, agrupamento mensal com saldo/acumulado,
+validação de pagamento parcial. `lib/finance-core.ts` = fonte única de leitura
+para Contas/Projeção/Fluxo/Dashboard — o mesmo registro muda de aba ao ser pago,
+nunca é duplicado.
+Telas: **/admin/contas** com 7 abas (Todas/A pagar/Vencendo/Vencidas/Parciais/
+Pagas/Canceladas) + registro de pagamento parcial inline + histórico/estorno;
+**Projeção mensal** com gráfico (previsto×pago×vencido×entradas), 3 visões
+(vencimento/competência/pagamento) e tabela completa com acumulado; **Fluxo de
+caixa** realizado/projetado/combinado com saldo inicial das contas; **Dashboard
+financeiro** com cards clicáveis + tooltips + gastos por classificação +
+próximas/vencidas/últimas movimentações; **Lançamentos** com campo único de
+classificação (§5).
+Visual: sidebar reorganizada (Financeiro/Movimentações especiais/Análises/
+Configurações financeiras), **ícones SVG profissionais** próprios no lugar dos
+emojis, colapso no desktop (persistido) + drawer com backdrop no mobile,
+`PageHeader` com breadcrumbs e descrição, badges de status padronizados,
+estados vazios orientativos. `hg_budget_projections` aposentada (projeção 100%
+calculada).
+
 ## [Correção] Login do painel
 - Corrigido o login que recusava a conta válida com "e-mail ou senha inválidos":
   quatro colunas de token do usuário estavam `NULL` no `auth.users`

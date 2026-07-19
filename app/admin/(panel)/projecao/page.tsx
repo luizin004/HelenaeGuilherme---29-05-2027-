@@ -1,113 +1,140 @@
-import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
-import { getProjecaoMensal } from "@/lib/admin-data";
+import Link from "next/link";
+import { Notice, Panel } from "@/components/admin/ui";
+import { PageHeader, SummaryCard, EmptyState } from "@/components/admin/finance/ui";
+import { loadFinance, projetarMensal, type VisaoProjecao } from "@/lib/finance-core";
+import { labelMesPT } from "@/domain/finance/status";
 import { formatCents } from "@/domain/money";
 import { WEDDING } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-const YM_CASAMENTO = WEDDING.dataISO.slice(0, 7); // "2027-05"
+const YM_CASAMENTO = WEDDING.dataISO.slice(0, 7);
+const VISOES: { key: VisaoProjecao; label: string }[] = [
+  { key: "vencimento", label: "Por vencimento" },
+  { key: "competencia", label: "Por competência" },
+  { key: "pagamento", label: "Por pagamento realizado" },
+];
 
-export default async function ProjecaoPage() {
-  const proj = await getProjecaoMensal();
-  const temSemData = proj.semData.previstoCents > 0;
+export default async function ProjecaoPage({ searchParams }: { searchParams: { visao?: string } }) {
+  const d = await loadFinance();
+  const visao = (VISOES.some((v) => v.key === searchParams.visao) ? searchParams.visao : "vencimento") as VisaoProjecao;
+  const proj = projetarMensal(d, visao);
 
-  // Acumulado do previsto ao longo dos meses.
-  let acumulado = 0;
+  const maxMes = Math.max(1, ...proj.meses.map((m) => Math.max(m.previstoCents, m.entradasCents)));
 
   return (
     <>
-      <PageTitle>Projeção mensal</PageTitle>
+      <PageHeader
+        title="Projeção mensal"
+        description="Agrupamento automático mês a mês — previsto, pago, pendente, vencido, entradas e saldo acumulado. Nada é digitado manualmente: tudo vem dos lançamentos."
+        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Projeção", href: "/admin/projecao" }]}
+      />
 
-      {!isSupabaseConfigured ? (
-        <Notice>Conecte o Supabase e faça login para ver a projeção.</Notice>
+      {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para ver a projeção.</Notice>}
+
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard label="Previsto" value={formatCents(proj.totalPrevistoCents)} tooltip="Soma das contas (parcelas) na visão escolhida." href="/admin/contas?aba=todas" />
+        <SummaryCard label="Pago" value={formatCents(proj.totalPagoCents)} tone="success" tooltip="Pagamentos válidos (estornos não contam)." href="/admin/contas?aba=pagas" />
+        <SummaryCard label="Pendente" value={formatCents(proj.totalPendenteCents)} tone="warn" tooltip="Saldo ainda em aberto." href="/admin/contas?aba=a_pagar" />
+        <SummaryCard label="Vencido" value={formatCents(proj.totalVencidoCents)} tone={proj.totalVencidoCents > 0 ? "danger" : "default"} tooltip="Saldo pendente com vencimento no passado." href="/admin/contas?aba=vencidas" />
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Visões da projeção">
+        {VISOES.map((v) => (
+          <Link
+            key={v.key}
+            role="tab"
+            aria-selected={visao === v.key}
+            href={`/admin/projecao?visao=${v.key}`}
+            className={`rounded-full px-3.5 py-1.5 text-xs uppercase tracking-wide transition ${
+              visao === v.key ? "bg-moss text-white" : "bg-white text-muted shadow-card hover:text-moss"
+            }`}
+          >
+            {v.label}
+          </Link>
+        ))}
+      </div>
+
+      {proj.meses.length === 0 ? (
+        <Panel title="Fluxo mês a mês">
+          <EmptyState title="Sem dados para projetar ainda.">
+            Cadastre despesas em <strong>Lançamentos</strong>, gere parcelas ou contrate uma proposta em <strong>Cotações</strong> — a projeção monta sozinha.
+          </EmptyState>
+        </Panel>
       ) : (
-        <Notice>
-          Cada <strong>parcela</strong> aparece no seu mês de vencimento — previsto, já pago e em
-          aberto, no total e por responsável. Parcela sem data fica no bloco &quot;sem data&quot; (não
-          conta como vencida). Não há teto de orçamento: isto é uma ferramenta de gestão.
-        </Notice>
-      )}
-
-      <KpiGrid>
-        <Kpi label="Previsto (parcelas)" value={formatCents(proj.totalPrevistoCents)} />
-        <Kpi label="Já pago" value={formatCents(proj.totalPagoCents)} />
-        <Kpi label="Em aberto" value={formatCents(proj.totalPrevistoCents - proj.totalPagoCents)} />
-      </KpiGrid>
-
-      {proj.meses.length === 0 && !temSemData && (
-        <Notice>Sem parcelas ainda. Gere cronogramas em Parcelas ou contrate uma proposta em Cotações.</Notice>
-      )}
-
-      <Panel title="Fluxo mês a mês">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                {["Mês", "Previsto", "Pago", "Em aberto", "Acumulado", ...proj.responsaveis].map((h) => (
-                  <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+        <>
+          <Panel title="Gráfico — previsto × pago × entradas">
+            <div className="space-y-3 p-6">
               {proj.meses.map((m) => {
-                acumulado += m.previstoCents;
                 const isCasamento = m.ym === YM_CASAMENTO;
                 return (
-                  <tr key={m.ym} className={`border-t border-line ${isCasamento ? "bg-gold-soft/40" : "hover:bg-ivory"}`}>
-                    <td className="whitespace-nowrap px-4 py-2.5 font-medium">
-                      {m.label}
-                      {isCasamento && <span className="ml-2 text-[10px] uppercase tracking-wide text-wood">casamento 💍</span>}
-                    </td>
-                    <td className="px-4 py-2.5 font-serif text-moss">{formatCents(m.previstoCents)}</td>
-                    <td className="px-4 py-2.5 text-success">{formatCents(m.pagoCents)}</td>
-                    <td className="px-4 py-2.5 text-warn">{formatCents(m.abertoCents)}</td>
-                    <td className="px-4 py-2.5 text-muted">{formatCents(acumulado)}</td>
-                    {proj.responsaveis.map((r) => (
-                      <td key={r} className="px-4 py-2.5 text-muted">{m.porResp[r] ? formatCents(m.porResp[r]) : "—"}</td>
-                    ))}
-                  </tr>
+                  <Link key={m.ym} href="/admin/contas?aba=todas" className="block" title={`${labelMesPT(m.ym)} · previsto ${formatCents(m.previstoCents)} · pago ${formatCents(m.pagoCents)} · pendente ${formatCents(m.pendenteCents)}${m.vencidoCents ? ` · vencido ${formatCents(m.vencidoCents)}` : ""}${m.entradasCents ? ` · entradas ${formatCents(m.entradasCents)}` : ""}`}>
+                    <div className="mb-0.5 flex items-center justify-between text-xs">
+                      <span className={`font-medium ${isCasamento ? "text-wood" : "text-moss"}`}>
+                        {labelMesPT(m.ym)}{isCasamento ? " · casamento" : ""}
+                      </span>
+                      <span className="text-muted">{formatCents(m.previstoCents)}</span>
+                    </div>
+                    <div className="relative h-4 w-full overflow-hidden rounded bg-cream">
+                      <div className="absolute inset-y-0 left-0 rounded bg-olive/35" style={{ width: `${(m.previstoCents / maxMes) * 100}%` }} />
+                      <div className="absolute inset-y-0 left-0 rounded bg-success/80" style={{ width: `${(m.pagoCents / maxMes) * 100}%` }} />
+                      {m.vencidoCents > 0 && (
+                        <div className="absolute inset-y-0 rounded bg-danger/70" style={{ left: `${(m.pagoCents / maxMes) * 100}%`, width: `${(m.vencidoCents / maxMes) * 100}%` }} />
+                      )}
+                      {m.entradasCents > 0 && (
+                        <div className="absolute bottom-0 left-0 h-1 rounded bg-gold" style={{ width: `${(m.entradasCents / maxMes) * 100}%` }} />
+                      )}
+                    </div>
+                  </Link>
                 );
               })}
-              {temSemData && (
-                <tr className="border-t border-line bg-cream/50">
-                  <td className="px-4 py-2.5 font-medium">Sem data</td>
-                  <td className="px-4 py-2.5 font-serif text-moss">{formatCents(proj.semData.previstoCents)}</td>
-                  <td className="px-4 py-2.5 text-success">{formatCents(proj.semData.pagoCents)}</td>
-                  <td className="px-4 py-2.5 text-warn">{formatCents(proj.semData.abertoCents)}</td>
-                  <td className="px-4 py-2.5 text-muted">—</td>
-                  {proj.responsaveis.map((r) => (
-                    <td key={r} className="px-4 py-2.5 text-muted">{proj.semData.porResp[r] ? formatCents(proj.semData.porResp[r]) : "—"}</td>
-                  ))}
-                </tr>
-              )}
-            </tbody>
-            {proj.meses.length > 0 && (
-              <tfoot>
-                <tr className="border-t-2 border-line bg-cream font-medium">
-                  <td className="px-4 py-3">Total</td>
-                  <td className="px-4 py-3 font-serif text-moss">{formatCents(proj.totalPrevistoCents)}</td>
-                  <td className="px-4 py-3 text-success">{formatCents(proj.totalPagoCents)}</td>
-                  <td className="px-4 py-3 text-warn">{formatCents(proj.totalPrevistoCents - proj.totalPagoCents)}</td>
-                  <td className="px-4 py-3" />
-                  {proj.responsaveis.map((r) => {
-                    const t =
-                      proj.meses.reduce((n, m) => n + (m.porResp[r] ?? 0), 0) + (proj.semData.porResp[r] ?? 0);
-                    return <td key={r} className="px-4 py-3 text-moss">{t ? formatCents(t) : "—"}</td>;
-                  })}
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      </Panel>
+              <div className="flex flex-wrap gap-4 pt-1 text-[11px] text-muted">
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-olive/35 align-middle" />previsto</span>
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-success/80 align-middle" />pago</span>
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-danger/70 align-middle" />vencido</span>
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-gold align-middle" />entradas (aportes)</span>
+              </div>
+            </div>
+          </Panel>
 
-      <p className="mt-4 text-xs text-muted">
-        Dica: contrate propostas em <strong>Cotações</strong> (gera entrada + parcelas) e ajuste as
-        datas em <strong>Parcelas</strong> — tudo reflete aqui automaticamente.
-      </p>
+          <Panel title="Tabela mês a mês">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    {["Mês", "Previsto", "Pago", "Pendente", "Vencido", "Entradas", "Saldo", "Acumulado", "Contas"].map((h) => (
+                      <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {proj.meses.map((m) => (
+                    <tr key={m.ym} className={`border-t border-line ${m.ym === YM_CASAMENTO ? "bg-gold-soft/40" : "hover:bg-ivory"}`}>
+                      <td className="whitespace-nowrap px-4 py-2.5 font-medium">{labelMesPT(m.ym)}</td>
+                      <td className="px-4 py-2.5 font-serif text-moss">{formatCents(m.previstoCents)}</td>
+                      <td className="px-4 py-2.5 text-success">{formatCents(m.pagoCents)}</td>
+                      <td className="px-4 py-2.5 text-warn">{formatCents(m.pendenteCents)}</td>
+                      <td className="px-4 py-2.5 text-danger">{m.vencidoCents ? formatCents(m.vencidoCents) : "—"}</td>
+                      <td className="px-4 py-2.5 text-olive">{m.entradasCents ? formatCents(m.entradasCents) : "—"}</td>
+                      <td className={`px-4 py-2.5 ${m.saldoCents < 0 ? "text-danger" : "text-moss"}`}>{formatCents(m.saldoCents)}</td>
+                      <td className={`px-4 py-2.5 ${m.acumuladoCents < 0 ? "text-danger" : "text-muted"}`}>{formatCents(m.acumuladoCents)}</td>
+                      <td className="px-4 py-2.5 text-muted">{m.qtde}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+
+          {proj.semDataCents > 0 && (
+            <Notice>
+              Há <strong>{formatCents(proj.semDataCents)}</strong> em contas <strong>sem data</strong> — elas não entram
+              nos meses acima. Defina vencimento ou previsão em <Link href="/admin/parcelas" className="underline">Parcelas</Link>.
+            </Notice>
+          )}
+        </>
+      )}
     </>
   );
 }
