@@ -1,50 +1,51 @@
+/* eslint-disable @next/next/no-img-element */
 import { Kpi, KpiGrid, Notice, PageTitle, Panel, StatusBadge } from "@/components/admin/ui";
+import { NovoConvidado } from "@/components/admin/NovoConvidado";
 import { getGuestStats, listGuests } from "@/lib/admin-data";
+import { conviteUrl, qrDataUrl } from "@/lib/qr-image";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import type { Guest } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
-const DEMO: Guest[] = [
-  demo("Maria Souza", "confirmado", "12", false),
-  demo("João Pereira", "pendente", "—", false),
-  demo("Lucas Souza", "confirmado", "12", true),
-];
-
-function demo(nome: string, status: string, mesa: string, crianca: boolean): Guest {
-  return {
-    id: nome, group_id: null, nome, email: null, telefone: null, eh_crianca: crianca,
-    faixa_etaria: null, lado: null, status: status as Guest["status"], respondeu_em: null,
-    mensagem: null, restricao_alimentar: null, qr_token: "demo", mesa,
-    check_in_em: null, check_in_por: null, criado_em: "", atualizado_em: "",
-  };
-}
-
 export default async function ConvidadosPage() {
   const [stats, guests] = await Promise.all([getGuestStats(), listGuests()]);
-  const rows = isSupabaseConfigured ? guests : DEMO;
+
+  // Gera o QR de cada convidado (link pessoal por token).
+  const comQr = await Promise.all(
+    guests.map(async (g) => ({
+      ...g,
+      link: conviteUrl(g.qr_token),
+      qr: await qrDataUrl(conviteUrl(g.qr_token)),
+    })),
+  );
 
   return (
     <>
       <PageTitle>Convidados</PageTitle>
 
       <KpiGrid>
-        <Kpi label="Total" value={rows.length} />
-        <Kpi label="Confirmados" value={isSupabaseConfigured ? stats.confirmados : 2} />
-        <Kpi label="Pendentes" value={isSupabaseConfigured ? stats.pendentes : 1} />
-        <Kpi label="Crianças" value={isSupabaseConfigured ? stats.criancas : 1} />
+        <Kpi label="Total" value={stats.total} />
+        <Kpi label="Confirmados" value={stats.confirmados} />
+        <Kpi label="Pendentes" value={stats.pendentes} />
+        <Kpi label="Crianças" value={stats.criancas} />
       </KpiGrid>
 
       {!isSupabaseConfigured && (
-        <Notice>Exibindo dados de exemplo. Conecte o Supabase para ver os convidados reais e emitir os QR Codes.</Notice>
+        <Notice>Conecte o Supabase para cadastrar convidados e emitir os QR Codes.</Notice>
       )}
+
+      <Panel title="Novo convidado">
+        <div className="p-6">
+          <NovoConvidado />
+        </div>
+      </Panel>
 
       <Panel title="Lista de convidados">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Nome", "Contato", "Status", "Mesa", "QR / Check-in"].map((h) => (
+                {["Nome", "Contato", "Status", "Link pessoal", "QR"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -52,25 +53,27 @@ export default async function ConvidadosPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 && (
+              {comQr.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-10 text-center text-muted">
-                    Nenhum convidado cadastrado ainda.
+                    Nenhum convidado ainda. Adicione o primeiro acima.
                   </td>
                 </tr>
               )}
-              {rows.map((g) => (
-                <tr key={g.id} className="border-t border-line hover:bg-ivory">
+              {comQr.map((g) => (
+                <tr key={g.id} className="border-t border-line align-middle hover:bg-ivory">
                   <td className="px-6 py-3">
                     {g.nome} {g.eh_crianca && <span className="text-xs text-muted">(criança)</span>}
                   </td>
                   <td className="px-6 py-3 text-muted">{g.email || g.telefone || "—"}</td>
                   <td className="px-6 py-3"><StatusBadge status={g.status} /></td>
-                  <td className="px-6 py-3">{g.mesa || "—"}</td>
                   <td className="px-6 py-3">
-                    <button className="rounded border border-line px-3 py-1 text-xs uppercase tracking-wide text-moss hover:bg-cream">
-                      Ver QR
-                    </button>
+                    <a href={g.link} target="_blank" rel="noopener" className="text-xs text-olive underline">
+                      /rsvp/{g.qr_token.slice(0, 8)}…
+                    </a>
+                  </td>
+                  <td className="px-6 py-3">
+                    <img src={g.qr} alt={`QR de ${g.nome}`} className="h-16 w-16" />
                   </td>
                 </tr>
               ))}

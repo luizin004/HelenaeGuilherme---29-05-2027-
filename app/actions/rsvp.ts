@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { rsvpSchema } from "@/validations/rsvp";
 import { logger } from "@/lib/logger";
 
 export interface RsvpState {
@@ -10,50 +9,42 @@ export interface RsvpState {
 }
 
 /**
- * Confirmação de presença (RSVP) do site público.
- * Valida com Zod e grava/atualiza o convidado no banco. Em modo demonstração
- * (sem backend), apenas valida e responde.
+ * Confirmação de presença por TOKEN do convite (fluxo seguro, PROJECT_SPEC §7).
+ * Usa a função SECURITY DEFINER `hg_rsvp_confirm` — o convidado só altera o próprio
+ * registro pelo token, sem acesso à tabela (LGPD / regra 36).
  */
-export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<RsvpState> {
-  const parsed = rsvpSchema.safeParse({
-    nome: formData.get("nome"),
-    email: formData.get("email"),
-    telefone: formData.get("telefone"),
-    acompanhantes: formData.get("acompanhantes"),
-    presenca: formData.get("presenca"),
-    mensagem: formData.get("mensagem"),
-  });
+export async function confirmarPresenca(_prev: RsvpState, formData: FormData): Promise<RsvpState> {
+  const token = String(formData.get("token") ?? "").trim();
+  const presenca = String(formData.get("presenca") ?? "");
+  const mensagem = String(formData.get("mensagem") ?? "").trim();
 
-  if (!parsed.success) {
-    const first = parsed.error.issues[0]?.message ?? "Verifique os dados e tente novamente.";
-    return { ok: false, message: first };
+  if (!token) return { ok: false, message: "Link do convite inválido." };
+  if (presenca !== "sim" && presenca !== "nao") {
+    return { ok: false, message: "Diga se você poderá comparecer." };
   }
 
-  const { nome, email, telefone, acompanhantes, presenca, mensagem } = parsed.data;
-  const primeiroNome = nome.split(" ")[0];
   const status = presenca === "sim" ? "confirmado" : "recusado";
-
   const supabase = createClient();
 
-  if (supabase) {
-    const observacao =
-      acompanhantes > 0 ? `Acompanhantes: ${acompanhantes}. ${mensagem ?? ""}`.trim() : mensagem || null;
-
-    const { error } = await supabase.from("hg_guests").insert({
-      nome,
-      email: email || null,
-      telefone: telefone || null,
-      status,
-      mensagem: observacao,
-      respondeu_em: new Date().toISOString(),
-    });
-
-    if (error) {
-      logger.error("Falha ao registrar RSVP", { code: error.code });
-      return { ok: false, message: "Não foi possível registrar agora. Tente novamente em instantes." };
-    }
+  if (!supabase) {
+    return {
+      ok: true,
+      message: status === "confirmado" ? "Presença confirmada (modo demonstração)." : "Ausência registrada (modo demonstração).",
+    };
   }
 
+  const { data, error } = await supabase.rpc("hg_rsvp_confirm", {
+    p_token: token,
+    p_status: status,
+    p_mensagem: mensagem,
+  });
+
+  if (error) {
+    logger.error("Falha ao confirmar RSVP", { code: error.code });
+    return { ok: false, message: "Não foi possível confirmar. Verifique o link do seu convite." };
+  }
+
+  const primeiroNome = String(data ?? "").split(" ")[0];
   return {
     ok: true,
     message:
