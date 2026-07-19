@@ -15,7 +15,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Check-in", ico: "📷", href: "/admin/checkin" },
   { label: "Comunicação", ico: "✉️", href: "/admin/comunicacao" },
   { section: "Presentes" },
-  { label: "Lista de presentes", ico: "🎁", href: "/admin", soon: true },
+  { label: "Lista de presentes", ico: "🎁", href: "/admin/presentes" },
   { label: "Pagamentos (Asaas)", ico: "💳", href: "/admin", soon: true },
   { section: "Gestão" },
   { label: "Controle financeiro", ico: "💰", href: "/admin/financeiro" },

@@ -19,6 +19,7 @@ export interface WeddingSettings {
   hashtag: string | null;
   historia: string | null;
   cor_primaria: string | null;
+  rsvp_prazo: string | null;
   atualizado_em: string;
 }
 

@@ -9,49 +9,74 @@ export interface RsvpState {
 }
 
 /**
- * Confirmação de presença por TOKEN do convite (fluxo seguro, PROJECT_SPEC §7).
- * Usa a função SECURITY DEFINER `hg_rsvp_confirm` — o convidado só altera o próprio
- * registro pelo token, sem acesso à tabela (LGPD / regra 36).
+ * Confirmação de presença por TOKEN do convite, para o GRUPO inteiro
+ * (regra 35 da spec: grupos familiares / acompanhantes autorizados).
+ *
+ * Usa a função SECURITY DEFINER `hg_rsvp_group_confirm` — o convidado só
+ * altera registros do próprio grupo pelo token, sem acesso à tabela
+ * (LGPD / regra 36). O prazo (30/03/2027) é validado dentro da função:
+ * respostas após o prazo levantam exceção `prazo encerrado`.
+ *
+ * O formulário envia, para cada integrante, um campo `presenca_<id>` com
+ * valor `sim`/`nao`. Montamos o array de confirmações a partir disso.
  */
-export async function confirmarPresenca(_prev: RsvpState, formData: FormData): Promise<RsvpState> {
+export async function confirmarPresencaGrupo(_prev: RsvpState, formData: FormData): Promise<RsvpState> {
   const token = String(formData.get("token") ?? "").trim();
-  const presenca = String(formData.get("presenca") ?? "");
   const mensagem = String(formData.get("mensagem") ?? "").trim();
   const transporte = String(formData.get("transporte") ?? "").trim();
 
   if (!token) return { ok: false, message: "Link do convite inválido." };
-  if (presenca !== "sim" && presenca !== "nao") {
-    return { ok: false, message: "Diga se você poderá comparecer." };
+
+  // Extrai as respostas por integrante (campos "presenca_<uuid>").
+  const confirmacoes: { guest_id: string; status: string }[] = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("presenca_")) continue;
+    const guestId = key.slice("presenca_".length);
+    const v = String(value);
+    if (v !== "sim" && v !== "nao") continue;
+    confirmacoes.push({ guest_id: guestId, status: v === "sim" ? "confirmado" : "recusado" });
   }
 
-  const status = presenca === "sim" ? "confirmado" : "recusado";
+  if (confirmacoes.length === 0) {
+    return { ok: false, message: "Marque a presença de pelo menos um convidado." };
+  }
+
+  const anyConfirmado = confirmacoes.some((c) => c.status === "confirmado");
   const supabase = createClient();
 
   if (!supabase) {
     return {
       ok: true,
-      message: status === "confirmado" ? "Presença confirmada (modo demonstração)." : "Ausência registrada (modo demonstração).",
+      message: anyConfirmado
+        ? "Presença confirmada (modo demonstração)."
+        : "Ausência registrada (modo demonstração).",
     };
   }
 
-  const { data, error } = await supabase.rpc("hg_rsvp_confirm", {
+  const { data, error } = await supabase.rpc("hg_rsvp_group_confirm", {
     p_token: token,
-    p_status: status,
+    p_confirmacoes: confirmacoes,
     p_mensagem: mensagem,
     p_transporte: transporte,
   });
 
   if (error) {
-    logger.error("Falha ao confirmar RSVP", { code: error.code });
+    // A função levanta 'prazo encerrado' quando a resposta chega após 30/03/2027.
+    if ((error.message ?? "").toLowerCase().includes("prazo")) {
+      return {
+        ok: false,
+        message: "O prazo para confirmação (30/03/2027) foi encerrado. Fale com os noivos.",
+      };
+    }
+    logger.error("Falha ao confirmar RSVP em grupo", { code: error.code });
     return { ok: false, message: "Não foi possível confirmar. Verifique o link do seu convite." };
   }
 
-  const primeiroNome = String(data ?? "").split(" ")[0];
+  const total = Number(data ?? 0);
   return {
     ok: true,
-    message:
-      status === "confirmado"
-        ? `Obrigado, ${primeiroNome}! Sua presença está confirmada. 🤍`
-        : `Vamos sentir sua falta, ${primeiroNome}. Obrigado por avisar!`,
+    message: anyConfirmado
+      ? `Presença registrada para ${total} convidado(s). Obrigado! 🤍`
+      : `Ausência registrada. Vamos sentir sua falta — obrigado por avisar!`,
   };
 }

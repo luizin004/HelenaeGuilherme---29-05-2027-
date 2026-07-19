@@ -178,6 +178,29 @@ export async function listSuppliers(): Promise<SupplierRow[]> {
   return (data ?? []) as SupplierRow[];
 }
 
+export interface GiftRow {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  imagem_url: string | null;
+  preco: number;
+  permite_cota: boolean;
+  status: string;
+}
+
+/** Lista de presentes para o painel — inclui adquiridos, exclui soft-deletados. */
+export async function listGifts(): Promise<GiftRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_gifts")
+    .select("id, nome, descricao, imagem_url, preco, permite_cota, status")
+    .is("deleted_at", null)
+    .order("ordem")
+    .order("nome");
+  return (data ?? []) as GiftRow[];
+}
+
 export interface ContractRow {
   id: string;
   titulo: string;

@@ -1,30 +1,32 @@
 import Link from "next/link";
 import { Logo } from "@/components/public/Logo";
-import { RsvpConfirm } from "@/components/public/RsvpConfirm";
+import { RsvpConfirm, type GrupoIntegrante } from "@/components/public/RsvpConfirm";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-interface GuestLookup {
-  id: string;
-  nome: string;
-  status: string;
-  eh_crianca: boolean;
+interface GrupoResult {
+  aberto: boolean;
+  integrantes: GrupoIntegrante[];
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function RsvpTokenPage({ params }: { params: { token: string } }) {
   const supabase = createClient();
-  let guest: GuestLookup | null = null;
+  let grupo: GrupoResult | null = null;
 
   // Evita chamada ao banco com token malformado (não-UUID → convite inexistente).
   if (supabase && UUID_RE.test(params.token)) {
-    const { data } = await supabase.rpc("hg_rsvp_lookup", { p_token: params.token });
-    const rows = (data ?? []) as GuestLookup[];
-    guest = rows[0] ?? null;
+    const { data } = await supabase.rpc("hg_rsvp_group", { p_token: params.token });
+    if (data && typeof data === "object" && Array.isArray((data as GrupoResult).integrantes)) {
+      grupo = data as GrupoResult;
+    }
   }
+
+  const integrantes = grupo?.integrantes ?? [];
+  const aberto = grupo?.aberto ?? true;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-ivory px-6 py-16">
@@ -39,19 +41,17 @@ export default async function RsvpTokenPage({ params }: { params: { token: strin
           <p className="text-center text-muted">
             Confirmação disponível quando o backend estiver ativo. Use o link do seu convite.
           </p>
-        ) : guest ? (
-          guest.status !== "pendente" ? (
-            <p className="text-center text-muted">
-              Este convite já foi respondido como{" "}
-              <strong className="text-moss">{guest.status}</strong>. Precisa alterar? Fale com os noivos.
-            </p>
-          ) : (
-            <RsvpConfirm token={params.token} nome={guest.nome} />
-          )
-        ) : (
+        ) : integrantes.length === 0 ? (
           <p className="text-center text-muted">
             Convite não encontrado. Confira o link recebido ou fale com os noivos.
           </p>
+        ) : !aberto ? (
+          <p className="text-center text-muted">
+            O prazo para confirmação (<strong className="text-moss">30/03/2027</strong>) foi encerrado.
+            Precisa ajustar sua resposta? Fale com os noivos.
+          </p>
+        ) : (
+          <RsvpConfirm token={params.token} integrantes={integrantes} />
         )}
       </div>
     </main>

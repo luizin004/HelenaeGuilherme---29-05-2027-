@@ -40,7 +40,12 @@ export async function getGallery(): Promise<GalleryPhoto[]> {
 export async function getGifts(): Promise<Gift[]> {
   const supabase = createClient();
   if (!supabase) return [];
-  const { data } = await supabase.from("hg_gifts").select("*").order("ordem");
+  const { data } = await supabase
+    .from("hg_gifts")
+    .select("*")
+    .is("deleted_at", null)
+    .neq("status", "adquirido")
+    .order("ordem");
   return data ?? [];
 }
 
