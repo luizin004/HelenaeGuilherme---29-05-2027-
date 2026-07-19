@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export interface SupplierFormState {
   ok: boolean;
@@ -34,6 +35,7 @@ export async function criarFornecedor(
 
   if (error) return { ok: false, message: "Não foi possível salvar. Verifique se você está autenticado." };
 
+  await logAudit(supabase, { modulo: "fornecedores", acao: "create", valorNovo: { nome, categoria } });
   revalidatePath("/admin/fornecedores");
   return { ok: true, message: `${nome} foi cadastrado.` };
 }

@@ -155,6 +155,25 @@ export async function listContracts(): Promise<ContractRow[]> {
   return (data ?? []) as ContractRow[];
 }
 
+export interface AuditRow {
+  id: string;
+  modulo: string;
+  acao: string;
+  registro: string | null;
+  criado_em: string;
+}
+
+export async function listAuditLog(): Promise<AuditRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_audit_log")
+    .select("*")
+    .order("criado_em", { ascending: false })
+    .limit(100);
+  return (data ?? []) as AuditRow[];
+}
+
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];

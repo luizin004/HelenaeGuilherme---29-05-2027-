@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseBRLToCents } from "@/domain/money";
+import { logAudit } from "@/lib/audit";
 
 export interface ContractFormState {
   ok: boolean;
@@ -42,6 +43,7 @@ export async function criarContrato(
 
   if (error) return { ok: false, message: "Não foi possível salvar. Verifique o login." };
 
+  await logAudit(supabase, { modulo: "contratos", acao: "create", valorNovo: { titulo, valor } });
   revalidatePath("/admin/contratos");
   return { ok: true, message: `Contrato "${titulo}" cadastrado.` };
 }

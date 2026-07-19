@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export interface GuestFormState {
   ok: boolean;
@@ -31,6 +32,7 @@ export async function criarConvidado(_prev: GuestFormState, formData: FormData):
     return { ok: false, message: "Não foi possível salvar. Verifique se você está autenticado." };
   }
 
+  await logAudit(supabase, { modulo: "convidados", acao: "create", valorNovo: { nome, ehCrianca } });
   revalidatePath("/admin/convidados");
   return { ok: true, message: `${nome.split(" ")[0]} foi adicionado à lista.` };
 }

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export interface ContentState {
   ok: boolean;
@@ -23,6 +24,7 @@ export async function salvarConteudo(_prev: ContentState, formData: FormData): P
 
   if (error) return { ok: false, message: "Não foi possível salvar. Verifique o login." };
 
+  await logAudit(supabase, { modulo: "cms", acao: "update", registro: "hg_wedding_settings:1" });
   revalidatePath("/");
   revalidatePath("/admin/conteudo");
   return { ok: true, message: "Conteúdo salvo. O site já reflete as mudanças." };

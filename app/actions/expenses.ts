@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export interface ClassifyState {
   ok: boolean;
@@ -40,6 +41,12 @@ export async function classificarDespesa(_prev: ClassifyState, formData: FormDat
       .insert({ expense_id: expenseId, payer_id: payerId, valor_cents: valor });
   }
 
+  await logAudit(supabase, {
+    modulo: "financeiro",
+    acao: "classify",
+    registro: `hg_expenses:${expenseId}`,
+    valorNovo: { cost_center_id: costCenterId || null, payer_id: payerId || null },
+  });
   revalidatePath("/admin/financeiro");
   return { ok: true, message: "Classificação salva." };
 }

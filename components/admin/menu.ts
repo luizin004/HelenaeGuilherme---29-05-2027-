@@ -25,6 +25,8 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Documentos", ico: "🗂️", href: "/admin", soon: true },
   { section: "Site" },
   { label: "Conteúdo (CMS)", ico: "📝", href: "/admin/conteudo" },
+  { section: "Segurança" },
+  { label: "Auditoria", ico: "🔎", href: "/admin/auditoria" },
 ];
 
 export function isSection(e: MenuEntry): e is { section: string } {
