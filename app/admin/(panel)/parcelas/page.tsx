@@ -1,50 +1,48 @@
-import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
+import { Notice, Panel } from "@/components/admin/ui";
+import { PageHeader, SummaryCard, FinanceStatusBadge } from "@/components/admin/finance/ui";
+import { PagamentoForm } from "@/components/admin/finance/PagamentoForm";
 import { GerarParcelas } from "@/components/admin/GerarParcelas";
-import { pagarParcela } from "@/app/actions/installments";
 import { listParcelaveis } from "@/lib/admin-data";
+import { loadFinance, type ContaRow } from "@/lib/finance-core";
 import { formatCents, sumCents } from "@/domain/money";
+import { fmtDateBR } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-const hojeISO = () => new Date().toISOString().slice(0, 10);
-
-function fmtDate(iso: string | null): string {
-  if (!iso) return "sem data";
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
-
 export default async function ParcelasPage() {
-  const rows = await listParcelaveis();
-  const hoje = hojeISO();
+  const [rows, d] = await Promise.all([listParcelaveis(), loadFinance()]);
 
-  const todasParcelas = rows.flatMap((r) => r.parcelas);
-  const pagoCents = sumCents(todasParcelas.filter((p) => p.pago).map((p) => p.valor_cents));
-  const abertoCents = sumCents(todasParcelas.filter((p) => !p.pago).map((p) => p.valor_cents));
-  const vencidas = todasParcelas.filter((p) => !p.pago && p.vencimento && p.vencimento < hoje).length;
+  // Estado calculado de cada parcela vem da FONTE ÚNICA (pagamentos parciais incluídos).
+  const porParcela = new Map<string, ContaRow>();
+  for (const c of d.contas) if (c.installmentId) porParcela.set(c.installmentId, c);
+
+  const parcelas = [...porParcela.values()];
+  const pagoCents = parcelas.reduce((n, c) => n + c.pagoCents, 0);
+  const abertoCents = parcelas.reduce((n, c) => n + c.saldoCents, 0);
+  const vencidas = parcelas.filter((c) => c.status === "vencido").length;
+
+  const metodos = d.metodos.filter((m) => m.ativo).map((m) => ({ id: m.id, nome: m.nome }));
+  const contasFin = d.contasFinanceiras.filter((c) => c.ativo).map((c) => ({ id: c.id, nome: c.nome }));
 
   return (
     <>
-      <PageTitle>Parcelas</PageTitle>
+      <PageHeader
+        title="Parcelas"
+        description="Visão consolidada dos cronogramas — mesma fonte de Contas, Projeção e Fluxo. As parcelas fecham exatamente o total e aceitam pagamento parcial."
+        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Parcelas", href: "/admin/parcelas" }]}
+      />
 
-      {!isSupabaseConfigured ? (
-        <Notice>Conecte o Supabase e faça login para gerenciar as parcelas.</Notice>
-      ) : (
-        <Notice>
-          As parcelas fecham <strong>exatamente</strong> o total da despesa. Renegociar versiona o
-          cronograma anterior (auditado). Parcela sem data nunca fica vencida (regra 5).
-        </Notice>
-      )}
+      {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para gerenciar as parcelas.</Notice>}
 
-      <KpiGrid>
-        <Kpi label="Parcelas pagas" value={formatCents(pagoCents)} />
-        <Kpi label="Em aberto" value={formatCents(abertoCents)} />
-        <Kpi label="Vencidas" value={String(vencidas)} hint="não pagas com data no passado" />
-      </KpiGrid>
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <SummaryCard label="Pago" value={formatCents(pagoCents)} tone="success" tooltip="Pagamentos válidos registrados nas parcelas." href="/admin/contas?aba=pagas" />
+        <SummaryCard label="Em aberto" value={formatCents(abertoCents)} tone="warn" tooltip="Saldo pendente de todas as parcelas." href="/admin/contas?aba=a_pagar" />
+        <SummaryCard label="Vencidas" value={String(vencidas)} tone={vencidas > 0 ? "danger" : "default"} tooltip="Parcelas com saldo e vencimento no passado." href="/admin/contas?aba=vencidas" />
+      </div>
 
       {rows.length === 0 && (
-        <Notice>Nenhuma despesa com valor definido. Defina valores no Financeiro para poder parcelar.</Notice>
+        <Notice>Nenhuma despesa com valor definido. Defina valores em Lançamentos para poder parcelar.</Notice>
       )}
 
       <div className="grid gap-6">
@@ -69,38 +67,39 @@ export default async function ParcelasPage() {
                           <tr className="text-left text-xs uppercase tracking-wide text-muted">
                             <th className="py-2">#</th>
                             <th className="py-2">Valor</th>
+                            <th className="py-2">Pago</th>
+                            <th className="py-2">Saldo</th>
                             <th className="py-2">Vencimento</th>
-                            <th className="py-2">Situação</th>
+                            <th className="py-2">Status</th>
                             <th className="py-2 text-right">Ação</th>
                           </tr>
                         </thead>
                         <tbody>
                           {r.parcelas.map((p) => {
-                            const vencida = !p.pago && p.vencimento && p.vencimento < hoje;
+                            const c = porParcela.get(p.id);
                             return (
-                              <tr key={p.id} className="border-t border-line">
+                              <tr key={p.id} className="border-t border-line align-top">
                                 <td className="py-2">{p.numero}</td>
                                 <td className="py-2 font-serif text-moss">{formatCents(p.valor_cents)}</td>
-                                <td className="py-2 text-muted">{fmtDate(p.vencimento)}</td>
-                                <td className="py-2">
-                                  {p.pago ? (
-                                    <span className="rounded-full bg-[#e6efe0] px-2.5 py-0.5 text-xs text-success">
-                                      pago {p.pago_em ? `· ${fmtDate(p.pago_em)}` : ""}
-                                    </span>
-                                  ) : vencida ? (
-                                    <span className="rounded-full bg-[#f4e2dc] px-2.5 py-0.5 text-xs text-danger">vencida</span>
-                                  ) : (
-                                    <span className="rounded-full bg-[#f6ecd6] px-2.5 py-0.5 text-xs text-warn">em aberto</span>
-                                  )}
-                                </td>
+                                <td className="py-2 text-success">{c?.pagoCents ? formatCents(c.pagoCents) : "—"}</td>
+                                <td className="py-2 text-warn">{c?.saldoCents ? formatCents(c.saldoCents) : "—"}</td>
+                                <td className="py-2 text-muted">{p.vencimento ? fmtDateBR(p.vencimento) : "sem data"}</td>
+                                <td className="py-2">{c ? <FinanceStatusBadge status={c.status} /> : "—"}</td>
                                 <td className="py-2 text-right">
-                                  <form action={pagarParcela}>
-                                    <input type="hidden" name="id" value={p.id} />
-                                    <input type="hidden" name="pago" value={p.pago ? "false" : "true"} />
-                                    <button type="submit" className="text-xs text-olive underline">
-                                      {p.pago ? "estornar" : "marcar pago"}
-                                    </button>
-                                  </form>
+                                  {c && c.saldoCents > 0 ? (
+                                    <div className="inline-block text-left">
+                                      <PagamentoForm
+                                        expenseId={c.expenseId}
+                                        installmentId={p.id}
+                                        saldoCents={c.saldoCents}
+                                        hoje={d.hoje}
+                                        metodos={metodos}
+                                        contas={contasFin}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-muted">quitada</span>
+                                  )}
                                 </td>
                               </tr>
                             );

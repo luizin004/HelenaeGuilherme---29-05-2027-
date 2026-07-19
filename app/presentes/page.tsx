@@ -1,14 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import Link from "next/link";
 import { Footer } from "@/components/public/Footer";
 import { Logo } from "@/components/public/Logo";
 import { getGifts, getSettings, resolveCouple } from "@/lib/data";
 import { WEDDING } from "@/lib/constants";
 import { giftVisual } from "@/domain/gifts/visual";
+import { giftSlug } from "@/domain/gifts/slug";
 import type { Gift } from "@/lib/database.types";
 
 export const revalidate = 60;
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Foto convencional em /public/images/presentes/<slug>.jpg — só se o arquivo existir. */
+function fotoLocalDoPresente(nome: string): string | null {
+  const slug = giftSlug(nome);
+  const rel = `/images/presentes/${slug}.jpg`;
+  return existsSync(join(process.cwd(), "public", rel)) ? rel : null;
+}
 
 const DEMO: Gift[] = [
   gift("Cota da lua de mel", "Ajude a realizar a viagem dos sonhos.", 250),
@@ -49,14 +59,17 @@ export default async function PresentesPage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((g) => {
             const v = giftVisual(g.nome);
+            // Foto automática: se /public/images/presentes/<slug>.jpg existir, ela
+            // substitui a capa temática — sem nenhum cadastro manual.
+            const foto = g.imagem_url ?? fotoLocalDoPresente(g.nome);
             return (
             <article key={g.id} className="flex flex-col overflow-hidden rounded-lg bg-white text-left shadow-card">
               <div
                 className="relative aspect-[4/5]"
                 style={{ background: `linear-gradient(135deg, ${v.from}, ${v.to})` }}
               >
-                {g.imagem_url ? (
-                  <img src={g.imagem_url} alt={g.nome} className="h-full w-full object-cover" />
+                {foto ? (
+                  <img src={foto} alt={g.nome} className="h-full w-full object-cover" />
                 ) : (
                   <span className="absolute inset-0 flex items-center justify-center text-6xl opacity-90 drop-shadow-sm">
                     {v.emoji}
