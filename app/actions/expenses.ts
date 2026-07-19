@@ -110,6 +110,35 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
   return { ok: true, message: `Despesa "${descricao}" atualizada.` };
 }
 
+/** Define o valor de mercado de um item gratuito/cortesia (economia estimada,
+ *  sem desembolso). */
+export async function definirValorMercado(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  const raw = String(formData.get("valor_mercado") ?? "").trim();
+  if (!id) return;
+
+  let cents: number | null = null;
+  try {
+    cents = raw ? parseBRLToCents(raw) : null;
+  } catch {
+    return;
+  }
+  if (cents !== null && cents < 0) return;
+
+  const supabase = createClient();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("hg_expenses")
+    .update({ valor_mercado_cents: cents })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (!error) {
+    await logAudit(supabase, { modulo: "financeiro", acao: "valor_mercado", registro: `hg_expenses:${id}`, valorNovo: { cents } });
+    revalidatePath("/admin/cortesias");
+    revalidatePath("/admin/relatorios");
+  }
+}
+
 /** Exclusão LÓGICA (soft-delete) de uma despesa. */
 export async function excluirDespesa(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "").trim();

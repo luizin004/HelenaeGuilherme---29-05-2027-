@@ -52,6 +52,103 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface DivisaoRow {
+  id: string;
+  descricao: string;
+  categoria: string | null;
+  valor_total_cents: number;
+  splits: Record<string, number>; // payer_id -> valor_cents
+}
+
+/** Despesas com valor (não gratuitas) + divisão atual entre responsáveis. */
+export async function listDivisao(): Promise<DivisaoRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data: exps } = await supabase
+    .from("hg_expenses")
+    .select("id, descricao, categoria, valor_total_cents")
+    .is("deleted_at", null)
+    .eq("gratuito", false)
+    .not("valor_total_cents", "is", null)
+    .order("descricao");
+  if (!exps || exps.length === 0) return [];
+  const ids = exps.map((e) => e.id);
+  const { data: splits } = await supabase
+    .from("hg_expense_payer_splits")
+    .select("expense_id, payer_id, valor_cents")
+    .in("expense_id", ids);
+  const byExp = new Map<string, Record<string, number>>();
+  for (const s of splits ?? []) {
+    const r = byExp.get(s.expense_id) ?? {};
+    r[s.payer_id] = Number(s.valor_cents);
+    byExp.set(s.expense_id, r);
+  }
+  return exps.map((e) => ({
+    id: e.id,
+    descricao: e.descricao,
+    categoria: e.categoria,
+    valor_total_cents: Number(e.valor_total_cents),
+    splits: byExp.get(e.id) ?? {},
+  }));
+}
+
+export interface ReembolsoRow {
+  id: string;
+  pagador: string;
+  devedor: string;
+  valor_cents: number;
+  data: string;
+  motivo: string | null;
+  status: string;
+}
+
+export async function listReembolsos(): Promise<ReembolsoRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data }, payers] = await Promise.all([
+    supabase
+      .from("hg_reembolsos")
+      .select("id, pagador_payer_id, pagador_nome, devedor_payer_id, devedor_nome, valor_cents, data, motivo, status")
+      .is("deleted_at", null)
+      .order("data", { ascending: false }),
+    getPayers(),
+  ]);
+  const nome = new Map(payers.map((p) => [p.id, p.nome]));
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    pagador: r.pagador_nome || (r.pagador_payer_id ? nome.get(r.pagador_payer_id) ?? "—" : "—"),
+    devedor: r.devedor_nome || (r.devedor_payer_id ? nome.get(r.devedor_payer_id) ?? "—" : "—"),
+    valor_cents: Number(r.valor_cents),
+    data: r.data,
+    motivo: r.motivo,
+    status: r.status,
+  }));
+}
+
+export interface CortesiaRow {
+  id: string;
+  descricao: string;
+  categoria: string | null;
+  valor_mercado_cents: number | null;
+}
+
+export async function listCortesias(): Promise<CortesiaRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_expenses")
+    .select("id, descricao, categoria, valor_mercado_cents")
+    .is("deleted_at", null)
+    .eq("gratuito", true)
+    .order("descricao");
+  return (data ?? []).map((e) => ({
+    id: e.id,
+    descricao: e.descricao,
+    categoria: e.categoria,
+    valor_mercado_cents: e.valor_mercado_cents === null ? null : Number(e.valor_mercado_cents),
+  }));
+}
+
 export interface CentroFull {
   id: string;
   nome: string;
