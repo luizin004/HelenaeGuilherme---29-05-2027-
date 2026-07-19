@@ -1,7 +1,9 @@
 # VALIDATION — Relatório de validação
 
-> **Atualização (varredura completa / Fase 21):** lint (zero erros), 25 unitários,
-> **6 e2e em Chromium real**, build e headers de segurança verificados em runtime.
+> **Atualização (Fase 22):** pendências do backlog construídas (RSVP em grupo + prazo,
+> presentes CRUD, parcelas na UI, rotas públicas, QR por câmera, edição de convidados).
+> lint (zero erros), 25 unitários, **7 e2e em Chromium real**, **build com 25 rotas**,
+> headers de segurança verificados em runtime. Funções de grupo RSVP exercitadas no banco.
 > RLS endurecida: gestão restrita a **membros** (`hg_is_member()`); prova por
 > impersonação de JWT — usuário autenticado de outro sistema vê **0** registros do
 > casamento; admin vê tudo. Webhook Asaas agora **idempotente** com payload armazenado.
@@ -16,7 +18,7 @@ demais camadas foram validadas aqui.
 |-------------|---------|-----------|
 | Testes automatizados | `npm test` (Vitest) | **25/25 passando** |
 | Análise de tipos | `tsc --noEmit` | **OK** |
-| Build de produção | `next build` | **Compilado, 18 rotas** |
+| Build de produção | `next build` | **Compilado, 25 rotas** |
 
 Testes cobrem: dinheiro em centavos, **parcelamento com fechamento exato**
 (R$ 1.893,50 em 6× = R$ 1.893,50), item gratuito sem parcela, parcela sem vencimento,

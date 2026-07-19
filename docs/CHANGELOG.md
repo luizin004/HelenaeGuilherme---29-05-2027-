@@ -2,6 +2,36 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fase 22] Construção das pendências do backlog
+Todas as 8 pendências de construção da matriz v2 foram entregues.
+### RSVP — grupos familiares e prazo (spec regra 35 + prazo)
+- Banco: `hg_rsvp_group(token)` e `hg_rsvp_group_confirm(token, confirmações, msg, transporte)`
+  (SECURITY DEFINER, grant anon/authenticated). O prazo (`rsvp_prazo`) é validado no banco —
+  respostas após 30/03/2027 levantam `prazo encerrado`. Exercitado no banco (lookup ordenado
+  adultos→crianças, confirmação mista, contagem) com limpeza dos dados de teste.
+- `/rsvp/[token]` mostra o grupo inteiro e coleta resposta por integrante; bloqueia após o prazo.
+- Reabertura administrativa em `/admin/conteudo` (grava `rsvp_prazo` + justificativa auditada).
+### Presentes (separados das finanças)
+- CRUD em `/admin/presentes` (criar via `parseBRLToCents`, status, exclusão lógica);
+  página pública oculta soft-deletados/adquiridos.
+### Financeiro — parcelas na UI
+- `/admin/parcelas`: gerar cronograma (motor `buildSchedule`, fechamento exato),
+  marcar pago/estornar (sem mexer no vencimento), renegociar versionando o cronograma
+  anterior em `hg_expense_schedule_versions` (snapshot + motivo, auditado).
+### Público — rotas dedicadas
+- `/duvidas`, `/programacao`, `/privacidade` (LGPD) e `/termos`, com casca reutilizável e
+  navegação no rodapé. Sem inventar dados: horários finos marcados como aproximados.
+### Check-in — leitura por câmera
+- `QrScanner` com `BarcodeDetector` nativo (sem dependência nova) + fallback; extrai o token
+  de URLs `/rsvp/<token>`; mantém o fluxo offline (cache + fila).
+### Convidados — edição/mesa/exclusão
+- `ConvidadoActions`: editar nome/contato/mesa/criança + exclusão lógica; colunas Mesa/Ações;
+  `listGuests`/`getGuestStats` passam a ocultar soft-deletados.
+### Docs
+- `PRODUCTION_CHECKLIST.md` (go-live) e `WEDDING_DAY_CHECKLIST.md` (operação do dia).
+### Verificação
+- **Lint ✔ · typecheck ✔ · 25 unit ✔ · 7 e2e (Chromium real) ✔ · build 25 rotas ✔**
+
 ## [Fase 21] Varredura completa + hardening de segurança
 ### Segurança (achados dos advisors do Supabase — corrigidos e PROVADOS)
 - **CRÍTICO corrigido:** políticas de gestão usavam `using(true)` p/ qualquer

@@ -1,4 +1,4 @@
-# REQUIREMENTS_MATRIX — Rastreamento de requisitos (v2 — pós-varredura)
+# REQUIREMENTS_MATRIX — Rastreamento de requisitos (v3 — construção das pendências)
 
 Status: `não iniciado` · `em desenvolvimento` · `implementado` · `testado` · `bloqueado` · `não aplicável`.
 `testado` só com evidência executada. Bloqueios externos: ver `PENDING_DECISIONS.md`.
@@ -7,21 +7,21 @@ Status: `não iniciado` · `em desenvolvimento` · `implementado` · `testado` �
 
 | # | Módulo | Status | Evidência / Falta |
 |---|--------|--------|-------------------|
-| 1 | Site público | **testado** | 6 e2e em Chromium real; dados reais; paleta natural. Faltam rotas dedicadas (dúvidas, privacidade, termos, programação) — ver R-080b |
-| 2 | Área individual do convidado | implementado | `/rsvp/[token]` + RPC validado no banco. Falta: fluxo de grupo/acompanhantes autorizados |
+| 1 | Site público | **testado** | 7 e2e em Chromium real; dados reais; paleta natural; **rotas dedicadas** (dúvidas, programação, privacidade/LGPD, termos) |
+| 2 | Área individual do convidado | implementado | `/rsvp/[token]` com **fluxo de grupo** (todos os integrantes) + RPC validado no banco |
 | 3 | Painel administrativo | implementado | 10 módulos, autorização por membro (provada por JWT) |
 | 4 | Serviços internos | implementado | actions/domínio/repositórios separados |
-| 5 | Gestão financeira | **testado** | Motor em centavos (R$1.893,50÷6 exato); 24 itens reais. Falta: UI de parcelas/pagamento de parcela/renegociação |
-| 6 | Gestão de convidados | implementado | Cadastro + importação em massa (testada) + QR. Falta: edição/mesa/grupos na UI |
-| 7 | Grupos familiares | em desenvolvimento | Tabela existe; sem UI/fluxo |
-| 8 | RSVP | implementado | Por token, sem busca pública; transporte incluso. Falta: enforcement do prazo 30/03/2027; crianças/restrições no fluxo público |
+| 5 | Gestão financeira | **testado** | Motor em centavos (R$1.893,50÷6 exato); 24 itens reais. **UI de parcelas**: gerar/pagar/estornar + renegociação versionada |
+| 6 | Gestão de convidados | implementado | Cadastro + importação em massa (testada) + QR + **edição/mesa/exclusão lógica na UI** |
+| 7 | Grupos familiares | implementado | `hg_rsvp_group`/`hg_rsvp_group_confirm` (validados no banco) + fluxo público de grupo |
+| 8 | RSVP | implementado | Por token, sem busca pública; transporte incluso; **prazo 30/03/2027 aplicado** (bloqueio público + reabertura administrativa auditada) |
 | 9 | Crianças | implementado | Painel /admin/infantil (alergias, responsável). Falta: check-in/out da criança com monitor |
 | 10 | Transporte | **testado** | RPC grava transporte (validado no banco) |
-| 11 | QR Codes | **testado** | Token opaco (testes) + geração de imagem. Falta: ciclo completo (bloquear/substituir/regenerar) |
-| 12 | Check-in | implementado | Por token + registrado_por + auditoria. Falta: leitura por câmera; check-in por grupo |
+| 11 | QR Codes | **testado** | Token opaco (testes) + geração de imagem + **leitura por câmera**. Falta: ciclo completo (bloquear/substituir/regenerar) |
+| 12 | Check-in | implementado | Por token + registrado_por + auditoria + **scanner de câmera** (BarcodeDetector) |
 | 13 | Operação offline | implementado | Cache local + fila de sincronização (check-in). Sync real: valida no deploy |
 | 14 | CMS | implementado | História + hashtag editáveis refletem no site. Falta: fotos/locais/cardápio/dúvidas; rascunho/histórico |
-| 15 | Lista de presentes | em desenvolvimento | Página pública ok; falta CRUD de presentes no painel + regras (coletivo/quantidade) |
+| 15 | Lista de presentes | implementado | Página pública + **CRUD no painel** (criar/status/exclusão lógica); regras coletivo/quantidade parciais |
 | 16 | Pedidos | em desenvolvimento | hg_payments modela; falta fluxo de pedido interno completo |
 | 17 | Pagamentos Asaas | **bloqueado (externo)** | Rotas prontas (mín. R$300, métodos validados); sem credenciais (PEND-005) |
 | 18 | Webhooks | implementado | **Idempotente** (payload + dedup); validação real pende credencial |
@@ -37,24 +37,31 @@ Status: `não iniciado` · `em desenvolvimento` · `implementado` · `testado` �
 | 28 | Monitoramento | em desenvolvimento | Logger estruturado; sem alertas |
 | 29 | Segurança | **testado** | RLS por membro (provada por impersonação JWT), headers em runtime, tokens seguros |
 | 30 | Publicação | **bloqueado (externo)** | Vercel sem permissão (PEND-008); app deploy-ready |
-| 31 | Documentação | em desenvolvimento | 15 docs criados; faltam DATA_DICTIONARY, PERMISSIONS, TESTING, DEPLOYMENT, OPERATIONS, WEDDING_DAY/PRODUCTION_CHECKLIST completos |
+| 31 | Documentação | implementado | 17 docs; **PRODUCTION_CHECKLIST + WEDDING_DAY_CHECKLIST** adicionados. Opcionais: DATA_DICTIONARY, PERMISSIONS, TESTING detalhados |
 | 32 | Plano de contingência | em desenvolvimento | Esboço em DISASTER_RECOVERY; consolidar |
 
 ## Contagem honesta
-- **Testado (evidência executada): 6** · **Implementado: 14** · **Em desenvolvimento: 8**
+- **Testado (evidência executada): 6** · **Implementado: 19** · **Em desenvolvimento: 3**
 - **Bloqueado por dependência EXTERNA: 3** (Asaas, provedor de mensagens, permissão Vercel)
 - **Não iniciado: 1** (conciliação — depende do Asaas)
+- Em desenvolvimento restantes: pedidos internos (16), backups automatizados (27), monitoramento/alertas (28)
 
-## Verificações executadas (Fase 21)
-Lint ✔ · Typecheck ✔ · 25 unitários ✔ · **6 e2e (Chromium real) ✔** · Build (18 rotas) ✔ ·
-Headers de segurança em runtime ✔ · RLS provada por impersonação ✔
+## Verificações executadas (Fase 22)
+Lint ✔ · Typecheck ✔ · 25 unitários ✔ · **7 e2e (Chromium real) ✔** · Build (25 rotas) ✔ ·
+Headers de segurança em runtime ✔ · RLS provada por impersonação ✔ ·
+Funções de grupo RSVP exercitadas no banco (lookup ordenado, confirmação mista, prazo) ✔
 
-## Top pendências de CONSTRUÇÃO (ordenadas por valor)
-1. **Grupos familiares + acompanhantes autorizados** no RSVP (regra 35 da spec)
-2. **Prazo do RSVP** (30/03/2027): bloqueio público + reabertura administrativa com justificativa
-3. **CRUD de presentes no painel** (hoje a lista pública usa exemplos)
-4. **Parcelas na UI financeira** (pagar parcela, renegociar com versionamento — motor já pronto)
-5. **Rotas públicas dedicadas**: dúvidas, privacidade (LGPD), termos, programação
-6. **Leitura de QR por câmera** no check-in
-7. **Edição/exclusão lógica de convidados + mesa** na UI
-8. Docs restantes (checklists de produção e do dia do casamento)
+## Top pendências de CONSTRUÇÃO — CONCLUÍDAS na Fase 22
+1. ✅ **Grupos familiares + acompanhantes** no RSVP (regra 35)
+2. ✅ **Prazo do RSVP** (30/03/2027): bloqueio público + reabertura administrativa auditada
+3. ✅ **CRUD de presentes no painel**
+4. ✅ **Parcelas na UI financeira** (pagar/estornar + renegociação versionada)
+5. ✅ **Rotas públicas dedicadas**: dúvidas, privacidade (LGPD), termos, programação
+6. ✅ **Leitura de QR por câmera** no check-in
+7. ✅ **Edição/exclusão lógica de convidados + mesa** na UI
+8. ✅ Docs: `PRODUCTION_CHECKLIST.md` + `WEDDING_DAY_CHECKLIST.md`
+
+## Pendências remanescentes (dependência externa ou fora do escopo imediato)
+- Asaas (chaves) · provedor de mensagens · permissão de deploy na Vercel — `PENDING_DECISIONS.md`
+- Pedidos internos completos, conciliação, backups automatizados, alertas de monitoramento
+- Regras avançadas de presentes (cota coletiva/quantidade), ciclo completo de QR (revogar/regenerar)
