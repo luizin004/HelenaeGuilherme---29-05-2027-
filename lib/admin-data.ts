@@ -52,6 +52,192 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface CentroFull {
+  id: string;
+  nome: string;
+  cor: string | null;
+  orcamento_cents: number | null;
+  ativo: boolean;
+  ordem: number;
+  lancamentos: number;
+  previstoCents: number;
+}
+
+/** Centros de custo com uso (nº de lançamentos e previsto). */
+export async function listCentrosFull(): Promise<CentroFull[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data: centros } = await supabase
+    .from("hg_cost_centers")
+    .select("id, nome, cor, orcamento_cents, ativo, ordem")
+    .order("ordem");
+  if (!centros) return [];
+  const { data: exps } = await supabase
+    .from("hg_expenses")
+    .select("cost_center_id, valor_total_cents")
+    .is("deleted_at", null)
+    .not("cost_center_id", "is", null);
+
+  const cnt = new Map<string, { n: number; prev: number }>();
+  for (const e of exps ?? []) {
+    const c = cnt.get(e.cost_center_id) ?? { n: 0, prev: 0 };
+    c.n += 1;
+    c.prev += Number(e.valor_total_cents ?? 0);
+    cnt.set(e.cost_center_id, c);
+  }
+  return centros.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+    cor: c.cor,
+    orcamento_cents: c.orcamento_cents === null ? null : Number(c.orcamento_cents),
+    ativo: c.ativo,
+    ordem: c.ordem,
+    lancamentos: cnt.get(c.id)?.n ?? 0,
+    previstoCents: cnt.get(c.id)?.prev ?? 0,
+  }));
+}
+
+export interface AporteRow {
+  id: string;
+  responsavel: string;
+  valor_cents: number;
+  data: string;
+  finalidade: string | null;
+  observacao: string | null;
+}
+
+export async function listAportes(): Promise<AporteRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data }, payers] = await Promise.all([
+    supabase
+      .from("hg_aportes")
+      .select("id, payer_id, responsavel_nome, valor_cents, data, finalidade, observacao")
+      .is("deleted_at", null)
+      .order("data", { ascending: false }),
+    getPayers(),
+  ]);
+  const nome = new Map(payers.map((p) => [p.id, p.nome]));
+  return (data ?? []).map((a) => ({
+    id: a.id,
+    responsavel: a.responsavel_nome || (a.payer_id ? nome.get(a.payer_id) ?? "—" : "—"),
+    valor_cents: Number(a.valor_cents),
+    data: a.data,
+    finalidade: a.finalidade,
+    observacao: a.observacao,
+  }));
+}
+
+export interface FluxoMes {
+  ym: string;
+  label: string;
+  entradasCents: number;
+  saidasCents: number;
+  saldoMesCents: number;
+  acumuladoCents: number;
+}
+
+export interface FluxoResult {
+  meses: FluxoMes[];
+  totalEntradasCents: number;
+  totalSaidasCents: number;
+  saldoAtualCents: number;
+  compromissosFuturosCents: number;
+}
+
+const _MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+function labelYM(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  return `${_MES[m - 1]}/${y}`;
+}
+
+/** Fluxo de caixa: aportes (entradas) x parcelas pagas (saídas), saldo acumulado. */
+export async function getFluxoCaixa(): Promise<FluxoResult> {
+  const [aportes, parcelas] = await Promise.all([listAportes(), listParcelasDetalhado()]);
+
+  const entradas = new Map<string, number>();
+  for (const a of aportes) {
+    const ym = a.data.slice(0, 7);
+    entradas.set(ym, (entradas.get(ym) ?? 0) + a.valor_cents);
+  }
+  const saidas = new Map<string, number>();
+  let compromissosFuturosCents = 0;
+  for (const p of parcelas) {
+    if (p.pago && p.pago_em) {
+      const ym = p.pago_em.slice(0, 7);
+      saidas.set(ym, (saidas.get(ym) ?? 0) + p.valor_cents);
+    } else if (!p.pago) {
+      compromissosFuturosCents += p.valor_cents;
+    }
+  }
+
+  const yms = [...new Set([...entradas.keys(), ...saidas.keys()])].sort();
+  let acumulado = 0;
+  const meses: FluxoMes[] = yms.map((ym) => {
+    const e = entradas.get(ym) ?? 0;
+    const s = saidas.get(ym) ?? 0;
+    acumulado += e - s;
+    return { ym, label: labelYM(ym), entradasCents: e, saidasCents: s, saldoMesCents: e - s, acumuladoCents: acumulado };
+  });
+
+  const totalEntradasCents = [...entradas.values()].reduce((n, v) => n + v, 0);
+  const totalSaidasCents = [...saidas.values()].reduce((n, v) => n + v, 0);
+  return {
+    meses,
+    totalEntradasCents,
+    totalSaidasCents,
+    saldoAtualCents: totalEntradasCents - totalSaidasCents,
+    compromissosFuturosCents,
+  };
+}
+
+export interface ResponsavelResumo {
+  nome: string;
+  assumidoCents: number;
+  pagoCents: number;
+  abertoCents: number;
+  esteMesCents: number;
+  proxMesCents: number;
+  aportesCents: number;
+}
+
+/** Resumo por responsável (Helena, Guilherme, Toninho…): parcelas + aportes. */
+export async function getResponsavelResumo(): Promise<ResponsavelResumo[]> {
+  const [parcelas, aportes, payers] = await Promise.all([listParcelasDetalhado(), listAportes(), getPayers()]);
+  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const ymAtual = hoje.slice(0, 7);
+  const [ay, am] = ymAtual.split("-").map(Number);
+  const ymProx = `${am === 12 ? ay + 1 : ay}-${String(am === 12 ? 1 : am + 1).padStart(2, "0")}`;
+
+  const map = new Map<string, ResponsavelResumo>();
+  const get = (n: string) =>
+    map.get(n) ??
+    (map.set(n, { nome: n, assumidoCents: 0, pagoCents: 0, abertoCents: 0, esteMesCents: 0, proxMesCents: 0, aportesCents: 0 }), map.get(n)!);
+
+  // Semeia os responsáveis (exceto Gratuito) para aparecerem mesmo zerados.
+  for (const p of payers) if (p.nome !== "Gratuito") get(p.nome);
+
+  for (const p of parcelas) {
+    const r = get(p.responsavel);
+    r.assumidoCents += p.valor_cents;
+    if (p.pago) r.pagoCents += p.valor_cents;
+    else {
+      r.abertoCents += p.valor_cents;
+      const ym = p.vencimento?.slice(0, 7);
+      if (ym === ymAtual) r.esteMesCents += p.valor_cents;
+      else if (ym === ymProx) r.proxMesCents += p.valor_cents;
+    }
+  }
+  for (const a of aportes) get(a.responsavel).aportesCents += a.valor_cents;
+
+  const ordem = ["Helena", "Guilherme", "Toninho"];
+  return [...map.values()].sort((a, b) => {
+    const ia = ordem.indexOf(a.nome), ib = ordem.indexOf(b.nome);
+    if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    return b.assumidoCents - a.assumidoCents;
+  });
+}
+
 export interface ParcelaDetalhe {
   id: string;
   expense_id: string;
