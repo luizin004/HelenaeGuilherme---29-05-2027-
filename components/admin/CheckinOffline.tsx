@@ -2,9 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { registrarCheckin, type CheckinEntry } from "@/app/actions/checkin";
+import { QrScanner } from "./QrScanner";
 
 const CACHE_KEY = "hg_checkin_cache_v1";
 const QUEUE_KEY = "hg_checkin_queue_v1";
+
+/** Extrai o token de um valor escaneado (URL ".../rsvp/<token>" ou o token puro). */
+function extractToken(raw: string): string {
+  const v = raw.trim();
+  const m = v.match(/\/rsvp\/([^/?#\s]+)/i);
+  return (m ? m[1] : v).trim();
+}
 
 type Cache = Record<string, { nome: string; chegou: boolean }>;
 type QueueItem = { token: string; ts: string };
@@ -79,32 +87,41 @@ export function CheckinOffline({ initial }: { initial: CheckinEntry[] }) {
     };
   }, [initial, sync]);
 
+  const doCheckIn = useCallback(
+    (rawToken: string) => {
+      const token = rawToken.trim();
+      if (!token) return;
+
+      const entry = cache[token];
+      if (!entry) {
+        setMsg({ ok: false, text: "Código não encontrado na lista." });
+        return;
+      }
+      if (entry.chegou) {
+        setMsg({ ok: false, text: `${entry.nome} já fez check-in.` });
+        return;
+      }
+
+      const novoCache: Cache = { ...cache, [token]: { ...entry, chegou: true } };
+      setCache(novoCache);
+      writeJSON(CACHE_KEY, novoCache);
+
+      const novaFila = [...queue, { token, ts: new Date().toISOString() }];
+      setQueue(novaFila);
+      writeJSON(QUEUE_KEY, novaFila);
+
+      setMsg({ ok: true, text: `✓ Bem-vindo(a), ${entry.nome}!` });
+      if (navigator.onLine) void sync(novaFila);
+    },
+    [cache, queue, sync],
+  );
+
   function checkIn(e: React.FormEvent) {
     e.preventDefault();
     const token = codigo.trim();
     if (!token) return;
     setCodigo("");
-
-    const entry = cache[token];
-    if (!entry) {
-      setMsg({ ok: false, text: "Código não encontrado na lista." });
-      return;
-    }
-    if (entry.chegou) {
-      setMsg({ ok: false, text: `${entry.nome} já fez check-in.` });
-      return;
-    }
-
-    const novoCache: Cache = { ...cache, [token]: { ...entry, chegou: true } };
-    setCache(novoCache);
-    writeJSON(CACHE_KEY, novoCache);
-
-    const novaFila = [...queue, { token, ts: new Date().toISOString() }];
-    setQueue(novaFila);
-    writeJSON(QUEUE_KEY, novaFila);
-
-    setMsg({ ok: true, text: `✓ Bem-vindo(a), ${entry.nome}!` });
-    if (navigator.onLine) void sync(novaFila);
+    doCheckIn(token);
   }
 
   const chegados = Object.values(cache).filter((c) => c.chegou).length;
@@ -132,6 +149,7 @@ export function CheckinOffline({ initial }: { initial: CheckinEntry[] }) {
           className="w-full rounded border border-line px-4 py-4 text-center text-lg focus:border-olive focus:outline-none focus:ring-4 focus:ring-olive/15"
         />
         <button type="submit" className="btn btn-dark mt-4">Registrar chegada</button>
+        <QrScanner onDetected={(raw) => doCheckIn(extractToken(raw))} />
         {msg && (
           <p className={`mt-5 font-serif text-2xl ${msg.ok ? "text-success" : "text-danger"}`}>{msg.text}</p>
         )}
