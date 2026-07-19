@@ -52,6 +52,61 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface ParcelaDetalhe {
+  id: string;
+  expense_id: string;
+  descricao: string;
+  categoria: string | null;
+  responsavel: string;
+  valor_cents: number;
+  vencimento: string | null;
+  pago: boolean;
+  pago_em: string | null;
+  is_entrada: boolean;
+}
+
+/** Todas as parcelas com o item, categoria e responsável — base de Contas a
+ *  Pagar / Pagas, Calendário e Relatórios. */
+export async function listParcelasDetalhado(): Promise<ParcelaDetalhe[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+
+  const { data: expenses } = await supabase
+    .from("hg_expenses")
+    .select("id, descricao, categoria")
+    .is("deleted_at", null);
+  if (!expenses || expenses.length === 0) return [];
+  const meta = new Map(expenses.map((e) => [e.id, { descricao: e.descricao, categoria: e.categoria as string | null }]));
+  const ids = expenses.map((e) => e.id);
+
+  const [{ data: inst }, expensePayers, payers] = await Promise.all([
+    supabase
+      .from("hg_expense_installments")
+      .select("id, expense_id, valor_cents, vencimento, pago, pago_em, is_entrada")
+      .in("expense_id", ids),
+    getExpensePayers(),
+    getPayers(),
+  ]);
+  const payerNome = new Map(payers.map((p) => [p.id, p.nome]));
+
+  return (inst ?? []).map((p) => {
+    const m = meta.get(p.expense_id);
+    const pid = expensePayers[p.expense_id];
+    return {
+      id: p.id,
+      expense_id: p.expense_id,
+      descricao: m?.descricao ?? "—",
+      categoria: m?.categoria ?? null,
+      responsavel: (pid && payerNome.get(pid)) || "Não atribuído",
+      valor_cents: Number(p.valor_cents),
+      vencimento: p.vencimento,
+      pago: p.pago,
+      pago_em: p.pago_em,
+      is_entrada: p.is_entrada ?? false,
+    };
+  });
+}
+
 export interface ProjecaoMes {
   ym: string; // "2026-07"
   label: string; // "jul/2026"
