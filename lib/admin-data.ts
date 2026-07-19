@@ -338,6 +338,90 @@ export async function listCotacoes(): Promise<CotacaoRow[]> {
   }));
 }
 
+export interface ComprovanteItem {
+  id: string;
+  installment_id: string | null;
+  titulo: string | null;
+  arquivo_url: string;
+  valor_cents: number | null;
+  data_pagamento: string | null;
+  observacao: string | null;
+}
+
+export interface ParcelaAberta {
+  id: string;
+  numero: number;
+  valor_cents: number;
+}
+
+export interface ComprovanteExpenseRow {
+  id: string;
+  descricao: string;
+  categoria: string | null;
+  valor_total_cents: number;
+  comprovantes: ComprovanteItem[];
+  parcelasAbertas: ParcelaAberta[];
+}
+
+/** Despesas com valor definido + comprovantes anexados + parcelas em aberto. */
+export async function listComprovantes(): Promise<ComprovanteExpenseRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+
+  const { data: expenses } = await supabase
+    .from("hg_expenses")
+    .select("id, descricao, categoria, valor_total_cents")
+    .is("deleted_at", null)
+    .eq("gratuito", false)
+    .not("valor_total_cents", "is", null)
+    .order("descricao");
+  if (!expenses || expenses.length === 0) return [];
+
+  const ids = expenses.map((e) => e.id);
+  const { data: comps } = await supabase
+    .from("hg_comprovantes")
+    .select("id, expense_id, installment_id, titulo, arquivo_url, valor_cents, data_pagamento, observacao")
+    .in("expense_id", ids)
+    .is("deleted_at", null)
+    .order("criado_em", { ascending: false });
+  const { data: inst } = await supabase
+    .from("hg_expense_installments")
+    .select("id, expense_id, numero, valor_cents, pago")
+    .in("expense_id", ids)
+    .eq("pago", false)
+    .order("numero");
+
+  const compByExp = new Map<string, ComprovanteItem[]>();
+  for (const c of comps ?? []) {
+    const arr = compByExp.get(c.expense_id) ?? [];
+    arr.push({
+      id: c.id,
+      installment_id: c.installment_id,
+      titulo: c.titulo,
+      arquivo_url: c.arquivo_url,
+      valor_cents: c.valor_cents === null ? null : Number(c.valor_cents),
+      data_pagamento: c.data_pagamento,
+      observacao: c.observacao,
+    });
+    compByExp.set(c.expense_id, arr);
+  }
+  const parcByExp = new Map<string, ParcelaAberta[]>();
+  for (const p of inst ?? []) {
+    const arr = parcByExp.get(p.expense_id) ?? [];
+    arr.push({ id: p.id, numero: p.numero, valor_cents: Number(p.valor_cents) });
+    parcByExp.set(p.expense_id, arr);
+  }
+
+  return expenses.map((e) => ({
+    id: e.id,
+    descricao: e.descricao,
+    categoria: e.categoria,
+    valor_total_cents: Number(e.valor_total_cents),
+    comprovantes: compByExp.get(e.id) ?? [],
+    parcelasAbertas: parcByExp.get(e.id) ?? [],
+  }));
+}
+
 export interface ContractRow {
   id: string;
   titulo: string;

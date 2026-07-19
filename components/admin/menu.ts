@@ -22,6 +22,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Cotações & propostas", ico: "📝", href: "/admin/cotacoes" },
   { label: "Controle financeiro", ico: "💰", href: "/admin/financeiro" },
   { label: "Parcelas", ico: "📆", href: "/admin/parcelas" },
+  { label: "Comprovantes", ico: "🧾", href: "/admin/comprovantes" },
   { label: "Fornecedores", ico: "🤝", href: "/admin/fornecedores" },
   { label: "Contratos", ico: "📄", href: "/admin/contratos" },
   { label: "Documentos", ico: "🗂️", href: "/admin/documentos" },
