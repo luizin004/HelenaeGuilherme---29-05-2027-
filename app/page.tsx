@@ -4,6 +4,7 @@ import { Countdown } from "@/components/public/Countdown";
 import { Story } from "@/components/public/Story";
 import { Details } from "@/components/public/Details";
 import { Gallery } from "@/components/public/Gallery";
+import { Festa } from "@/components/public/Festa";
 import { Kids } from "@/components/public/Kids";
 import { Gifts } from "@/components/public/Gifts";
 import { Rsvp } from "@/components/public/Rsvp";
@@ -39,6 +40,7 @@ export default async function HomePage() {
       <Countdown dataISO={couple.dataISO} />
       <Story historia={couple.historia} eventos={story} />
       <Details venues={venues} />
+      <Festa />
       <Gallery fotos={gallery} />
       <Kids />
       <Gifts />

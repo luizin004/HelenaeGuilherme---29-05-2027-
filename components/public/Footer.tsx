@@ -12,6 +12,9 @@ export function Footer({ noiva, noivo, dataExtenso }: { noiva: string; noivo: st
       <p className="text-sm opacity-70">Feito com carinho · Nos vemos lá 🤍</p>
 
       <nav className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs uppercase tracking-[0.15em] opacity-80">
+        <Link href="/cerimonia" className="transition hover:text-gold">Cerimônia</Link>
+        <Link href="/recepcao" className="transition hover:text-gold">Recepção</Link>
+        <Link href="/como-chegar" className="transition hover:text-gold">Como chegar</Link>
         <Link href="/programacao" className="transition hover:text-gold">Programação</Link>
         <Link href="/duvidas" className="transition hover:text-gold">Dúvidas</Link>
         <Link href="/presentes" className="transition hover:text-gold">Presentes</Link>

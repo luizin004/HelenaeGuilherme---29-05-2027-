@@ -50,7 +50,40 @@ export const VENUES_FALLBACK: Venue[] = [
 export const NAV_LINKS = [
   { href: "#historia", label: "Nossa história" },
   { href: "#detalhes", label: "O grande dia" },
+  { href: "#festa", label: "A festa" },
   { href: "#galeria", label: "Galeria" },
-  { href: "#infantil", label: "Espaço infantil" },
   { href: "#presentes", label: "Presentes" },
 ] as const;
+
+/** Cardápio da recepção (dados fornecidos pelo casal). */
+export const CARDAPIO: { nome: string; descricao: string; icone: string }[] = [
+  { nome: "Churrasco fogo de chão", descricao: "Costelão, picanha, leitoa e salmão na brasa", icone: "🔥" },
+  { nome: "Buffet gourmet", descricao: "Pratos quentes e acompanhamentos", icone: "🍽️" },
+  { nome: "Mesa gourmet", descricao: "Estação com curadoria especial", icone: "🧀" },
+  { nome: "Pizza volante", descricao: "Pizzas artesanais passando pela festa", icone: "🍕" },
+  { nome: "Doces finos", descricao: "Confeitaria para adoçar a noite", icone: "🍬" },
+  { nome: "Açaí", descricao: "Estação de açaí", icone: "🫐" },
+  { nome: "Sorvete", descricao: "Para refrescar a celebração", icone: "🍨" },
+];
+
+/** Atrações musicais (dados fornecidos pelo casal). */
+export const ATRACOES: { nome: string; tipo: string }[] = [
+  { nome: "Rock Bar", tipo: "Banda" },
+  { nome: "Na Ideia", tipo: "Banda" },
+  { nome: "Calangodum", tipo: "Banda" },
+  { nome: "Zé Pretim", tipo: "Banda" },
+  { nome: "DJ Vinicius Mendes", tipo: "DJ" },
+];
+
+/**
+ * Etapas da rota até o Rancho das Águas (base: mapa enviado pelo casal).
+ * A coordenada exata do portão ainda deve ser cadastrada para Maps/Waze precisos.
+ */
+export const ROTA_ETAPAS: { titulo: string; detalhe: string }[] = [
+  { titulo: "Parque de Exposições", detalhe: "Siga em direção ao Parque de Exposições e continue pela via indicada." },
+  { titulo: "Estrada do Forninho", detalhe: "Continue em direção à Estrada do Forninho." },
+  { titulo: "Radar de 60 km/h", detalhe: "Após passar pelo radar de 60 km/h, siga por aproximadamente 1,5 km." },
+  { titulo: "Placa do Sítio Rancho das Águas", detalhe: "Na placa indicativa do Sítio Rancho das Águas, vire à esquerda." },
+  { titulo: "Pontos de referência", detalhe: "Use como referência o Pau de Angú, o Sítio Santa Cruz e o Sítio Drumond." },
+  { titulo: "Trecho final", detalhe: "No trecho final, o Rancho das Águas estará à esquerda." },
+];
