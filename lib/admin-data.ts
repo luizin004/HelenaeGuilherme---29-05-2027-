@@ -52,6 +52,34 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface GrupoRow {
+  id: string;
+  nome: string;
+  lado: string | null;
+  max_convidados: number | null;
+  observacao: string | null;
+  integrantes: number;
+}
+
+export async function listGrupos(): Promise<GrupoRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data: grupos }, { data: guests }] = await Promise.all([
+    supabase.from("hg_guest_groups").select("id, nome, lado, max_convidados, observacao").order("nome"),
+    supabase.from("hg_guests").select("group_id").is("deleted_at", null),
+  ]);
+  const cnt = new Map<string, number>();
+  for (const g of guests ?? []) if (g.group_id) cnt.set(g.group_id, (cnt.get(g.group_id) ?? 0) + 1);
+  return (grupos ?? []).map((g) => ({
+    id: g.id,
+    nome: g.nome,
+    lado: g.lado,
+    max_convidados: g.max_convidados,
+    observacao: g.observacao,
+    integrantes: cnt.get(g.id) ?? 0,
+  }));
+}
+
 export interface TransporteResumo {
   opcoes: { chave: string; label: string; total: number }[];
   oferecemCarona: { nome: string; telefone: string | null }[];

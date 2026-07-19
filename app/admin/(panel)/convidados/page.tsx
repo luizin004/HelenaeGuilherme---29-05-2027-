@@ -3,14 +3,15 @@ import { Kpi, KpiGrid, Notice, PageTitle, Panel, StatusBadge } from "@/component
 import { NovoConvidado } from "@/components/admin/NovoConvidado";
 import { ImportarConvidados } from "@/components/admin/ImportarConvidados";
 import { ConvidadoActions } from "@/components/admin/ConvidadoActions";
-import { getGuestStats, listGuests } from "@/lib/admin-data";
+import { getGuestStats, listGuests, listGrupos } from "@/lib/admin-data";
 import { conviteUrl, qrDataUrl } from "@/lib/qr-image";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConvidadosPage() {
-  const [stats, guests] = await Promise.all([getGuestStats(), listGuests()]);
+  const [stats, guests, grupos] = await Promise.all([getGuestStats(), listGuests(), listGrupos()]);
+  const gruposOpts = grupos.map((gr) => ({ id: gr.id, nome: gr.nome }));
 
   // Gera o QR de cada convidado (link pessoal por token).
   const comQr = await Promise.all(
@@ -86,7 +87,8 @@ export default async function ConvidadosPage() {
                   </td>
                   <td className="px-6 py-3">
                     <ConvidadoActions
-                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, eh_crianca: g.eh_crianca }}
+                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, group_id: g.group_id, eh_crianca: g.eh_crianca }}
+                      grupos={gruposOpts}
                     />
                   </td>
                 </tr>

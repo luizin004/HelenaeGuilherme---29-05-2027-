@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { atualizarConvidado, excluirConvidado, type GuestFormState } from "@/app/actions/guests";
+import { atualizarConvidado, excluirConvidado, regenerarQr, type GuestFormState } from "@/app/actions/guests";
 
 const initial: GuestFormState = { ok: false, message: "" };
 
@@ -12,6 +12,7 @@ export interface ConvidadoEditavel {
   email: string | null;
   telefone: string | null;
   mesa: string | null;
+  group_id: string | null;
   eh_crianca: boolean;
 }
 
@@ -24,7 +25,7 @@ function SaveButton() {
   );
 }
 
-export function ConvidadoActions({ g }: { g: ConvidadoEditavel }) {
+export function ConvidadoActions({ g, grupos }: { g: ConvidadoEditavel; grupos: { id: string; nome: string }[] }) {
   const [aberto, setAberto] = useState(false);
   const [state, formAction] = useFormState(atualizarConvidado, initial);
 
@@ -34,6 +35,10 @@ export function ConvidadoActions({ g }: { g: ConvidadoEditavel }) {
         <button type="button" onClick={() => setAberto((v) => !v)} className="text-xs text-olive underline">
           {aberto ? "fechar" : "editar"}
         </button>
+        <form action={regenerarQr} onSubmit={(e) => { if (!confirm(`Gerar um novo QR para ${g.nome}? O anterior deixa de valer.`)) e.preventDefault(); }}>
+          <input type="hidden" name="id" value={g.id} />
+          <button type="submit" className="text-xs text-muted underline">novo QR</button>
+        </form>
         <form
           action={excluirConvidado}
           onSubmit={(e) => {
@@ -59,6 +64,10 @@ export function ConvidadoActions({ g }: { g: ConvidadoEditavel }) {
               <input type="checkbox" name="eh_crianca" defaultChecked={g.eh_crianca} /> É criança
             </label>
           </div>
+          <select name="group_id" defaultValue={g.group_id ?? ""} className="field-input py-1.5 text-sm">
+            <option value="">Sem grupo</option>
+            {grupos.map((gr) => <option key={gr.id} value={gr.id}>{gr.nome}</option>)}
+          </select>
           <div className="flex items-center gap-3">
             <SaveButton />
             {state.message && (

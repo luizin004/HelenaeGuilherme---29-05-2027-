@@ -44,6 +44,7 @@ export async function atualizarConvidado(_prev: GuestFormState, formData: FormDa
   const email = String(formData.get("email") ?? "").trim();
   const telefone = String(formData.get("telefone") ?? "").trim();
   const mesa = String(formData.get("mesa") ?? "").trim();
+  const grupo = String(formData.get("group_id") ?? "").trim();
   const ehCrianca = formData.get("eh_crianca") === "on";
 
   if (!id) return { ok: false, message: "Convidado inválido." };
@@ -59,6 +60,7 @@ export async function atualizarConvidado(_prev: GuestFormState, formData: FormDa
       email: email || null,
       telefone: telefone || null,
       mesa: mesa || null,
+      group_id: grupo || null,
       eh_crianca: ehCrianca,
     })
     .eq("id", id)
@@ -74,6 +76,23 @@ export async function atualizarConvidado(_prev: GuestFormState, formData: FormDa
   });
   revalidatePath("/admin/convidados");
   return { ok: true, message: `${nome.split(" ")[0]} atualizado.` };
+}
+
+/** Regenera o QR (novo token) — invalida o anterior. Ex.: convite perdido. */
+export async function regenerarQr(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("hg_guests")
+    .update({ qr_token: crypto.randomUUID(), check_in_em: null, check_in_por: null })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (!error) {
+    await logAudit(supabase, { modulo: "convidados", acao: "regenerar_qr", registro: `hg_guests:${id}` });
+    revalidatePath("/admin/convidados");
+  }
 }
 
 /** Exclusão LÓGICA (soft-delete) de um convidado. */
