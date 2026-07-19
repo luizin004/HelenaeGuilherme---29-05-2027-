@@ -86,11 +86,21 @@ export function RsvpConfirm({
                   Não poderá
                 </label>
               </div>
+              <input
+                name={`restricao_${g.id}`}
+                placeholder="Restrição alimentar / alergia (opcional)"
+                className="field-input mt-2 py-1.5 text-sm"
+              />
             </fieldset>
           );
         })}
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="instagram" className="field-label">Seu Instagram (opcional)</label>
+        <input id="instagram" name="instagram" placeholder="@seuinstagram" className="field-input" />
+        <span className="text-xs text-muted">Guardamos para algumas surpresas e interações na preparação do casamento. 💛</span>
+      </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="transporte" className="field-label">Como vão ao casamento? (opcional)</label>
         <select id="transporte" name="transporte" className="field-input" defaultValue="">

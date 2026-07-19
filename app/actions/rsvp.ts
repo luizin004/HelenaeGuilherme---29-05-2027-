@@ -24,17 +24,19 @@ export async function confirmarPresencaGrupo(_prev: RsvpState, formData: FormDat
   const token = String(formData.get("token") ?? "").trim();
   const mensagem = String(formData.get("mensagem") ?? "").trim();
   const transporte = String(formData.get("transporte") ?? "").trim();
+  const instagram = String(formData.get("instagram") ?? "").trim();
 
   if (!token) return { ok: false, message: "Link do convite inválido." };
 
-  // Extrai as respostas por integrante (campos "presenca_<uuid>").
-  const confirmacoes: { guest_id: string; status: string }[] = [];
+  // Extrai as respostas por integrante (campos "presenca_<uuid>" + "restricao_<uuid>").
+  const confirmacoes: { guest_id: string; status: string; restricao?: string }[] = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("presenca_")) continue;
     const guestId = key.slice("presenca_".length);
     const v = String(value);
     if (v !== "sim" && v !== "nao") continue;
-    confirmacoes.push({ guest_id: guestId, status: v === "sim" ? "confirmado" : "recusado" });
+    const restricao = String(formData.get(`restricao_${guestId}`) ?? "").trim();
+    confirmacoes.push({ guest_id: guestId, status: v === "sim" ? "confirmado" : "recusado", ...(restricao ? { restricao } : {}) });
   }
 
   if (confirmacoes.length === 0) {
@@ -58,6 +60,7 @@ export async function confirmarPresencaGrupo(_prev: RsvpState, formData: FormDat
     p_confirmacoes: confirmacoes,
     p_mensagem: mensagem,
     p_transporte: transporte,
+    p_instagram: instagram,
   });
 
   if (error) {

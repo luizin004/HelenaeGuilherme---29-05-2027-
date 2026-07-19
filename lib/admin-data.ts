@@ -52,6 +52,45 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface TransporteResumo {
+  opcoes: { chave: string; label: string; total: number }[];
+  oferecemCarona: { nome: string; telefone: string | null }[];
+  precisamCarona: { nome: string; telefone: string | null }[];
+  comInstagram: number;
+  semResposta: number;
+}
+
+const TRANSPORTE_LABEL: Record<string, string> = {
+  carro: "Vão de carro",
+  com_outra_pessoa: "Vão com outra pessoa",
+  oferece_vagas: "Oferecem carona",
+  precisa_carona: "Precisam de carona",
+  contratado: "Transporte contratado",
+  nao_definiu: "Ainda não definiram",
+};
+
+/** Resumo de transporte a partir das respostas de RSVP (regra: sem expor dados entre convidados). */
+export async function getTransporteResumo(): Promise<TransporteResumo> {
+  const guests = await listGuests();
+  const counts = new Map<string, number>();
+  const oferecem: { nome: string; telefone: string | null }[] = [];
+  const precisam: { nome: string; telefone: string | null }[] = [];
+  let comInstagram = 0;
+  let semResposta = 0;
+
+  for (const g of guests) {
+    if (g.instagram) comInstagram += 1;
+    const t = g.transporte;
+    if (!t) { semResposta += 1; continue; }
+    counts.set(t, (counts.get(t) ?? 0) + 1);
+    if (t === "oferece_vagas") oferecem.push({ nome: g.nome, telefone: g.telefone });
+    if (t === "precisa_carona") precisam.push({ nome: g.nome, telefone: g.telefone });
+  }
+
+  const opcoes = Object.keys(TRANSPORTE_LABEL).map((chave) => ({ chave, label: TRANSPORTE_LABEL[chave], total: counts.get(chave) ?? 0 }));
+  return { opcoes, oferecemCarona: oferecem, precisamCarona: precisam, comInstagram, semResposta };
+}
+
 export interface CategoriaResumo {
   categoria: string;
   itens: number;

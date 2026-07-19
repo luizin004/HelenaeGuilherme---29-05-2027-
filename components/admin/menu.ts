@@ -12,6 +12,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { section: "Convidados" },
   { label: "Lista de convidados", ico: "📋", href: "/admin/convidados" },
   { label: "Espaço infantil", ico: "🧸", href: "/admin/infantil" },
+  { label: "Transporte", ico: "🚗", href: "/admin/transporte" },
   { label: "Check-in", ico: "📷", href: "/admin/checkin" },
   { label: "Comunicação", ico: "✉️", href: "/admin/comunicacao" },
   { section: "Presentes" },

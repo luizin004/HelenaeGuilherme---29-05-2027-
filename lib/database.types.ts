@@ -66,6 +66,7 @@ export interface Guest {
   mensagem: string | null;
   restricao_alimentar: string | null;
   transporte: string | null;
+  instagram: string | null;
   qr_token: string;
   mesa: string | null;
   check_in_em: string | null;
