@@ -135,6 +135,26 @@ export async function listSuppliers(): Promise<SupplierRow[]> {
   return (data ?? []) as SupplierRow[];
 }
 
+export interface ContractRow {
+  id: string;
+  titulo: string;
+  supplier_id: string | null;
+  valor: number;
+  data_evento: string | null;
+  status: string;
+}
+
+export async function listContracts(): Promise<ContractRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_contracts")
+    .select("*")
+    .is("deleted_at", null)
+    .order("criado_em");
+  return (data ?? []) as ContractRow[];
+}
+
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];

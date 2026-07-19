@@ -21,8 +21,10 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Controle financeiro", ico: "💰", href: "/admin/financeiro" },
   { label: "Projeção mensal", ico: "📈", href: "/admin/financeiro", soon: true },
   { label: "Fornecedores", ico: "🤝", href: "/admin/fornecedores" },
-  { label: "Contratos", ico: "📄", href: "/admin", soon: true },
+  { label: "Contratos", ico: "📄", href: "/admin/contratos" },
   { label: "Documentos", ico: "🗂️", href: "/admin", soon: true },
+  { section: "Site" },
+  { label: "Conteúdo (CMS)", ico: "📝", href: "/admin/conteudo" },
 ];
 
 export function isSection(e: MenuEntry): e is { section: string } {
