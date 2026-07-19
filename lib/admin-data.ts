@@ -1,6 +1,60 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Guest } from "@/lib/database.types";
 
+export interface ExpenseRow {
+  id: string;
+  descricao: string;
+  estado: string;
+  gratuito: boolean;
+  valor_total_cents: number | null;
+  observacao: string | null;
+}
+
+export interface ExpensesSummary {
+  itens: number;
+  comValor: number;
+  gratuitos: number;
+  semValor: number;
+  totalOrcadoCents: number;
+  pagoCents: number;
+}
+
+export async function listExpenses(): Promise<ExpenseRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_expenses")
+    .select("*")
+    .is("deleted_at", null)
+    .order("criado_em");
+  return ((data ?? []) as ExpenseRow[]).map((e) => ({
+    ...e,
+    valor_total_cents: e.valor_total_cents === null ? null : Number(e.valor_total_cents),
+  }));
+}
+
+export async function getExpensesSummary(): Promise<ExpensesSummary> {
+  const rows = await listExpenses();
+  const supabase = createClient();
+  let pagoCents = 0;
+  if (supabase) {
+    const { data } = await supabase.from("hg_expense_installments").select("*");
+    pagoCents = (data ?? [])
+      .filter((i: { pago: boolean }) => i.pago)
+      .reduce((s: number, i: { valor_cents: number }) => s + Number(i.valor_cents), 0);
+  }
+  return {
+    itens: rows.length,
+    comValor: rows.filter((e) => e.valor_total_cents !== null).length,
+    gratuitos: rows.filter((e) => e.gratuito).length,
+    semValor: rows.filter((e) => e.valor_total_cents === null && !e.gratuito).length,
+    totalOrcadoCents: rows
+      .filter((e) => !e.gratuito)
+      .reduce((s, e) => s + (e.valor_total_cents ?? 0), 0),
+    pagoCents,
+  };
+}
+
 export interface GuestStats {
   total: number;
   confirmados: number;
