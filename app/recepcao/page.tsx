@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPage, InfoBlock } from "@/components/public/InfoPage";
+import { RanchoGallery } from "@/components/rancho/RanchoGallery";
 import { getVenues } from "@/lib/data";
 import { VENUES_FALLBACK } from "@/lib/constants";
+import { FOTOS } from "@/lib/rancho";
 import type { Venue } from "@/lib/database.types";
 
 export const revalidate = 60;
@@ -59,6 +61,11 @@ export default async function RecepcaoPage() {
       <InfoBlock titulo="Preparados para o que der e vier">
         <p>Seja com sol ou com chuva, a estrutura estará organizada para receber todos com conforto.</p>
       </InfoBlock>
+
+      <div>
+        <h2 className="mb-4 text-center font-serif text-2xl text-moss">Conheça o espaço</h2>
+        <RanchoGallery fotos={FOTOS.galeria} />
+      </div>
     </InfoPage>
   );
 }
