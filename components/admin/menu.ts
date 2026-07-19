@@ -18,6 +18,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Lista de presentes", ico: "🎁", href: "/admin/presentes" },
   { label: "Pagamentos (Asaas)", ico: "💳", href: "/admin", soon: true },
   { section: "Financeiro" },
+  { label: "Evania (assistente)", ico: "💌", href: "/admin/evania" },
   { label: "Dashboard financeiro", ico: "📉", href: "/admin/financeiro-dashboard" },
   { label: "Montar orçamento", ico: "🧮", href: "/admin/orcamento" },
   { label: "Cotações & propostas", ico: "📝", href: "/admin/cotacoes" },

@@ -52,6 +52,91 @@ export interface ExpensesSummary {
   pagoCents: number;
 }
 
+export interface EvaniaConfig {
+  ativa: boolean;
+  grupo_nome: string | null;
+  grupo_link: string | null;
+  grupo_numero: string | null;
+  horario: string;
+  dias: string;
+  canais: string;
+  responsaveis: string | null;
+  lembrete_30d: boolean;
+  lembrete_15d: boolean;
+  lembrete_7d: boolean;
+  lembrete_3d: boolean;
+  lembrete_1d: boolean;
+  lembrete_dia: boolean;
+  lembrete_apos: boolean;
+  observacao: string | null;
+}
+
+export async function getEvaniaConfig(): Promise<EvaniaConfig | null> {
+  const supabase = createClient();
+  if (!supabase) return null;
+  const { data } = await supabase.from("hg_evania_config").select("*").eq("id", 1).maybeSingle();
+  return (data as EvaniaConfig) ?? null;
+}
+
+export interface EvaniaAgenda {
+  hoje: ParcelaDetalhe[];
+  semana: ParcelaDetalhe[];
+  mes: ParcelaDetalhe[];
+  vencidas: ParcelaDetalhe[];
+  pagasSemComprovante: ParcelaDetalhe[];
+  itensSemValor: number;
+  comValorSemParcela: number;
+  fornecedoresSemContrato: number;
+}
+
+/** O que a Evania "vê" hoje — agenda + diagnósticos, calculado do banco. */
+export async function getEvaniaAgenda(): Promise<EvaniaAgenda> {
+  const supabase = createClient();
+  const vazio: EvaniaAgenda = { hoje: [], semana: [], mes: [], vencidas: [], pagasSemComprovante: [], itensSemValor: 0, comValorSemParcela: 0, fornecedoresSemContrato: 0 };
+  if (!supabase) return vazio;
+
+  const [parcelas, expenses, contracts, suppliers, { data: comps }] = await Promise.all([
+    listParcelasDetalhado(),
+    listExpenses(),
+    listContracts(),
+    listSuppliers(),
+    supabase.from("hg_comprovantes").select("installment_id").is("deleted_at", null).not("installment_id", "is", null),
+  ]);
+
+  const hojeISO = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const ymAtual = hojeISO.slice(0, 7);
+  const dias = (iso: string | null): number | null => {
+    if (!iso) return null;
+    const a = Date.parse(`${iso.slice(0, 10)}T00:00:00-03:00`);
+    const b = Date.parse(`${hojeISO}T00:00:00-03:00`);
+    return Number.isNaN(a) || Number.isNaN(b) ? null : Math.round((a - b) / 86_400_000);
+  };
+
+  const agenda: EvaniaAgenda = { ...vazio, hoje: [], semana: [], mes: [], vencidas: [], pagasSemComprovante: [] };
+  const comComprovante = new Set((comps ?? []).map((c) => c.installment_id));
+
+  for (const p of parcelas) {
+    if (p.pago) {
+      if (!comComprovante.has(p.id)) agenda.pagasSemComprovante.push(p);
+      continue;
+    }
+    const d = dias(p.vencimento);
+    if (d !== null && d < 0) agenda.vencidas.push(p);
+    if (d === 0) agenda.hoje.push(p);
+    if (d !== null && d >= 0 && d <= 7) agenda.semana.push(p);
+    if (p.vencimento && p.vencimento.slice(0, 7) === ymAtual) agenda.mes.push(p);
+  }
+
+  const naoGrat = expenses.filter((e) => !e.gratuito);
+  agenda.itensSemValor = naoGrat.filter((e) => e.valor_total_cents === null).length;
+  const comParcela = new Set(parcelas.map((p) => p.expense_id));
+  agenda.comValorSemParcela = naoGrat.filter((e) => e.valor_total_cents !== null && !comParcela.has(e.id)).length;
+  const fornecedoresComContrato = new Set(contracts.map((c) => c.supplier_id).filter(Boolean));
+  agenda.fornecedoresSemContrato = suppliers.filter((s) => !fornecedoresComContrato.has(s.id)).length;
+
+  return agenda;
+}
+
 export interface FinanceDashboard {
   previstoCents: number;
   contratadoCents: number;
