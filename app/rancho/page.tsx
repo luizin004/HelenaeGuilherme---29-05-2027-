@@ -5,9 +5,10 @@ import { WhatsAppButton } from "@/components/rancho/WhatsAppButton";
 import { CopyButton } from "@/components/rancho/CopyButton";
 import { Foto } from "@/components/rancho/Foto";
 import { RanchoGallery } from "@/components/rancho/RanchoGallery";
+import { VideoEmbed } from "@/components/rancho/VideoEmbed";
 import { getVenues } from "@/lib/data";
 import { VENUES_FALLBACK } from "@/lib/constants";
-import { RANCHO, waLink, WA_MSG, ESTRUTURA, EVENTOS, FAQ_RANCHO, FOTOS } from "@/lib/rancho";
+import { RANCHO, waLink, WA_MSG, ESTRUTURA, EVENTOS, FAQ_RANCHO, FOTOS, VIDEO_ID } from "@/lib/rancho";
 import type { Venue } from "@/lib/database.types";
 
 export const revalidate = 60;
@@ -140,6 +141,31 @@ export default async function RanchoPage() {
         <p className="eyebrow text-center">Um passeio pelo espaço</p>
         <h2 className="section-title text-center">Galeria</h2>
         <RanchoGallery fotos={FOTOS.galeria} />
+      </section>
+
+      {/* Vídeo */}
+      <section className="bg-cream px-6 py-20">
+        <div className="mx-auto max-w-content text-center">
+          <p className="eyebrow">Assista</p>
+          <h2 className="section-title">Faça um passeio pelo Rancho das Águas</h2>
+          <p className="mx-auto mb-8 max-w-xl text-muted">Conheça um pouco dos ambientes, da paisagem e da atmosfera do local.</p>
+          <VideoEmbed id={VIDEO_ID} titulo="Passeio pelo Rancho das Águas" />
+        </div>
+      </section>
+
+      {/* Clima da noite */}
+      <section className="relative">
+        <Foto src={FOTOS.noite} label="O Rancho das Águas à noite" className="h-[55vh] min-h-[360px] rounded-none" />
+        <div className="absolute inset-0 flex items-center justify-center bg-moss-deep/45 px-6">
+          <div className="max-w-xl text-center text-cream">
+            <p className="eyebrow text-gold">Quando a noite chega</p>
+            <h2 className="section-title text-cream">O clima da celebração</h2>
+            <p className="text-cream/85">
+              Com a luz do fim do dia, o deck e a área às margens do lago ganham uma atmosfera
+              aconchegante — perfeita para receber e celebrar.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Tipos de evento */}

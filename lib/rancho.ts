@@ -66,6 +66,8 @@ export const FOTOS = {
   hero: "/rancho/aerea-deck.jpg",
   sobre: "/rancho/panoramica.jpg",
   visita: "/rancho/lago-vertical.jpg",
+  noite: "/rancho/noite-deck.jpg",
+  infantil: "/rancho/crianca-correndo.jpg",
   recepcao: "/rancho/aerea-montanhas.jpg",
   galeria: [
     { src: "/rancho/aerea-deck.jpg", label: "Deck sobre o lago" },
@@ -73,8 +75,14 @@ export const FOTOS = {
     { src: "/rancho/lago-vertical.jpg", label: "Lago espelhado" },
     { src: "/rancho/panoramica.jpg", label: "Vista panorâmica do sítio" },
     { src: "/rancho/vista-geral.jpg", label: "Vista geral aérea" },
+    { src: "/rancho/noite-deck.jpg", label: "Deck iluminado à noite" },
+    { src: "/rancho/noite-bar.jpg", label: "Bar e área da festa à noite" },
+    { src: "/rancho/crianca-correndo.jpg", label: "Espaço livre para as crianças" },
   ],
 } as const;
+
+/** Vídeo de apresentação do Rancho (YouTube). */
+export const VIDEO_ID = "9PFlpPbCVAE";
 
 export const FAQ_RANCHO: { p: string; r: string }[] = [
   { p: "Como faço para conhecer o espaço?", r: "É só falar com a gente pelo WhatsApp (31) 9 9118-8181 e combinar uma visita." },

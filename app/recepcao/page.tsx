@@ -29,6 +29,13 @@ export default async function RecepcaoPage() {
       titulo="Recepção"
       intro="Depois da cerimônia, queremos receber vocês em um lugar que faz parte da nossa família."
     >
+      <div
+        role="img"
+        aria-label="Vista do Sítio Rancho das Águas"
+        className="h-60 rounded-lg md:h-80"
+        style={{ background: "url('/rancho/aerea-montanhas.jpg') center / cover no-repeat, linear-gradient(135deg, #6f7352, #4b5540)" }}
+      />
+
       <InfoBlock titulo={v?.nome ?? "Sítio Rancho das Águas"}>
         <p>{v?.endereco ?? "Itabira — MG (sentido João Monlevade)"}</p>
         <p>
