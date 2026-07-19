@@ -9,6 +9,7 @@ import { Logo } from "@/components/public/Logo";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const acessoNegado = params.get("erro") === "sem_acesso";
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -59,6 +60,9 @@ function LoginForm() {
           <input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} className="field-input" required={isSupabaseConfigured} />
         </div>
 
+        {acessoNegado && (
+          <p className="mb-4 text-sm text-danger">Esta conta não tem acesso ao painel do casamento.</p>
+        )}
         {erro && <p className="mb-4 text-sm text-danger">{erro}</p>}
 
         <button type="submit" disabled={loading} className="btn btn-dark w-full disabled:opacity-60">

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -5,8 +6,21 @@ import { signOut } from "@/app/actions/auth";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
-  const { data } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
-  const email = data?.user?.email;
+
+  let email: string | undefined;
+  if (supabase) {
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+    if (!user) redirect("/admin/login?next=/admin");
+    // Autorização: só usuários cadastrados em hg_profiles acessam o painel do casamento.
+    const { data: profile } = await supabase
+      .from("hg_profiles")
+      .select("papel")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!profile) redirect("/admin/login?erro=sem_acesso");
+    email = user.email;
+  }
 
   return (
     <div className="flex min-h-screen bg-ivory">
