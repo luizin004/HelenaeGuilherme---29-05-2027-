@@ -58,6 +58,18 @@ resolução, solução temporária, procedimento para concluir, módulo afetado.
 - **Nota:** `.env.local` (com a chave anon) fica fora do git; em produção, configurar as
   variáveis na Vercel.
 
+## PEND-009 · Ambiente de desenvolvimento não alcança o Supabase (egress)
+- **Descrição:** a política de rede DESTE sandbox de desenvolvimento **bloqueia o host**
+  `wjsbyahzwdupsmopygkg.supabase.co` (proxy responde 403 / "Host not in allowlist").
+- **Impacto:** MÉDIO — impede **validar a integração app↔banco em runtime aqui**. O banco
+  em si é validado via MCP/SQL; o app compila, tipa e passa nos testes unitários.
+- **Motivo:** política de egress da organização (não alterável a partir da sessão).
+- **Solução temporária:** validação do banco por SQL (MCP); validação de runtime fica
+  para a **publicação em produção (Vercel)**, onde não há esse bloqueio.
+- **Procedimento:** publicar na Vercel (ou liberar o host no egress do ambiente) para o
+  teste ponta a ponta app↔Supabase.
+- **Módulo:** infraestrutura / validação.
+
 ## PEND-005 · Credenciais Asaas (sandbox e produção)
 - **Descrição:** `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN` não fornecidos.
 - **Impacto:** MÉDIO — checkout de presentes inativo até configurar.
