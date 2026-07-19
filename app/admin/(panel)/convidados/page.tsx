@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Kpi, KpiGrid, Notice, PageTitle, Panel, StatusBadge } from "@/components/admin/ui";
 import { NovoConvidado } from "@/components/admin/NovoConvidado";
+import { ImportarConvidados } from "@/components/admin/ImportarConvidados";
 import { getGuestStats, listGuests } from "@/lib/admin-data";
 import { conviteUrl, qrDataUrl } from "@/lib/qr-image";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -37,6 +38,12 @@ export default async function ConvidadosPage() {
       <Panel title="Novo convidado">
         <div className="p-6">
           <NovoConvidado />
+        </div>
+      </Panel>
+
+      <Panel title="Importar em massa">
+        <div className="p-6">
+          <ImportarConvidados />
         </div>
       </Panel>
 

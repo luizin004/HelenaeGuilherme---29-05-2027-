@@ -81,6 +81,28 @@ export async function getGuestStats(): Promise<GuestStats> {
   }, { ...empty });
 }
 
+export interface SupplierRow {
+  id: string;
+  nome: string;
+  categoria: string | null;
+  contato_nome: string | null;
+  telefone: string | null;
+  email: string | null;
+  status: string;
+  observacoes: string | null;
+}
+
+export async function listSuppliers(): Promise<SupplierRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_suppliers")
+    .select("*")
+    .is("deleted_at", null)
+    .order("nome");
+  return (data ?? []) as SupplierRow[];
+}
+
 export async function listGuests(): Promise<Guest[]> {
   const supabase = createClient();
   if (!supabase) return [];
