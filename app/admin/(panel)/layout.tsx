@@ -14,14 +14,14 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <div className="flex flex-1 flex-col md:ml-[250px]">
         <header className="sticky top-0 z-40 flex items-center justify-end gap-4 border-b border-line bg-white px-6 py-3.5">
           {!isSupabaseConfigured && (
-            <span className="rounded-full bg-champagne-soft px-3 py-1 text-xs text-bronze-dark">
+            <span className="rounded-full bg-gold-soft px-3 py-1 text-xs text-moss">
               modo demonstração
             </span>
           )}
           {email && <span className="text-sm text-muted">{email}</span>}
           {isSupabaseConfigured && (
             <form action={signOut}>
-              <button className="rounded border border-line px-3 py-1.5 text-xs uppercase tracking-wide text-bronze-dark hover:bg-cream">
+              <button className="rounded border border-line px-3 py-1.5 text-xs uppercase tracking-wide text-moss hover:bg-cream">
                 Sair
               </button>
             </form>

@@ -23,7 +23,7 @@ export default async function FinanceiroPage() {
         <div className="p-6">
           <p className="mb-2 text-sm text-muted">Orçado x Realizado</p>
           <div className="h-2 overflow-hidden rounded bg-cream">
-            <div className="h-full bg-gradient-to-r from-champagne to-bronze" style={{ width: "0%" }} />
+            <div className="h-full bg-gradient-to-r from-gold to-olive" style={{ width: "0%" }} />
           </div>
         </div>
       </Panel>
@@ -34,7 +34,7 @@ export default async function FinanceiroPage() {
             <thead>
               <tr>
                 {["Descrição", "Categoria", "Fornecedor", "Valor", "Vencimento", "Status"].map((h) => (
-                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-bronze-dark">
+                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
                 ))}

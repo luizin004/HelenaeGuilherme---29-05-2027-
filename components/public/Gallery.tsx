@@ -11,7 +11,7 @@ export function Gallery({ fotos }: { fotos: GalleryPhoto[] }) {
     <section id="galeria" className="mx-auto max-w-content px-6 py-24 text-center">
       <Reveal>
         <p className="eyebrow">Momentos</p>
-        <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-champagne after:content-['']">
+        <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-gold after:content-['']">
           Galeria
         </h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -20,7 +20,7 @@ export function Gallery({ fotos }: { fotos: GalleryPhoto[] }) {
               {f.url ? (
                 <img src={f.url} alt={f.legenda ?? ""} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-champagne to-bronze font-serif text-xl text-white/80">
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gold to-olive font-serif text-xl text-white/80">
                   {f.legenda}
                 </div>
               )}

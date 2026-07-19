@@ -6,7 +6,7 @@ export function Gifts() {
     <section id="presentes" className="mx-auto max-w-content px-6 py-24 text-center">
       <Reveal>
         <p className="eyebrow">Com carinho</p>
-        <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-champagne after:content-['']">
+        <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-gold after:content-['']">
           Lista de presentes
         </h2>
         <p className="mx-auto mb-10 max-w-lg text-[1.08rem] text-muted">

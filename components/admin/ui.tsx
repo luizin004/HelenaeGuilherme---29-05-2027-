@@ -1,12 +1,12 @@
 export function PageTitle({ children }: { children: React.ReactNode }) {
-  return <h1 className="mb-6 font-serif text-3xl font-medium text-bronze-dark">{children}</h1>;
+  return <h1 className="mb-6 font-serif text-3xl font-medium text-moss">{children}</h1>;
 }
 
 export function Kpi({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="rounded-lg border-l-[3px] border-bronze bg-white p-6 shadow-card">
+    <div className="rounded-lg border-l-[3px] border-olive bg-white p-6 shadow-card">
       <div className="text-xs uppercase tracking-[0.1em] text-muted">{label}</div>
-      <div className="mt-1 font-serif text-4xl leading-none text-bronze-dark">{value}</div>
+      <div className="mt-1 font-serif text-4xl leading-none text-moss">{value}</div>
       {hint && <div className="mt-1 text-sm text-muted">{hint}</div>}
     </div>
   );
@@ -34,7 +34,7 @@ export function Panel({ title, children, action }: { title: string; children: Re
   return (
     <section className="mb-8 overflow-hidden rounded-lg bg-white shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
-        <h2 className="font-serif text-2xl text-bronze-dark">{title}</h2>
+        <h2 className="font-serif text-2xl text-moss">{title}</h2>
         {action}
       </div>
       {children}
@@ -44,6 +44,6 @@ export function Panel({ title, children, action }: { title: string; children: Re
 
 export function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-6 rounded-lg bg-champagne-soft px-5 py-4 text-sm text-bronze-dark">{children}</div>
+    <div className="mb-6 rounded-lg bg-gold-soft px-5 py-4 text-sm text-moss">{children}</div>
   );
 }

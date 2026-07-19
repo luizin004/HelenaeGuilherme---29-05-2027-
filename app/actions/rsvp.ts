@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { rsvpSchema } from "@/validations/rsvp";
+import { logger } from "@/lib/logger";
 
 export interface RsvpState {
   ok: boolean;
@@ -9,22 +11,25 @@ export interface RsvpState {
 
 /**
  * Confirmação de presença (RSVP) do site público.
- * Grava/atualiza o convidado no banco. Em modo demonstração (sem backend),
- * apenas valida e responde.
+ * Valida com Zod e grava/atualiza o convidado no banco. Em modo demonstração
+ * (sem backend), apenas valida e responde.
  */
 export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<RsvpState> {
-  const nome = String(formData.get("nome") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  const telefone = String(formData.get("telefone") ?? "").trim();
-  const acompanhantes = Number(formData.get("acompanhantes") ?? 0);
-  const presenca = String(formData.get("presenca") ?? "");
-  const mensagem = String(formData.get("mensagem") ?? "").trim();
+  const parsed = rsvpSchema.safeParse({
+    nome: formData.get("nome"),
+    email: formData.get("email"),
+    telefone: formData.get("telefone"),
+    acompanhantes: formData.get("acompanhantes"),
+    presenca: formData.get("presenca"),
+    mensagem: formData.get("mensagem"),
+  });
 
-  if (!nome) return { ok: false, message: "Por favor, informe seu nome." };
-  if (presenca !== "sim" && presenca !== "nao") {
-    return { ok: false, message: "Diga se você poderá comparecer." };
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]?.message ?? "Verifique os dados e tente novamente.";
+    return { ok: false, message: first };
   }
 
+  const { nome, email, telefone, acompanhantes, presenca, mensagem } = parsed.data;
   const primeiroNome = nome.split(" ")[0];
   const status = presenca === "sim" ? "confirmado" : "recusado";
 
@@ -32,7 +37,7 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
 
   if (supabase) {
     const observacao =
-      acompanhantes > 0 ? `Acompanhantes: ${acompanhantes}. ${mensagem}`.trim() : mensagem || null;
+      acompanhantes > 0 ? `Acompanhantes: ${acompanhantes}. ${mensagem ?? ""}`.trim() : mensagem || null;
 
     const { error } = await supabase.from("guests").insert({
       nome,
@@ -44,6 +49,7 @@ export async function submitRsvp(_prev: RsvpState, formData: FormData): Promise<
     });
 
     if (error) {
+      logger.error("Falha ao registrar RSVP", { code: error.code });
       return { ok: false, message: "Não foi possível registrar agora. Tente novamente em instantes." };
     }
   }

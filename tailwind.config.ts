@@ -2,32 +2,31 @@ import type { Config } from "tailwindcss";
 
 /**
  * Design system — Helena & Guilherme
- * Paleta bronze / champanhe extraída do monograma HG.
+ * "O início do nosso maior projeto"
+ *
+ * Paleta natural: off-white / areia / bege (base),
+ * verde-oliva e verde-musgo (primárias),
+ * marrom amadeirado e dourado fosco (acentos).
  */
 const config: Config = {
-  content: [
-    "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-  ],
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        bronze: {
-          DEFAULT: "#8a7359",
-          dark: "#5c4a38",
-          deep: "#45372a",
-          light: "#a08a6f",
-        },
-        champagne: {
-          DEFAULT: "#c9b79c",
-          soft: "#e4d9c6",
-        },
-        ivory: "#faf8f3",
+        // Primárias — verdes
+        olive: { DEFAULT: "#6f7352", light: "#8f9470" },
+        moss: { DEFAULT: "#4b5540", deep: "#333b2b" },
+        // Acentos
+        gold: { DEFAULT: "#b89b6a", soft: "#e6dcc4" }, // dourado fosco / sand-gold
+        wood: "#8a7359", // marrom amadeirado (monograma / toques quentes)
+        // Base neutra quente
+        ivory: "#faf8f3", // off-white
         cream: "#f0ebe2",
-        sand: "#ede6da",
-        ink: "#3a3129",
-        muted: "#7a6f61",
-        line: "#e0d8ca",
+        sand: "#ece3d3", // areia / bege
+        ink: "#33372b", // texto (verde-terroso escuro)
+        muted: "#6f6f5c",
+        line: "#ddd7c6",
+        // Semânticos
         success: "#6f8a5e",
         danger: "#b06a55",
         warn: "#c79a4a",
@@ -37,21 +36,17 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        soft: "0 10px 40px rgba(69,55,42,0.10)",
-        card: "0 6px 24px rgba(69,55,42,0.08)",
+        soft: "0 10px 40px rgba(51,59,43,0.10)",
+        card: "0 6px 24px rgba(51,59,43,0.08)",
       },
-      maxWidth: {
-        content: "1120px",
-      },
+      maxWidth: { content: "1120px" },
       keyframes: {
         fadeUp: {
           from: { opacity: "0", transform: "translateY(30px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
       },
-      animation: {
-        fadeUp: "fadeUp 1.2s ease both",
-      },
+      animation: { fadeUp: "fadeUp 1.2s ease both" },
     },
   },
   plugins: [],

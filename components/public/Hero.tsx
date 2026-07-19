@@ -1,11 +1,23 @@
 import { Logo } from "./Logo";
 
-export function Hero({ noiva, noivo, dataLinha }: { noiva: string; noivo: string; dataLinha: string }) {
+export function Hero({
+  noiva,
+  noivo,
+  dataLinha,
+  conceito,
+  local,
+}: {
+  noiva: string;
+  noivo: string;
+  dataLinha: string;
+  conceito: string;
+  local: string;
+}) {
   return (
     <section
       id="top"
       className="relative flex min-h-screen items-center justify-center overflow-hidden text-center text-white"
-      style={{ background: "linear-gradient(135deg,#9c876c 0%,#6f5a44 55%,#4a3a2c 100%)" }}
+      style={{ background: "linear-gradient(135deg,#6f7352 0%,#4b5540 55%,#333b2b 100%)" }}
     >
       <div
         className="absolute inset-0"
@@ -18,9 +30,13 @@ export function Hero({ noiva, noivo, dataLinha }: { noiva: string; noivo: string
         <Logo className="mx-auto mb-7 h-24 w-auto opacity-95" white />
         <p className="mb-6 text-sm uppercase tracking-[0.42em] text-white/85">Vamos nos casar</p>
         <h1 className="font-serif text-6xl font-medium leading-none sm:text-7xl md:text-8xl">
-          {noiva} <span className="italic text-champagne">&amp;</span> {noivo}
+          {noiva} <span className="italic text-gold">&amp;</span> {noivo}
         </h1>
+        <p className="mx-auto mt-5 max-w-md font-serif text-xl italic text-gold-soft md:text-2xl">
+          {conceito}
+        </p>
         <p className="my-6 text-lg uppercase tracking-[0.35em] md:text-xl">{dataLinha}</p>
+        <p className="mb-8 text-sm uppercase tracking-[0.2em] text-white/75">{local}</p>
         <a href="#rsvp" className="btn btn-light">
           Confirmar presença
         </a>

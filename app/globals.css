@@ -21,19 +21,19 @@
     @apply inline-flex items-center justify-center gap-2 rounded uppercase tracking-[0.14em] text-xs font-normal transition-all duration-200 cursor-pointer border border-transparent px-8 py-3.5;
   }
   .btn:hover { transform: translateY(-2px); }
-  .btn-light { @apply bg-white text-bronze-dark hover:bg-cream; }
-  .btn-dark { @apply bg-bronze text-white hover:bg-bronze-dark; }
-  .btn-outline { @apply bg-transparent text-bronze-dark border-bronze hover:bg-bronze hover:text-white; }
+  .btn-light { @apply bg-white text-moss hover:bg-cream; }
+  .btn-dark { @apply bg-olive text-white hover:bg-moss; }
+  .btn-outline { @apply bg-transparent text-moss border-olive hover:bg-olive hover:text-white; }
 
   /* Rótulos / eyebrows */
-  .eyebrow { @apply uppercase tracking-[0.35em] text-xs text-bronze mb-3; }
-  .section-title { @apply font-serif font-medium text-bronze-dark text-4xl md:text-5xl mb-8; }
+  .eyebrow { @apply uppercase tracking-[0.35em] text-xs text-olive mb-3; }
+  .section-title { @apply font-serif font-medium text-moss text-4xl md:text-5xl mb-8; }
 
   /* Campos de formulário */
-  .field-label { @apply text-xs uppercase tracking-[0.12em] text-bronze-dark; }
+  .field-label { @apply text-xs uppercase tracking-[0.12em] text-moss; }
   .field-input {
     @apply w-full rounded border border-line bg-white px-4 py-3 text-base text-ink transition
-      focus:border-bronze focus:outline-none focus:ring-4 focus:ring-bronze/15;
+      focus:border-olive focus:outline-none focus:ring-4 focus:ring-olive/15;
   }
 }
 

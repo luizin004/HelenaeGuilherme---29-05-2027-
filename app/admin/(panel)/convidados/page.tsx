@@ -45,7 +45,7 @@ export default async function ConvidadosPage() {
             <thead>
               <tr>
                 {["Nome", "Contato", "Status", "Mesa", "QR / Check-in"].map((h) => (
-                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-bronze-dark">
+                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
                 ))}
@@ -68,7 +68,7 @@ export default async function ConvidadosPage() {
                   <td className="px-6 py-3"><StatusBadge status={g.status} /></td>
                   <td className="px-6 py-3">{g.mesa || "—"}</td>
                   <td className="px-6 py-3">
-                    <button className="rounded border border-line px-3 py-1 text-xs uppercase tracking-wide text-bronze-dark hover:bg-cream">
+                    <button className="rounded border border-line px-3 py-1 text-xs uppercase tracking-wide text-moss hover:bg-cream">
                       Ver QR
                     </button>
                   </td>

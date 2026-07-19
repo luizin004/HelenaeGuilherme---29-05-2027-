@@ -20,7 +20,7 @@ const sans = Jost({
 export const metadata: Metadata = {
   title: "Helena & Guilherme · 29.05.2027",
   description:
-    "Helena & Guilherme — 29 de Maio de 2027. Acompanhe cada detalhe do nosso grande dia.",
+    "Helena & Guilherme — O início do nosso maior projeto. 29 de maio de 2027, Itabira · MG. Acompanhe cada detalhe do nosso grande dia.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   openGraph: {
     title: "Helena & Guilherme · Casamento",

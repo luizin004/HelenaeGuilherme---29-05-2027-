@@ -30,10 +30,10 @@ export default async function PresentesPage() {
 
   return (
     <main className="min-h-screen bg-ivory">
-      <header className="bg-bronze-deep px-6 py-5">
+      <header className="bg-moss-deep px-6 py-5">
         <div className="mx-auto flex max-w-content items-center justify-between">
           <Link href="/"><Logo className="h-10 w-auto" white /></Link>
-          <Link href="/" className="text-xs uppercase tracking-[0.1em] text-champagne">← Voltar ao site</Link>
+          <Link href="/" className="text-xs uppercase tracking-[0.1em] text-gold">← Voltar ao site</Link>
         </div>
       </header>
 
@@ -48,14 +48,14 @@ export default async function PresentesPage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((g) => (
             <article key={g.id} className="flex flex-col overflow-hidden rounded-lg bg-white text-left shadow-card">
-              <div className="aspect-[4/3] bg-gradient-to-br from-champagne to-bronze">
+              <div className="aspect-[4/3] bg-gradient-to-br from-gold to-olive">
                 {g.imagem_url && <img src={g.imagem_url} alt={g.nome} className="h-full w-full object-cover" />}
               </div>
               <div className="flex flex-1 flex-col p-5">
-                <h3 className="font-serif text-2xl text-bronze-dark">{g.nome}</h3>
+                <h3 className="font-serif text-2xl text-moss">{g.nome}</h3>
                 {g.descricao && <p className="mt-1 flex-1 text-sm text-muted">{g.descricao}</p>}
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="font-serif text-xl text-bronze">{brl(Number(g.preco))}</span>
+                  <span className="font-serif text-xl text-olive">{brl(Number(g.preco))}</span>
                   <button className="btn btn-dark px-5 py-2.5">Presentear</button>
                 </div>
               </div>

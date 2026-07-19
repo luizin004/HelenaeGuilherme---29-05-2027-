@@ -13,7 +13,7 @@ export function Sidebar() {
   return (
     <>
       <button
-        className="fixed left-4 top-3.5 z-[60] text-2xl text-bronze-dark md:hidden"
+        className="fixed left-4 top-3.5 z-[60] text-2xl text-moss md:hidden"
         aria-label="Menu"
         onClick={() => setOpen((v) => !v)}
       >
@@ -21,7 +21,7 @@ export function Sidebar() {
       </button>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col overflow-y-auto bg-bronze-deep py-6 text-champagne-soft transition-transform md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col overflow-y-auto bg-moss-deep py-6 text-gold-soft transition-transform md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -41,7 +41,7 @@ export function Sidebar() {
               href={e.href}
               onClick={() => setOpen(false)}
               className={`flex items-center gap-3 px-6 py-2.5 text-sm transition-colors hover:bg-white/5 hover:text-white ${
-                pathname === e.href ? "bg-bronze text-white" : "text-champagne-soft"
+                pathname === e.href ? "bg-olive text-white" : "text-gold-soft"
               }`}
             >
               <span className="w-5 text-center">{e.ico}</span>

@@ -38,14 +38,14 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bronze-deep px-6">
+    <main className="flex min-h-screen items-center justify-center bg-moss-deep px-6">
       <form onSubmit={submit} className="w-full max-w-sm rounded-xl bg-ivory p-8 shadow-soft">
         <Logo className="mx-auto mb-4 h-16 w-auto" />
-        <h1 className="mb-1 text-center font-serif text-2xl text-bronze-dark">Painel dos noivos</h1>
+        <h1 className="mb-1 text-center font-serif text-2xl text-moss">Painel dos noivos</h1>
         <p className="mb-6 text-center text-sm text-muted">Helena &amp; Guilherme</p>
 
         {!isSupabaseConfigured && (
-          <p className="mb-4 rounded bg-champagne-soft px-3 py-2 text-center text-xs text-bronze-dark">
+          <p className="mb-4 rounded bg-gold-soft px-3 py-2 text-center text-xs text-moss">
             Modo demonstração — clique em entrar para explorar o painel.
           </p>
         )}
@@ -71,7 +71,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-bronze-deep" />}>
+    <Suspense fallback={<main className="min-h-screen bg-moss-deep" />}>
       <LoginForm />
     </Suspense>
   );

@@ -30,7 +30,7 @@ export default function CheckinPage() {
             value={codigo}
             onChange={(e) => setCodigo(e.target.value)}
             placeholder="Código do convidado"
-            className="w-full rounded border border-line px-4 py-4 text-center text-lg focus:border-bronze focus:outline-none focus:ring-4 focus:ring-bronze/15"
+            className="w-full rounded border border-line px-4 py-4 text-center text-lg focus:border-olive focus:outline-none focus:ring-4 focus:ring-olive/15"
           />
           <button type="submit" disabled={pending} className="btn btn-dark mt-4 disabled:opacity-60">
             {pending ? "Validando…" : "Registrar chegada"}

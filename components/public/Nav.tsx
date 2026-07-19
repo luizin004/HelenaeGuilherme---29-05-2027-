@@ -36,7 +36,7 @@ export function Nav() {
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className={`h-0.5 w-6 transition-colors ${scrolled ? "bg-bronze-dark" : "bg-white"}`}
+              className={`h-0.5 w-6 transition-colors ${scrolled ? "bg-moss" : "bg-white"}`}
             />
           ))}
         </button>
@@ -46,8 +46,8 @@ export function Nav() {
             <a
               key={l.href}
               href={l.href}
-              className={`text-xs uppercase tracking-[0.1em] transition-colors hover:text-champagne ${
-                scrolled ? "text-ink hover:text-bronze" : "text-white/90"
+              className={`text-xs uppercase tracking-[0.1em] transition-colors hover:text-gold ${
+                scrolled ? "text-ink hover:text-olive" : "text-white/90"
               }`}
             >
               {l.label}
@@ -56,7 +56,7 @@ export function Nav() {
           <a
             href="#rsvp"
             className={`rounded border px-4 py-2 text-xs uppercase tracking-[0.1em] transition-colors ${
-              scrolled ? "border-bronze text-bronze" : "border-white text-white"
+              scrolled ? "border-olive text-olive" : "border-white text-white"
             }`}
           >
             Confirmar presença

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { WEDDING } from "@/lib/constants";
+import { VENUES_FALLBACK, WEDDING } from "@/lib/constants";
 import type { GalleryPhoto, Gift, StoryEvent, Venue, WeddingSettings } from "@/lib/database.types";
 
 const STORY_FALLBACK: StoryEvent[] = [
@@ -18,9 +18,9 @@ export async function getSettings(): Promise<WeddingSettings | null> {
 
 export async function getVenues(): Promise<Venue[]> {
   const supabase = createClient();
-  if (!supabase) return [];
+  if (!supabase) return VENUES_FALLBACK;
   const { data } = await supabase.from("venues").select("*").order("ordem");
-  return data ?? [];
+  return data && data.length ? data : VENUES_FALLBACK;
 }
 
 export async function getStory(): Promise<StoryEvent[]> {

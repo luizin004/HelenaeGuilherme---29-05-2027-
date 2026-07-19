@@ -29,7 +29,13 @@ export default async function HomePage() {
   return (
     <main>
       <Nav />
-      <Hero noiva={couple.noiva} noivo={couple.noivo} dataLinha={dataLinha} />
+      <Hero
+        noiva={couple.noiva}
+        noivo={couple.noivo}
+        dataLinha={dataLinha}
+        conceito={WEDDING.conceito}
+        local={WEDDING.cidade}
+      />
       <Countdown dataISO={couple.dataISO} />
       <Story historia={couple.historia} eventos={story} />
       <Details venues={venues} />

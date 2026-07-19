@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         <Kpi label="Crianças" value={stats.criancas} hint="para o espaço infantil" />
       </KpiGrid>
 
-      <h2 className="mb-4 font-serif text-2xl text-bronze-dark">Módulos</h2>
+      <h2 className="mb-4 font-serif text-2xl text-moss">Módulos</h2>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {MODULES.map((m) => (
           <Link
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
             className="block rounded-lg bg-white p-6 shadow-card transition-transform hover:-translate-y-1"
           >
             <div className="text-2xl">{m.ico}</div>
-            <h3 className="my-1 font-serif text-2xl text-bronze-dark">{m.titulo}</h3>
+            <h3 className="my-1 font-serif text-2xl text-moss">{m.titulo}</h3>
             <p className="text-sm text-muted">{m.texto}</p>
           </Link>
         ))}

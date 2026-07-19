@@ -23,7 +23,7 @@ export function Rsvp() {
       <div className="mx-auto max-w-2xl px-6 py-24 text-center">
         <Reveal>
           <p className="eyebrow">Contamos com você</p>
-          <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-champagne after:content-['']">
+          <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-gold after:content-['']">
             Confirme sua presença
           </h2>
 
@@ -64,7 +64,7 @@ export function Rsvp() {
               <p
                 role="status"
                 aria-live="polite"
-                className={`text-[0.95rem] ${state.ok ? "text-bronze" : "text-danger"}`}
+                className={`text-[0.95rem] ${state.ok ? "text-olive" : "text-danger"}`}
               >
                 {state.message}
               </p>
