@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { PessoaAudiencia } from "@/domain/comm/audience";
 
 // ============================================================
 // Padrinhos / madrinhas
@@ -395,6 +396,123 @@ export interface CommDashboard {
   audiosAguardandoAprovacao: number;
   promptsAguardandoAprovacao: number;
   whatsappPendente: boolean;
+}
+
+// ============================================================
+// Audiência (convidados enriquecidos p/ campanhas)
+// ============================================================
+export async function listGuestsForAudience(): Promise<PessoaAudiencia[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data: guests }, { data: party }, { data: perfis }] = await Promise.all([
+    supabase.from("hg_guests").select("id,nome,lado,status,telefone,eh_crianca").is("deleted_at", null),
+    supabase.from("hg_wedding_party").select("guest_id").is("deleted_at", null),
+    supabase.from("hg_guest_comm_profiles").select("guest_id,cidade_partida,opt_out"),
+  ]);
+  const padrinhoIds = new Set((party ?? []).map((p: { guest_id: string | null }) => p.guest_id).filter(Boolean));
+  const perfilMap = new Map(
+    (perfis ?? []).map((p: { guest_id: string; cidade_partida: string | null; opt_out: boolean }) => [p.guest_id, p]),
+  );
+  return (guests ?? []).map((g: Record<string, unknown>) => {
+    const perfil = perfilMap.get(g.id as string);
+    return {
+      id: g.id as string,
+      nome: g.nome as string,
+      lado: (g.lado as string) ?? null,
+      status: (g.status as string) ?? null,
+      telefone: (g.telefone as string) ?? null,
+      ehCrianca: Boolean(g.eh_crianca),
+      ehPadrinho: padrinhoIds.has(g.id as string),
+      cidadePartida: perfil?.cidade_partida ?? null,
+      optOut: perfil?.opt_out ?? false,
+    };
+  });
+}
+
+// ============================================================
+// Perfis de comunicação do convidado (§3)
+// ============================================================
+export interface GuestBasic {
+  id: string;
+  nome: string;
+  lado: string | null;
+  status: string;
+  telefone: string | null;
+}
+export async function listGuestsBasic(): Promise<GuestBasic[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_guests")
+    .select("id,nome,lado,status,telefone")
+    .is("deleted_at", null)
+    .order("nome");
+  return (data ?? []) as GuestBasic[];
+}
+
+export interface GuestCommProfile {
+  guest_id: string;
+  nome_preferido: string | null;
+  apelido_autorizado: string | null;
+  parentesco: string | null;
+  relacao_helena: string | null;
+  relacao_guilherme: string | null;
+  proximidade: string | null;
+  historia_autorizada: string | null;
+  assuntos_permitidos: string | null;
+  assuntos_proibidos: string | null;
+  tom: string | null;
+  formalidade: string | null;
+  tratamento: string | null;
+  canal_preferido: string | null;
+  cidade_partida: string | null;
+  precisa_hospedagem: boolean | null;
+  aceita_whatsapp: boolean;
+  aceita_email: boolean;
+  aceita_audio: boolean;
+  aceita_lembretes: boolean;
+  opt_out: boolean;
+  herdar_familia: boolean;
+  observacao: string | null;
+}
+export async function getGuestCommProfile(guestId: string): Promise<GuestCommProfile | null> {
+  const supabase = createClient();
+  if (!supabase) return null;
+  const { data } = await supabase.from("hg_guest_comm_profiles").select("*").eq("guest_id", guestId).maybeSingle();
+  return (data as GuestCommProfile) ?? null;
+}
+
+// ============================================================
+// Campanha (detalhe + audiência materializada)
+// ============================================================
+export interface CampaignFull extends Campaign {
+  journey_id: string | null;
+  journey_stage_id: string | null;
+  publico_filtros: Record<string, unknown>;
+  prompt_id: string | null;
+  corpo_modelo: string | null;
+}
+export async function getCampaign(id: string): Promise<CampaignFull | null> {
+  const supabase = createClient();
+  if (!supabase) return null;
+  const { data } = await supabase.from("hg_comm_campaigns").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  return (data as CampaignFull) ?? null;
+}
+
+export interface CampaignAudienceRow {
+  id: string;
+  guest_id: string | null;
+  incluido: boolean;
+  motivo_exclusao: string | null;
+}
+export async function listCampaignAudience(campaignId: string): Promise<CampaignAudienceRow[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("hg_comm_campaign_audiences")
+    .select("id,guest_id,incluido,motivo_exclusao")
+    .eq("campaign_id", campaignId);
+  return (data ?? []) as CampaignAudienceRow[];
 }
 
 export async function getCommDashboard(): Promise<CommDashboard> {

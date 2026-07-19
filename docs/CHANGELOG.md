@@ -37,6 +37,23 @@ madrinhas em toda a jornada. Nada envia sem canal validado; nada é inventado.
   transcrição automática marcada como "revisar"; a IA gera só rascunhos e nunca
   altera dados críticos. Pendências reais (envio/IA reais) dependem de provedor.
 
+### Lote 2 — construtores e testes
+- **Construtor de campanha** (`/comunicacao/campanhas/nova` + `/[id]`): filtros de
+  público (lado, RSVP, telefone, crianças, padrinhos, outra cidade) →
+  materializa a audiência com **deduplicação**, mostra incluídos e excluídos
+  **com o motivo**, e uma **prévia de envio por pessoa** (consentimento + telefone
+  + janela) via `domain/comm/audience` + `consent`. Aprovar/agendar/pausar/
+  recalcular com trilha de auditoria; aprovação exige noivos/admin.
+- **Ambiente de teste de prompt** (`/comunicacao/prompts/[id]/testar`): convidado
+  fictício ou **real mascarado**, mostra "informações usadas pela IA" e
+  "removido por privacidade", gera **3 variações locais** (`domain/comm/draft`,
+  sem IA externa, só campos autorizados), avalia e salva como exemplo.
+- **Perfis de comunicação** (`/comunicacao/perfis` + `/[guestId]`): editor por
+  convidado (tom, tratamento, história autorizada, consentimento, herança).
+- **Edição de fases** da jornada (nome, objetivo, tipo, canal, aprovação,
+  intervalo) direto em `/comunicacao/jornadas/[id]`.
+- +6 testes (audiência + rascunho local). Suite: 53 testes verdes.
+
 ## [Fase 23] Módulo financeiro completo + Evania
 Expansão do Financeiro para a "central de custos e pagamentos" da spec, tudo
 conectado (planejamento → orçamento → cotação → contrato → parcelas → contas →

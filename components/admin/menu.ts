@@ -20,6 +20,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Operação da Evania", ico: "💌", href: "/admin/comunicacao/evania" },
   { label: "Calendário", ico: "🗓️", href: "/admin/comunicacao/calendario" },
   { label: "Jornadas", ico: "🧭", href: "/admin/comunicacao/jornadas" },
+  { label: "Perfis de comunicação", ico: "🧩", href: "/admin/comunicacao/perfis" },
   { label: "Campanhas", ico: "📢", href: "/admin/comunicacao/campanhas" },
   { label: "Mensagens", ico: "✉️", href: "/admin/comunicacao/mensagens" },
   { label: "Áudios", ico: "🎙️", href: "/admin/comunicacao/audios" },

@@ -24,7 +24,10 @@ export default async function PromptDetalhe({ params }: { params: { id: string }
   return (
     <>
       <div className="mb-4"><Link href="/admin/comunicacao/prompts" className="text-sm text-olive underline">← Estúdio de prompts</Link></div>
-      <PageTitle>{prompt.nome}</PageTitle>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <PageTitle>{prompt.nome}</PageTitle>
+        <Link href={`/admin/comunicacao/prompts/${prompt.id}/testar`} className="btn btn-dark">Testar</Link>
+      </div>
       <Notice>{prompt.descricao} · A IA usa somente o contexto permitido; dados privados são removidos antes do envio.</Notice>
 
       <Panel title={`Versões (${versoes.length})`}>

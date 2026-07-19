@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { filtrarAudiencia, type FiltrosAudiencia } from "@/domain/comm/audience";
+import { listGuestsForAudience } from "@/lib/comm-data";
 
 export interface ActionState {
   ok: boolean;
@@ -272,4 +274,221 @@ export async function excluirAudio(formData: FormData): Promise<void> {
   if (!supabase) return;
   await supabase.from("hg_audio_assets").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   revalidatePath("/admin/comunicacao/audios");
+}
+
+// ============================================================
+// Campanhas (§7) — criar, materializar audiência, aprovar, agendar, pausar
+// ============================================================
+function lerFiltros(formData: FormData): FiltrosAudiencia {
+  const val = (k: string) => String(formData.get(k) ?? "");
+  return {
+    lado: (["helena", "guilherme", "ambos"].includes(val("lado")) ? val("lado") : "") as FiltrosAudiencia["lado"],
+    status: (["confirmado", "pendente", "recusado"].includes(val("status")) ? val("status") : "") as FiltrosAudiencia["status"],
+    telefone: (["com", "sem"].includes(val("telefone")) ? val("telefone") : "") as FiltrosAudiencia["telefone"],
+    incluirCriancas: val("incluir_criancas") === "on",
+    apenasPadrinhos: val("apenas_padrinhos") === "on",
+    apenasOutraCidade: val("apenas_outra_cidade") === "on",
+  };
+}
+
+export async function criarCampanha(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const nome = String(formData.get("nome") ?? "").trim();
+  const canal = String(formData.get("canal") ?? "whatsapp");
+  const aprovacao = String(formData.get("aprovacao_tipo") ?? "evania");
+  const journeyId = String(formData.get("journey_id") ?? "").trim();
+  const corpo = String(formData.get("corpo_modelo") ?? "").trim();
+  if (!nome) return { ok: false, message: "Dê um nome à campanha." };
+
+  const filtros = lerFiltros(formData);
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from("hg_comm_campaigns")
+    .insert({
+      nome,
+      canal: ["whatsapp", "email", "audio"].includes(canal) ? canal : "whatsapp",
+      aprovacao_tipo: ["nenhuma", "evania", "um_noivo", "dois_noivos", "admin"].includes(aprovacao) ? aprovacao : "evania",
+      journey_id: journeyId || null,
+      publico_filtros: filtros as unknown as Record<string, unknown>,
+      corpo_modelo: corpo || null,
+      status: "rascunho",
+      criado_por: user?.id ?? null,
+    })
+    .select("id")
+    .single();
+  if (error || !data) return { ok: false, message: "Não foi possível criar a campanha." };
+
+  // Materializa a audiência já na criação.
+  await materializarAudiencia(supabase, data.id as string, filtros);
+  await logAudit(supabase, { modulo: "comunicacao", acao: "create", registro: `hg_comm_campaigns:${data.id}`, valorNovo: { nome } });
+  revalidatePath("/admin/comunicacao/campanhas");
+  return { ok: true, message: "Campanha criada. Confira a audiência e envie para aprovação." };
+}
+
+async function materializarAudiencia(
+  supabase: NonNullable<ReturnType<typeof createClient>>,
+  campaignId: string,
+  filtros: FiltrosAudiencia,
+) {
+  const pessoas = await listGuestsForAudience();
+  const { incluidos, excluidos } = filtrarAudiencia(pessoas, filtros);
+  await supabase.from("hg_comm_campaign_audiences").delete().eq("campaign_id", campaignId);
+  const linhas = [
+    ...incluidos.map((p) => ({ campaign_id: campaignId, guest_id: p.id, incluido: true, motivo_exclusao: null })),
+    ...excluidos.map((e) => ({ campaign_id: campaignId, guest_id: e.pessoa.id, incluido: false, motivo_exclusao: e.motivo })),
+  ];
+  if (linhas.length) await supabase.from("hg_comm_campaign_audiences").insert(linhas);
+}
+
+/** Recalcula a audiência de uma campanha existente a partir dos filtros salvos. */
+export async function recalcularAudiencia(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  const { data } = await supabase.from("hg_comm_campaigns").select("publico_filtros").eq("id", id).maybeSingle();
+  const filtros = (data?.publico_filtros ?? {}) as FiltrosAudiencia;
+  await materializarAudiencia(supabase, id, filtros);
+  revalidatePath(`/admin/comunicacao/campanhas/${id}`);
+}
+
+export async function aprovarCampanha(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  const papel = await papelAtual(supabase);
+  if (!papel || !["admin", "noivos"].includes(papel)) return; // aprovação humana (§20/§29)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  await supabase.from("hg_comm_campaigns").update({ status: "aprovada", aprovado_por: user?.id ?? null }).eq("id", id);
+  await logAudit(supabase, { modulo: "comunicacao", acao: "approve", registro: `hg_comm_campaigns:${id}` });
+  revalidatePath(`/admin/comunicacao/campanhas/${id}`);
+}
+
+export async function agendarCampanha(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  const quando = String(formData.get("agendado_para") ?? "").trim();
+  if (!id || !quando) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  await supabase.from("hg_comm_campaigns").update({ status: "agendada", agendado_para: quando }).eq("id", id);
+  await logAudit(supabase, { modulo: "comunicacao", acao: "update", registro: `hg_comm_campaigns:${id}`, valorNovo: { agendado_para: quando } });
+  revalidatePath(`/admin/comunicacao/campanhas/${id}`);
+}
+
+export async function pausarCampanha(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  await supabase.from("hg_comm_campaigns").update({ status: "pausada" }).eq("id", id);
+  revalidatePath(`/admin/comunicacao/campanhas/${id}`);
+}
+
+// ============================================================
+// Perfil de comunicação do convidado (§3)
+// ============================================================
+export async function salvarPerfilComunicacao(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const guestId = String(formData.get("guest_id") ?? "").trim();
+  if (!guestId) return { ok: false, message: "Convidado inválido." };
+  const txt = (k: string) => (String(formData.get(k) ?? "").trim() || null);
+  const bool = (k: string) => formData.get(k) === "on";
+
+  const row = {
+    guest_id: guestId,
+    nome_preferido: txt("nome_preferido"),
+    apelido_autorizado: txt("apelido_autorizado"),
+    parentesco: txt("parentesco"),
+    relacao_helena: txt("relacao_helena"),
+    relacao_guilherme: txt("relacao_guilherme"),
+    proximidade: txt("proximidade"),
+    historia_autorizada: txt("historia_autorizada"),
+    assuntos_permitidos: txt("assuntos_permitidos"),
+    assuntos_proibidos: txt("assuntos_proibidos"),
+    tom: txt("tom"),
+    formalidade: txt("formalidade"),
+    tratamento: txt("tratamento"),
+    canal_preferido: txt("canal_preferido"),
+    cidade_partida: txt("cidade_partida"),
+    precisa_hospedagem: bool("precisa_hospedagem"),
+    aceita_whatsapp: bool("aceita_whatsapp"),
+    aceita_email: bool("aceita_email"),
+    aceita_audio: bool("aceita_audio"),
+    aceita_lembretes: bool("aceita_lembretes"),
+    opt_out: bool("opt_out"),
+    herdar_familia: bool("herdar_familia"),
+    observacao: txt("observacao"),
+  };
+
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+  const { error } = await supabase.from("hg_guest_comm_profiles").upsert(row, { onConflict: "guest_id" });
+  if (error) return { ok: false, message: "Não foi possível salvar o perfil." };
+  await logAudit(supabase, { modulo: "comunicacao", acao: "update", registro: `hg_guest_comm_profiles:${guestId}` });
+  revalidatePath(`/admin/comunicacao/perfis/${guestId}`);
+  revalidatePath("/admin/comunicacao/perfis");
+  return { ok: true, message: "Perfil de comunicação salvo." };
+}
+
+// ============================================================
+// Estúdio de prompts — salvar teste (com contexto enviado/removido)
+// ============================================================
+export async function salvarTestePrompt(formData: FormData): Promise<void> {
+  const versionId = String(formData.get("prompt_version_id") ?? "").trim();
+  const promptId = String(formData.get("prompt_id") ?? "").trim();
+  if (!versionId) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  const parseJson = (k: string) => {
+    try {
+      return JSON.parse(String(formData.get(k) ?? "null"));
+    } catch {
+      return null;
+    }
+  };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  await supabase.from("hg_ai_prompt_tests").insert({
+    prompt_version_id: versionId,
+    entrada: parseJson("entrada"),
+    contexto_enviado: parseJson("contexto_enviado"),
+    contexto_removido: parseJson("contexto_removido"),
+    saida: String(formData.get("saida") ?? "").trim() || null,
+    avaliacao: parseJson("avaliacao"),
+    criado_por: user?.id ?? null,
+  });
+  await logAudit(supabase, { modulo: "comunicacao", acao: "test", registro: `hg_ai_prompt_versions:${versionId}` });
+  if (promptId) revalidatePath(`/admin/comunicacao/prompts/${promptId}/testar`);
+}
+
+// ============================================================
+// Editar fase da jornada (§4/§5 editáveis)
+// ============================================================
+export async function atualizarFaseDetalhe(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const id = String(formData.get("id") ?? "").trim();
+  const journeyId = String(formData.get("journey_id") ?? "").trim();
+  if (!id) return { ok: false, message: "Fase inválida." };
+  const num = Number(formData.get("intervalo_min_dias"));
+  const patch = {
+    nome: String(formData.get("nome") ?? "").trim() || "Fase",
+    objetivo: String(formData.get("objetivo") ?? "").trim() || null,
+    tipo_mensagem: String(formData.get("tipo_mensagem") ?? "").trim() || null,
+    canal: ["whatsapp", "email", "audio"].includes(String(formData.get("canal"))) ? String(formData.get("canal")) : "whatsapp",
+    aprovacao: String(formData.get("aprovacao") ?? "evania").trim() || "evania",
+    intervalo_min_dias: Number.isFinite(num) && num >= 0 ? Math.floor(num) : 0,
+  };
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+  const { error } = await supabase.from("hg_comm_journey_stages").update(patch).eq("id", id);
+  if (error) return { ok: false, message: "Não foi possível salvar a fase." };
+  await logAudit(supabase, { modulo: "comunicacao", acao: "update", registro: `hg_comm_journey_stages:${id}` });
+  revalidatePath(`/admin/comunicacao/jornadas/${journeyId}`);
+  return { ok: true, message: "Fase atualizada." };
 }

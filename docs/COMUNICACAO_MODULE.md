@@ -71,11 +71,23 @@ crítica passa por revisão humana; a IA só gera rascunhos.
   ingresso, pagamento ou consentimento.
 - Prompts versionados: publicar não sobrescreve; a versão publicada é apontada.
 
+## Construtores (lote 2)
+
+- **Campanhas** — `/comunicacao/campanhas/nova` monta o público por filtros e
+  materializa a audiência em `hg_comm_campaign_audiences` (dedup). `/[id]` mostra
+  incluídos/excluídos com motivo e uma prévia de "prontos para envio" por pessoa
+  (consentimento + telefone + janela). Aprovar exige noivos/admin.
+- **Teste de prompt** — `/comunicacao/prompts/[id]/testar`: convidado mascarado,
+  contexto enviado/removido, 3 variações locais (sem IA), salvar exemplo.
+- **Perfis** — `/comunicacao/perfis` (+`/[guestId]`) edita `hg_guest_comm_profiles`.
+- **Fases** — edição inline em `/comunicacao/jornadas/[id]`.
+
 ## Testes
 
-`tests/comm/comunicacao.test.ts` — 22 casos cobrindo personalização,
-sanitização, envio, idempotência/dedup, herança e o **cenário obrigatório
-Carlos** (§32). Suite total: 47 testes verdes.
+`tests/comm/comunicacao.test.ts` (22) + `tests/comm/audience-draft.test.ts` (6)
+— personalização, sanitização, envio, idempotência/dedup, herança, filtro de
+audiência, rascunho local e o **cenário obrigatório Carlos** (§32). Suite total:
+53 testes verdes.
 
 ## Pendências (dependem de terceiros)
 

@@ -23,9 +23,9 @@ export default async function CampanhasPage() {
         canal validado.
       </Notice>
 
-      <Panel title={`Campanhas (${campanhas.length})`}>
+      <Panel title={`Campanhas (${campanhas.length})`} action={<Link href="/admin/comunicacao/campanhas/nova" className="btn btn-dark">Nova campanha</Link>}>
         {campanhas.length === 0 ? (
-          <p className="p-6 text-sm text-muted">Nenhuma campanha ainda. As campanhas nascem das jornadas ou de um envio manual.</p>
+          <p className="p-6 text-sm text-muted">Nenhuma campanha ainda. Crie uma com <Link href="/admin/comunicacao/campanhas/nova" className="underline">Nova campanha</Link>.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
@@ -35,7 +35,7 @@ export default async function CampanhasPage() {
               <tbody>
                 {campanhas.map((c) => (
                   <tr key={c.id} className="border-t border-line hover:bg-ivory">
-                    <td className="px-4 py-2.5 font-medium">{c.nome}</td>
+                    <td className="px-4 py-2.5 font-medium"><Link href={`/admin/comunicacao/campanhas/${c.id}`} className="text-moss underline-offset-2 hover:underline">{c.nome}</Link></td>
                     <td className="px-4 py-2.5 capitalize text-muted">{c.tipo}</td>
                     <td className="px-4 py-2.5 capitalize text-muted">{c.canal}</td>
                     <td className="px-4 py-2.5 text-muted">{c.aprovacao_tipo}</td>
