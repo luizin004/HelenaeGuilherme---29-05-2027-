@@ -29,6 +29,17 @@ export async function POST(req: Request) {
   if (!valor || valor <= 0 || !pagador?.nome) {
     return NextResponse.json({ error: "Informe valor e nome do pagador." }, { status: 400 });
   }
+  // Regra da spec (§9): valor mínimo de presente é R$ 300,00 (valor livre acima disso).
+  const VALOR_MINIMO = 300;
+  if (valor < VALOR_MINIMO) {
+    return NextResponse.json(
+      { error: `O valor mínimo de presente é R$ ${VALOR_MINIMO},00.` },
+      { status: 400 },
+    );
+  }
+  if (!["PIX", "CREDIT_CARD", "BOLETO"].includes(metodo)) {
+    return NextResponse.json({ error: "Método de pagamento inválido." }, { status: 400 });
+  }
 
   try {
     const customer = await createCustomer({

@@ -2,6 +2,28 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fase 21] Varredura completa + hardening de segurança
+### Segurança (achados dos advisors do Supabase — corrigidos e PROVADOS)
+- **CRÍTICO corrigido:** políticas de gestão usavam `using(true)` p/ qualquer
+  `authenticated` — os 11 usuários do outro sistema do projeto compartilhado podiam
+  acessar dados do casamento via API. Agora restritas a **membros de `hg_profiles`**
+  (função `hg_is_member()` SECURITY DEFINER). Prova por impersonação de JWT:
+  não-membro vê 0 despesas; admin vê 24. Storage (bucket privado) idem.
+- `hg_set_atualizado_em` com `search_path` fixo (advisor 0011).
+- **Security headers** em todas as rotas (X-Frame-Options DENY, nosniff,
+  Referrer-Policy, Permissions-Policy, HSTS) — verificados em runtime.
+### Correções / melhorias
+- **Webhook Asaas idempotente** (spec §9): tabela `hg_webhook_events` (payload
+  armazenado + dedup por `event_key`); duplicado retorna 200 sem reprocessar;
+  503 sem service_role (antes falhava silenciosamente).
+- **Valor mínimo de presente R$ 300** validado no servidor (spec) + validação de método.
+- Check-in registra `registrado_por`/`check_in_por` + auditoria.
+- `/rsvp/[token]` valida formato UUID antes de consultar (evita erro de cast).
+- Código morto removido (`validations/rsvp.ts`) e dependências órfãs
+  (`react-hook-form`, `@hookform/resolvers`) desinstaladas.
+### Verificação (tudo re-executado)
+- **Lint ✔ (primeira execução — zero erros) · typecheck ✔ · 25 unit ✔ · 6 e2e ✔ · build ✔**
+
 ## [Fases 7–14] Módulos do sistema (construídos + validados por build/testes/SQL)
 > Runtime app↔Supabase NÃO exercitado (egress do sandbox bloqueia o host — PEND-009).
 > Validação real de runtime pendente de deploy.

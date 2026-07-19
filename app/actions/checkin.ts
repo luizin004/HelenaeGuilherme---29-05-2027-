@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export interface CheckinEntry {
   token: string;
@@ -48,8 +49,23 @@ export async function registrarCheckin(token: string): Promise<CheckinResult> {
   }
 
   const agora = new Date().toISOString();
-  await supabase.from("hg_guests").update({ check_in_em: agora }).eq("id", guest.id);
-  await supabase.from("hg_checkins").insert({ guest_id: guest.id, check_in_em: agora });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await supabase
+    .from("hg_guests")
+    .update({ check_in_em: agora, check_in_por: user?.id ?? null })
+    .eq("id", guest.id);
+  await supabase
+    .from("hg_checkins")
+    .insert({ guest_id: guest.id, check_in_em: agora, registrado_por: user?.id ?? null });
+  await logAudit(supabase, {
+    modulo: "checkin",
+    acao: "checkin",
+    registro: `hg_guests:${guest.id}`,
+    valorNovo: { nome: guest.nome, check_in_em: agora },
+  });
 
   return { ok: true, message: `✓ Bem-vindo(a), ${guest.nome}!`, nome: guest.nome };
 }

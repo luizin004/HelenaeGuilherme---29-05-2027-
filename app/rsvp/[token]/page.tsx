@@ -13,11 +13,14 @@ interface GuestLookup {
   eh_crianca: boolean;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default async function RsvpTokenPage({ params }: { params: { token: string } }) {
   const supabase = createClient();
   let guest: GuestLookup | null = null;
 
-  if (supabase) {
+  // Evita chamada ao banco com token malformado (não-UUID → convite inexistente).
+  if (supabase && UUID_RE.test(params.token)) {
     const { data } = await supabase.rpc("hg_rsvp_lookup", { p_token: params.token });
     const rows = (data ?? []) as GuestLookup[];
     guest = rows[0] ?? null;

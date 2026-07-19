@@ -1,5 +1,11 @@
 # VALIDATION — Relatório de validação
 
+> **Atualização (varredura completa / Fase 21):** lint (zero erros), 25 unitários,
+> **6 e2e em Chromium real**, build e headers de segurança verificados em runtime.
+> RLS endurecida: gestão restrita a **membros** (`hg_is_member()`); prova por
+> impersonação de JWT — usuário autenticado de outro sistema vê **0** registros do
+> casamento; admin vê tudo. Webhook Asaas agora **idempotente** com payload armazenado.
+
 Fechamento da validação até onde o ambiente de desenvolvimento permite.
 **Limite conhecido (PEND-009):** o sandbox bloqueia o egress ao host do Supabase, então
 a integração **app↔Supabase em runtime** só pode ser exercitada no **deploy**. Todas as
