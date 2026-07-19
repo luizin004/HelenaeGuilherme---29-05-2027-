@@ -22,7 +22,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Projeção mensal", ico: "📈", href: "/admin/financeiro", soon: true },
   { label: "Fornecedores", ico: "🤝", href: "/admin/fornecedores" },
   { label: "Contratos", ico: "📄", href: "/admin/contratos" },
-  { label: "Documentos", ico: "🗂️", href: "/admin", soon: true },
+  { label: "Documentos", ico: "🗂️", href: "/admin/documentos" },
   { section: "Site" },
   { label: "Conteúdo (CMS)", ico: "📝", href: "/admin/conteudo" },
   { section: "Segurança" },
