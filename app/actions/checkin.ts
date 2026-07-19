@@ -2,6 +2,24 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+export interface CheckinEntry {
+  token: string;
+  nome: string;
+  chegou: boolean;
+}
+
+/** Lista para o modo recepção (offline-first). Só autenticado (RLS). */
+export async function getCheckinList(): Promise<CheckinEntry[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const { data } = await supabase.from("hg_guests").select("*").is("deleted_at", null);
+  return ((data ?? []) as { qr_token: string; nome: string; check_in_em: string | null }[]).map((g) => ({
+    token: g.qr_token,
+    nome: g.nome,
+    chegou: Boolean(g.check_in_em),
+  }));
+}
+
 export interface CheckinResult {
   ok: boolean;
   message: string;
