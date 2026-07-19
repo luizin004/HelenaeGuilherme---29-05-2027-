@@ -2,6 +2,19 @@
 
 Formato: agrupado por fase de trabalho. Datas relativas à sessão de desenvolvimento.
 
+## [Fases 7–14] Módulos do sistema (construídos + validados por build/testes/SQL)
+> Runtime app↔Supabase NÃO exercitado (egress do sandbox bloqueia o host — PEND-009).
+> Validação real de runtime pendente de deploy.
+- **Fase 7** — Financeiro real: 24 itens da planilha (centavos), cronogramas que fecham exato, tela de lançamentos.
+- **Fase 8** — 1º admin criado + autorização do painel (só `hg_profiles` acessa; bloqueia os outros usuários do projeto compartilhado).
+- **Fase 9** — RSVP por token seguro (`SECURITY DEFINER`) + `/rsvp/[token]`; cadastro de convidados + QR Code.
+- **Fase 10** — Fornecedores (CRUD) + importação de convidados em massa (parser testado).
+- **Fase 11** — Classificação de despesas (centro de custo + responsável).
+- **Fase 12** — Contratos (CRUD ligado a fornecedores) + CMS (editar história do site).
+- **Fase 13** — Trilha de auditoria (`hg_audit_log`) nas ações críticas + tela.
+- **Fase 14** — Resumo financeiro por responsável e por centro de custo.
+- **Descoberta (Fase 9):** o sandbox bloqueia o Supabase (egress 403) — validações de runtime só no deploy. Correção honesta registrada.
+
 ## [Fase 6] Backend real provisionado (isolado + RLS) + importação de convidados
 ### Adicionado
 - Schema do casamento aplicado no Supabase existente com **prefixo `hg_`** (28 tabelas,
