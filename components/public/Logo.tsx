@@ -4,7 +4,7 @@
 export function Logo({ className = "", white = false }: { className?: string; white?: boolean }) {
   return (
     <img
-      src="/logo.svg"
+      src="/logo.png"
       alt="Helena e Guilherme"
       className={`${className} ${white ? "brightness-0 invert" : ""}`}
     />
