@@ -47,12 +47,26 @@ export const VENUES_FALLBACK: Venue[] = [
   },
 ];
 
+/**
+ * Navegação principal do site — TODAS as telas acessíveis pelo cabeçalho.
+ * Âncoras (#) rolam para as seções da home; caminhos (/) abrem as páginas.
+ * Mantida em sincronia com o rodapé (components/public/Footer.tsx).
+ */
 export const NAV_LINKS = [
-  { href: "#historia", label: "Nossa história" },
-  { href: "#detalhes", label: "O grande dia" },
-  { href: "#festa", label: "A festa" },
-  { href: "#galeria", label: "Galeria" },
-  { href: "#presentes", label: "Presentes" },
+  { href: "/#historia", label: "Nossa história" },
+  { href: "/#detalhes", label: "O grande dia" },
+  { href: "/#festa", label: "A festa" },
+  { href: "/#galeria", label: "Galeria" },
+  { href: "/cerimonia", label: "Cerimônia" },
+  { href: "/recepcao", label: "Recepção" },
+  { href: "/como-chegar", label: "Como chegar" },
+  { href: "/hospedagem", label: "Hospedagem" },
+  { href: "/programacao", label: "Programação" },
+  { href: "/duvidas", label: "Dúvidas" },
+  { href: "/presentes", label: "Presentes" },
+  { href: "/rancho", label: "O espaço (Rancho)" },
+  { href: "/privacidade", label: "Privacidade" },
+  { href: "/termos", label: "Termos" },
 ] as const;
 
 /** Cardápio da recepção (dados fornecidos pelo casal). */
