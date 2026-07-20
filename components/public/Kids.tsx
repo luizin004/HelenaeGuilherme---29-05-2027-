@@ -21,9 +21,9 @@ export function Kids() {
           </p>
           <div
             role="img"
-            aria-label="Criança brincando no gramado do Rancho das Águas"
+            aria-label="Ilustração: crianças brincando à beira do lago"
             className="mx-auto mb-10 h-56 max-w-2xl rounded-lg md:h-72"
-            style={{ background: "url('/rancho/crianca-correndo.jpg') center / cover no-repeat, linear-gradient(135deg, #8f9470, #6f7352)" }}
+            style={{ background: "url('/images/espaco-infantil-ilustracao.jpg') center / cover no-repeat, linear-gradient(135deg, #8f9470, #6f7352)" }}
           />
           <div className="grid gap-8 md:grid-cols-3">
             {FEATURES.map((f) => (
