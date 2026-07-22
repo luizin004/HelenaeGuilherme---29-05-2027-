@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { buildSchedule } from "@/domain/finance/installments";
+import { gerarDatas } from "@/domain/finance/schedule";
 
 export interface InstallmentState {
   ok: boolean;
@@ -17,13 +18,13 @@ interface ExistingInstallment {
   pago: boolean;
 }
 
-/** Soma N meses a uma data ISO (YYYY-MM-DD), tratando fim de mês. */
-function addMonths(iso: string, months: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const base = new Date(Date.UTC(y, m - 1 + months, 1));
-  const lastDay = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0)).getUTCDate();
-  base.setUTCDate(Math.min(d, lastDay));
-  return base.toISOString().slice(0, 10);
+/** Telas que dependem do cronograma — revalidadas juntas (fonte única, §25). */
+function revalidarFinanceiro() {
+  for (const t of [
+    "/admin/parcelas", "/admin/financeiro", "/admin/contas",
+    "/admin/calendario", "/admin/projecao", "/admin/fluxo-caixa",
+    "/admin/financeiro-dashboard", "/admin/responsaveis", "/admin/divisao",
+  ]) revalidatePath(t);
 }
 
 /**
@@ -38,6 +39,11 @@ export async function gerarParcelas(_prev: InstallmentState, formData: FormData)
   const n = Number(formData.get("n") ?? 0);
   const primeiroVenc = String(formData.get("primeiro_vencimento") ?? "").trim();
   const motivo = String(formData.get("motivo") ?? "").trim();
+  // Condição de pagamento (referência): intervalo em dias OU mensal; responsável; forma.
+  const mensal = String(formData.get("mensal") ?? "") === "on";
+  const intervaloDias = Number(formData.get("intervalo_dias") ?? 30);
+  const responsavelPayerId = String(formData.get("responsavel_payer_id") ?? "").trim();
+  const metodoId = String(formData.get("metodo_id") ?? "").trim();
 
   if (!expenseId) return { ok: false, message: "Despesa inválida." };
   if (!Number.isInteger(n) || n < 1 || n > 60) return { ok: false, message: "Número de parcelas entre 1 e 60." };
@@ -56,11 +62,29 @@ export async function gerarParcelas(_prev: InstallmentState, formData: FormData)
   if (expense.gratuito) return { ok: false, message: "Item gratuito não gera parcelas." };
   if (expense.valor_total_cents === null) return { ok: false, message: "Defina o valor total antes de parcelar." };
 
-  // Cronograma novo (fechamento exato garantido pelo motor).
-  const vencimentos = primeiroVenc
-    ? Array.from({ length: n }, (_, i) => addMonths(primeiroVenc, i))
-    : undefined;
-  const schedule = buildSchedule({ totalCents: Number(expense.valor_total_cents), n, vencimentos });
+  // Datas do cronograma (1º vencimento + intervalo em dias, ou mensal no mesmo dia).
+  const datas = gerarDatas(primeiroVenc, n, { mensal, intervaloDias });
+  const schedule = buildSchedule({
+    totalCents: Number(expense.valor_total_cents),
+    n,
+    vencimentos: datas,
+  });
+
+  // Forma de pagamento padrão da despesa (pré-preenche o registro de pagamento).
+  if (formData.has("metodo_id")) {
+    await supabase.from("hg_expenses").update({ metodo_id: metodoId || null }).eq("id", expenseId);
+  }
+
+  // Responsável pela cobrança: define a divisão como responsável ÚNICO (desembolso total).
+  // Alimenta Responsáveis / Divisão / Projeção. Só quando há valor e responsável escolhido.
+  if (responsavelPayerId) {
+    await supabase.from("hg_expense_payer_splits").delete().eq("expense_id", expenseId);
+    await supabase.from("hg_expense_payer_splits").insert({
+      expense_id: expenseId,
+      payer_id: responsavelPayerId,
+      valor_cents: Number(expense.valor_total_cents),
+    });
+  }
 
   // Versiona o cronograma anterior, se existir.
   const { data: atuais } = await supabase
@@ -105,11 +129,30 @@ export async function gerarParcelas(_prev: InstallmentState, formData: FormData)
     modulo: "financeiro",
     acao: atuais && atuais.length > 0 ? "renegociar_parcelas" : "gerar_parcelas",
     registro: `hg_expenses:${expenseId}`,
-    valorNovo: { n, primeiroVenc: primeiroVenc || null, motivo: motivo || null },
+    valorNovo: { n, primeiroVenc: primeiroVenc || null, mensal, intervaloDias, responsavelPayerId: responsavelPayerId || null, motivo: motivo || null },
   });
-  revalidatePath("/admin/parcelas");
-  revalidatePath("/admin/financeiro");
-  return { ok: true, message: `Cronograma de ${n}× salvo para ${expense.descricao}.` };
+  revalidarFinanceiro();
+  const como = primeiroVenc ? (mensal ? "mensal" : `a cada ${intervaloDias} dias`) : "sem datas";
+  return { ok: true, message: `Cronograma de ${n}× (${como}) salvo para ${expense.descricao}.` };
+}
+
+/** Ajusta o vencimento de UMA parcela (para o cronograma nunca virar um problema). */
+export async function atualizarVencimentoParcela(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  const vencimento = String(formData.get("vencimento") ?? "").trim() || null;
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  const { error } = await supabase.from("hg_expense_installments").update({ vencimento }).eq("id", id);
+  if (!error) {
+    await logAudit(supabase, {
+      modulo: "financeiro",
+      acao: "ajustar_vencimento",
+      registro: `hg_expense_installments:${id}`,
+      valorNovo: { vencimento },
+    });
+    revalidarFinanceiro();
+  }
 }
 
 /** Marca/desmarca uma parcela como paga (regra 5: sem alterar vencimento). */

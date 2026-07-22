@@ -2,16 +2,17 @@ import { Notice, Panel } from "@/components/admin/ui";
 import { PageHeader, SummaryCard, FinanceStatusBadge } from "@/components/admin/finance/ui";
 import { PagamentoForm } from "@/components/admin/finance/PagamentoForm";
 import { GerarParcelas } from "@/components/admin/GerarParcelas";
-import { listParcelaveis } from "@/lib/admin-data";
+import { atualizarVencimentoParcela } from "@/app/actions/installments";
+import { listParcelaveis, getPayers } from "@/lib/admin-data";
 import { loadFinance, type ContaRow } from "@/lib/finance-core";
 import { formatCents, sumCents } from "@/domain/money";
-import { fmtDateBR } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
 export default async function ParcelasPage() {
-  const [rows, d] = await Promise.all([listParcelaveis(), loadFinance()]);
+  const [rows, d, payers] = await Promise.all([listParcelaveis(), loadFinance(), getPayers()]);
+  const responsaveis = payers.filter((p) => p.nome !== "Gratuito");
 
   // Estado calculado de cada parcela vem da FONTE ÚNICA (pagamentos parciais incluídos).
   const porParcela = new Map<string, ContaRow>();
@@ -55,7 +56,7 @@ export default async function ParcelasPage() {
               title={`${r.descricao} · ${formatCents(r.valor_total_cents)}${r.versoes > 0 ? ` · v${r.versoes + 1}` : ""}`}
             >
               <div className="space-y-4 p-6">
-                <GerarParcelas expenseId={r.id} temParcelas={r.parcelas.length > 0} />
+                <GerarParcelas expenseId={r.id} temParcelas={r.parcelas.length > 0} metodos={metodos} responsaveis={responsaveis} />
 
                 {r.parcelas.length === 0 ? (
                   <p className="text-sm text-muted">Sem cronograma. Gere as parcelas acima.</p>
@@ -83,7 +84,13 @@ export default async function ParcelasPage() {
                                 <td className="py-2 font-serif text-moss">{formatCents(p.valor_cents)}</td>
                                 <td className="py-2 text-success">{c?.pagoCents ? formatCents(c.pagoCents) : "—"}</td>
                                 <td className="py-2 text-warn">{c?.saldoCents ? formatCents(c.saldoCents) : "—"}</td>
-                                <td className="py-2 text-muted">{p.vencimento ? fmtDateBR(p.vencimento) : "sem data"}</td>
+                                <td className="py-2">
+                                  <form action={atualizarVencimentoParcela} className="flex items-center gap-1">
+                                    <input type="hidden" name="id" value={p.id} />
+                                    <input type="date" name="vencimento" defaultValue={p.vencimento ?? ""} className="field-input py-1 text-xs" aria-label={`Vencimento da parcela ${p.numero}`} />
+                                    <button type="submit" className="text-xs text-olive underline">salvar</button>
+                                  </form>
+                                </td>
                                 <td className="py-2">{c ? <FinanceStatusBadge status={c.status} /> : "—"}</td>
                                 <td className="py-2 text-right">
                                   {c && c.saldoCents > 0 ? (
