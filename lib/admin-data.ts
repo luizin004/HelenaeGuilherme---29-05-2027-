@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Guest } from "@/lib/database.types";
+import { normalizarFaixa } from "@/domain/convites/caixas";
 
 export interface ExpenseRow {
   id: string;
@@ -884,12 +885,14 @@ export interface GuestStats {
   confirmados: number;
   pendentes: number;
   recusados: number;
+  adultos: number;
+  jovens: number;
   criancas: number;
 }
 
 export async function getGuestStats(): Promise<GuestStats> {
   const supabase = createClient();
-  const empty = { total: 0, confirmados: 0, pendentes: 0, recusados: 0, criancas: 0 };
+  const empty = { total: 0, confirmados: 0, pendentes: 0, recusados: 0, adultos: 0, jovens: 0, criancas: 0 };
   if (!supabase) return empty;
 
   const { data } = await supabase.from("hg_guests").select("*").is("deleted_at", null);
@@ -900,7 +903,10 @@ export async function getGuestStats(): Promise<GuestStats> {
     if (g.status === "confirmado") acc.confirmados += 1;
     if (g.status === "pendente") acc.pendentes += 1;
     if (g.status === "recusado") acc.recusados += 1;
-    if (g.eh_crianca) acc.criancas += 1;
+    const faixa = normalizarFaixa(g.faixa_etaria as string | null, Boolean(g.eh_crianca));
+    if (faixa === "crianca") acc.criancas += 1;
+    else if (faixa === "jovem") acc.jovens += 1;
+    else acc.adultos += 1;
     return acc;
   }, { ...empty });
 }

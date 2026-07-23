@@ -36,9 +36,14 @@ export function NovoConvidado() {
           ))}
         </select>
       </div>
-      <label className="flex items-center gap-2 py-3 text-sm text-muted">
-        <input type="checkbox" name="eh_crianca" /> Criança
-      </label>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="faixa" className="field-label">Faixa</label>
+        <select id="faixa" name="faixa_etaria" defaultValue="adulto" className="field-input">
+          <option value="adulto">Adulto</option>
+          <option value="jovem">Jovem</option>
+          <option value="crianca">Criança</option>
+        </select>
+      </div>
       <Submit />
       {state.message && (
         <span className={`text-sm ${state.ok ? "text-olive" : "text-danger"}`}>{state.message}</span>

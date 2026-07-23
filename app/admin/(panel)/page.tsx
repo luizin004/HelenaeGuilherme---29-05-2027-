@@ -64,7 +64,7 @@ export default async function DashboardPage() {
           hint={`${stats.confirmados} confirmados · ${stats.pendentes} pendentes`}
         />
         <Kpi label="Presentes recebidos" value={brl(gifts.recebido)} hint={`${gifts.contribuicoes} contribuições`} />
-        <Kpi label="Crianças" value={stats.criancas} hint="para o espaço infantil" />
+        <Kpi label="Crianças" value={stats.criancas} hint={`${stats.adultos} adultos · ${stats.jovens} jovens`} />
       </KpiGrid>
 
       <h2 className="mb-3 mt-8 font-serif text-2xl text-moss">Padrinhos & caixas</h2>

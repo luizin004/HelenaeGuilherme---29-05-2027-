@@ -28,9 +28,9 @@ export default async function ConvidadosPage() {
       <PageTitle>Convidados</PageTitle>
 
       <KpiGrid>
-        <Kpi label="Total" value={stats.total} />
-        <Kpi label="Confirmados" value={stats.confirmados} />
-        <Kpi label="Pendentes" value={stats.pendentes} />
+        <Kpi label="Total" value={stats.total} hint={`${stats.confirmados} confirmados · ${stats.pendentes} pendentes`} />
+        <Kpi label="Adultos" value={stats.adultos} />
+        <Kpi label="Jovens" value={stats.jovens} />
         <Kpi label="Crianças" value={stats.criancas} />
       </KpiGrid>
 
@@ -94,7 +94,7 @@ export default async function ConvidadosPage() {
                   </td>
                   <td className="px-6 py-3">
                     <ConvidadoActions
-                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, group_id: g.group_id, papel: g.papel, eh_crianca: g.eh_crianca }}
+                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, group_id: g.group_id, papel: g.papel, faixa_etaria: g.faixa_etaria, eh_crianca: g.eh_crianca }}
                       grupos={gruposOpts}
                     />
                   </td>

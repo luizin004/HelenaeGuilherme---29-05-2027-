@@ -13,6 +13,13 @@ export interface GuestFormState {
 const PAPEL_VALIDO = new Set(PAPEIS.map((p) => p.value as string));
 type DB = NonNullable<ReturnType<typeof createClient>>;
 
+/** Faixa etária do formulário (compat: se não vier faixa, usa o checkbox de criança). */
+function normalizarFaixaForm(formData: FormData): "adulto" | "jovem" | "crianca" {
+  const f = String(formData.get("faixa_etaria") ?? "").trim();
+  if (f === "adulto" || f === "jovem" || f === "crianca") return f;
+  return formData.get("eh_crianca") === "on" ? "crianca" : "adulto";
+}
+
 /**
  * Mantém a LISTA DE PADRINHOS derivada do papel do convidado (FASE 3):
  *  • virou padrinho/madrinha → cria/reativa o registro em hg_wedding_party (por guest_id);
@@ -61,7 +68,8 @@ export async function criarConvidado(_prev: GuestFormState, formData: FormData):
   const email = String(formData.get("email") ?? "").trim();
   const telefone = String(formData.get("telefone") ?? "").trim();
   const papel = String(formData.get("papel") ?? "convidado").trim();
-  const ehCrianca = formData.get("eh_crianca") === "on";
+  const faixa = normalizarFaixaForm(formData);
+  const ehCrianca = faixa === "crianca";
 
   if (!nome) return { ok: false, message: "Informe o nome do convidado." };
   const papelFinal = PAPEL_VALIDO.has(papel) ? papel : "convidado";
@@ -76,6 +84,7 @@ export async function criarConvidado(_prev: GuestFormState, formData: FormData):
       email: email || null,
       telefone: telefone || null,
       papel: papelFinal,
+      faixa_etaria: faixa,
       eh_crianca: ehCrianca,
     })
     .select("id")
@@ -101,7 +110,8 @@ export async function atualizarConvidado(_prev: GuestFormState, formData: FormDa
   const telefone = String(formData.get("telefone") ?? "").trim();
   const mesa = String(formData.get("mesa") ?? "").trim();
   const grupo = String(formData.get("group_id") ?? "").trim();
-  const ehCrianca = formData.get("eh_crianca") === "on";
+  const faixa = normalizarFaixaForm(formData);
+  const ehCrianca = faixa === "crianca";
   const temPapel = formData.has("papel");
   const papel = String(formData.get("papel") ?? "convidado").trim();
 
@@ -118,6 +128,7 @@ export async function atualizarConvidado(_prev: GuestFormState, formData: FormDa
     telefone: telefone || null,
     mesa: mesa || null,
     group_id: grupo || null,
+    faixa_etaria: faixa,
     eh_crianca: ehCrianca,
   };
   if (temPapel) patch.papel = papelFinal;

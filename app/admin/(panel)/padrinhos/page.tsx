@@ -2,10 +2,21 @@ import Link from "next/link";
 import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
 import { PadrinhoForm } from "@/components/admin/comm/PadrinhoForm";
 import { excluirPadrinho } from "@/app/actions/padrinhos";
-import { listPadrinhos, getPadrinhosPendencias } from "@/lib/comm-data";
+import { listPadrinhos, getPadrinhosPendencias, listParesPadrinhos } from "@/lib/comm-data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
+
+const FILTROS = [
+  { k: "todos", label: "Todos" },
+  { k: "padrinhos", label: "Padrinhos" },
+  { k: "madrinhas", label: "Madrinhas" },
+  { k: "casal", label: "Em casal" },
+  { k: "sem_par", label: "A vincular" },
+  { k: "individual", label: "Caixa individual" },
+  { k: "sem_telefone", label: "Sem telefone" },
+] as const;
+type Filtro = (typeof FILTROS)[number]["k"];
 
 const STATUS_BADGE: Record<string, string> = {
   confirmado: "bg-[#e6efe0] text-success",
@@ -24,8 +35,33 @@ const ATALHOS: { href: string; ico: string; titulo: string; desc: string }[] = [
   { href: "/admin/padrinhos/tarefas", ico: "✅", titulo: "Tarefas", desc: "To-dos e responsáveis." },
 ];
 
-export default async function PadrinhosPage() {
-  const [membros, pend] = await Promise.all([listPadrinhos(), getPadrinhosPendencias()]);
+export default async function PadrinhosPage({ searchParams }: { searchParams: { f?: string } }) {
+  const [membros, pend, pares] = await Promise.all([listPadrinhos(), getPadrinhosPendencias(), listParesPadrinhos()]);
+  const filtro = (FILTROS.some((f) => f.k === searchParams.f) ? searchParams.f : "todos") as Filtro;
+
+  // Status de vínculo/caixa de cada padrinho.
+  const parDe = new Map<string, string>(); // memberId → nome do par
+  for (const p of pares) {
+    if (p.member_a) parDe.set(p.member_a, p.nomeB ?? "par");
+    if (p.member_b) parDe.set(p.member_b, p.nomeA ?? "par");
+  }
+  const vinculo = (id: string, caixaIndividual: boolean): { label: string; tom: string } => {
+    if (parDe.has(id)) return { label: `casal · ${parDe.get(id)}`, tom: "bg-[#e6efe0] text-success" };
+    if (caixaIndividual) return { label: "caixa individual", tom: "bg-[#eef1e6] text-olive" };
+    return { label: "a vincular", tom: "bg-[#f6ecd6] text-warn" };
+  };
+
+  const lista = membros.filter((m) => {
+    switch (filtro) {
+      case "padrinhos": return m.papel === "padrinho";
+      case "madrinhas": return m.papel === "madrinha";
+      case "casal": return parDe.has(m.id);
+      case "sem_par": return !parDe.has(m.id) && !m.caixa_individual;
+      case "individual": return !parDe.has(m.id) && m.caixa_individual;
+      case "sem_telefone": return !m.telefone;
+      default: return true;
+    }
+  });
 
   return (
     <>
@@ -62,45 +98,64 @@ export default async function PadrinhosPage() {
         <PadrinhoForm />
       </Panel>
 
-      <Panel title={`Lista (${membros.length})`} action={<Link href="/admin/padrinhos/pendencias" className="text-sm text-olive underline">ver pendências</Link>}>
+      <Panel title={`Lista (${lista.length})`} action={<Link href="/admin/padrinhos/duplas" className="text-sm text-olive underline">casais e caixas</Link>}>
+        <div className="flex flex-wrap gap-1.5 border-b border-line px-4 py-3" role="tablist" aria-label="Filtros de padrinhos">
+          {FILTROS.map((f) => (
+            <Link
+              key={f.k}
+              role="tab"
+              aria-selected={filtro === f.k}
+              href={f.k === "todos" ? "/admin/padrinhos" : `/admin/padrinhos?f=${f.k}`}
+              className={`rounded-full px-3 py-1 text-xs uppercase tracking-wide transition ${
+                filtro === f.k ? "bg-moss text-white" : "bg-white text-muted shadow-card hover:text-moss"
+              }`}
+            >
+              {f.label}
+            </Link>
+          ))}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Nome", "Papel", "Lado", "Cidade", "Confirmação", "Traje", "Ensaio", "Ações"].map((h) => (
+                {["Nome", "Papel", "Vínculo / caixa", "Lado", "Confirmação", "Traje", "Ações"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {membros.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted">Nenhum padrinho cadastrado ainda.</td></tr>
+              {lista.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted">Nenhum padrinho neste filtro.</td></tr>
               )}
-              {membros.map((m) => (
-                <tr key={m.id} className="border-t border-line align-top hover:bg-ivory">
-                  <td className="px-4 py-2.5 font-medium">
-                    <Link href={`/admin/padrinhos/${m.id}`} className="text-moss underline-offset-2 hover:underline">{m.nome}</Link>
-                    {m.relacao && <div className="text-xs text-muted">{m.relacao}</div>}
-                  </td>
-                  <td className="px-4 py-2.5 capitalize text-muted">{m.papel}</td>
-                  <td className="px-4 py-2.5 capitalize text-muted">{m.lado ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-muted">{m.cidade ?? "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs ${STATUS_BADGE[m.status] ?? "bg-cream text-muted"}`}>{m.status}</span>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-muted">{m.traje_status.replace(/_/g, " ")}</td>
-                  <td className="px-4 py-2.5 text-xs text-muted">{m.ensaio_status}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex gap-3">
-                      <Link href={`/admin/padrinhos/${m.id}`} className="text-xs text-olive underline">abrir</Link>
-                      <form action={excluirPadrinho}>
-                        <input type="hidden" name="id" value={m.id} />
-                        <button type="submit" className="text-xs text-danger underline">excluir</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {lista.map((m) => {
+                const v = vinculo(m.id, m.caixa_individual);
+                return (
+                  <tr key={m.id} className="border-t border-line align-top hover:bg-ivory">
+                    <td className="px-4 py-2.5 font-medium">
+                      <Link href={`/admin/padrinhos/${m.id}`} className="text-moss underline-offset-2 hover:underline">{m.nome}</Link>
+                      {!m.telefone && <div className="text-xs text-warn">sem telefone</div>}
+                    </td>
+                    <td className="px-4 py-2.5 capitalize text-muted">{m.papel}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs ${v.tom}`}>{v.label}</span>
+                    </td>
+                    <td className="px-4 py-2.5 capitalize text-muted">{m.lado ?? "—"}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs ${STATUS_BADGE[m.status] ?? "bg-cream text-muted"}`}>{m.status}</span>
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-muted">{m.traje_status.replace(/_/g, " ")}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex gap-3">
+                        <Link href={`/admin/padrinhos/${m.id}`} className="text-xs text-olive underline">abrir</Link>
+                        <form action={excluirPadrinho}>
+                          <input type="hidden" name="id" value={m.id} />
+                          <button type="submit" className="text-xs text-danger underline">excluir</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

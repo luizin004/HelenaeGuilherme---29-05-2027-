@@ -15,6 +15,7 @@ export interface ConvidadoEditavel {
   mesa: string | null;
   group_id: string | null;
   papel: string | null;
+  faixa_etaria: string | null;
   eh_crianca: boolean;
 }
 
@@ -62,9 +63,11 @@ export function ConvidadoActions({ g, grupos }: { g: ConvidadoEditavel; grupos: 
           </div>
           <div className="grid grid-cols-2 items-center gap-2">
             <input name="mesa" defaultValue={g.mesa ?? ""} placeholder="Mesa" className="field-input py-1.5 text-sm" />
-            <label className="flex items-center gap-2 text-xs text-muted">
-              <input type="checkbox" name="eh_crianca" defaultChecked={g.eh_crianca} /> É criança
-            </label>
+            <select name="faixa_etaria" defaultValue={g.faixa_etaria ?? (g.eh_crianca ? "crianca" : "adulto")} className="field-input py-1.5 text-sm">
+              <option value="adulto">Adulto</option>
+              <option value="jovem">Jovem</option>
+              <option value="crianca">Criança</option>
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <select name="papel" defaultValue={g.papel ?? "convidado"} className="field-input py-1.5 text-sm">

@@ -85,13 +85,15 @@ describe("agrupamento por fill-down (célula mesclada)", () => {
 });
 
 describe("lista rápida (digitar todo mundo, 1 por linha)", () => {
-  it("conta total, adultos e crianças; marca criança por (c)/(criança)", () => {
-    const r = parseListaRapida("Ana\nJoão (c)\nMaria (criança)\nPedro - crianca\nBia");
-    expect(r.total).toBe(5);
+  it("conta por faixa; marca criança (c) e jovem (j)", () => {
+    const r = parseListaRapida("Ana\nJoão (c)\nMaria (criança)\nPedro - crianca\nBia (j)\nLia (jovem)");
+    expect(r.total).toBe(6);
     expect(r.criancas).toBe(3);
-    expect(r.adultos).toBe(2);
-    expect(r.pessoas[1]).toEqual({ nome: "João", ehCrianca: true });
-    expect(r.pessoas[4]).toEqual({ nome: "Bia", ehCrianca: false });
+    expect(r.jovens).toBe(2);
+    expect(r.adultos).toBe(1);
+    expect(r.pessoas[1]).toEqual({ nome: "João", faixa: "crianca" });
+    expect(r.pessoas[4]).toEqual({ nome: "Bia", faixa: "jovem" });
+    expect(r.pessoas[0]).toEqual({ nome: "Ana", faixa: "adulto" });
   });
 
   it("remove duplicados no próprio lote e linhas vazias", () => {

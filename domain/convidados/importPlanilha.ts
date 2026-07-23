@@ -20,7 +20,7 @@ export type TipoGrupo = "familiar" | "casal" | "solo" | "padrinhos" | "personali
 
 export interface MembroDraft {
   nome: string;
-  papel: "convidado" | "padrinho";
+  papel: "convidado" | "padrinho" | "madrinha";
 }
 
 export interface GrupoDraft {
@@ -166,25 +166,30 @@ export function previewPlanilha(texto: string): ImportPreview {
 
 // ————————————————————————————————————————————————— Lista rápida
 
+export type FaixaEtariaImport = "adulto" | "jovem" | "crianca";
+
 export interface PessoaRapida {
   nome: string;
-  ehCrianca: boolean;
+  faixa: FaixaEtariaImport;
 }
 
 export interface ListaRapidaPreview {
   pessoas: PessoaRapida[];
   total: number;
   adultos: number;
+  jovens: number;
   criancas: number;
 }
 
-// Marcadores de criança no fim da linha: (c), (crianca), (criança), " - crianca".
+// Marcadores no fim da linha: criança (c)/(criança)/"- crianca"; jovem (j)/(jovem).
 const MARCA_CRIANCA = /\s*(?:\((?:c|crian[cç]a)\)|[-–]\s*crian[cç]a)\s*$/i;
+const MARCA_JOVEM = /\s*(?:\((?:j|jovem)\)|[-–]\s*jovem)\s*$/i;
 
 /**
- * Lista rápida: uma pessoa por linha. Para marcar criança, basta terminar a
- * linha com "(c)" ou "(criança)". Ideal para "ir digitando todo mundo" e depois
- * vincular às famílias. Sempre devolve o total e a contagem de crianças.
+ * Lista rápida: uma pessoa por linha. Para classificar a faixa, termine a linha
+ * com "(c)"/"(criança)" ou "(j)"/"(jovem)"; sem marcador é adulto. Ideal para
+ * "ir digitando todo mundo" e depois vincular às famílias. Sempre devolve o
+ * total e a contagem por faixa.
  */
 export function parseListaRapida(texto: string): ListaRapidaPreview {
   const vistos = new Set<string>();
@@ -192,18 +197,26 @@ export function parseListaRapida(texto: string): ListaRapidaPreview {
   for (const bruta of texto.split(/\r?\n/)) {
     let linha = bruta.trim();
     if (!linha) continue;
-    const ehCrianca = MARCA_CRIANCA.test(linha);
-    linha = limpar(linha.replace(MARCA_CRIANCA, ""));
+    let faixa: FaixaEtariaImport = "adulto";
+    if (MARCA_CRIANCA.test(linha)) {
+      faixa = "crianca";
+      linha = linha.replace(MARCA_CRIANCA, "");
+    } else if (MARCA_JOVEM.test(linha)) {
+      faixa = "jovem";
+      linha = linha.replace(MARCA_JOVEM, "");
+    }
+    linha = limpar(linha);
     if (!linha) continue;
     const chave = linha.toLowerCase();
     if (vistos.has(chave)) continue; // evita duplicar no próprio lote
     vistos.add(chave);
-    pessoas.push({ nome: linha, ehCrianca });
+    pessoas.push({ nome: linha, faixa });
   }
   return {
     pessoas,
     total: pessoas.length,
-    adultos: pessoas.filter((p) => !p.ehCrianca).length,
-    criancas: pessoas.filter((p) => p.ehCrianca).length,
+    adultos: pessoas.filter((p) => p.faixa === "adulto").length,
+    jovens: pessoas.filter((p) => p.faixa === "jovem").length,
+    criancas: pessoas.filter((p) => p.faixa === "crianca").length,
   };
 }
