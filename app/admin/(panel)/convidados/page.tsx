@@ -2,6 +2,7 @@
 import { Kpi, KpiGrid, Notice, PageTitle, Panel, StatusBadge } from "@/components/admin/ui";
 import { NovoConvidado } from "@/components/admin/NovoConvidado";
 import { ImportarConvidados } from "@/components/admin/ImportarConvidados";
+import { ImportarPlanilha } from "@/components/admin/ImportarPlanilha";
 import { ConvidadoActions } from "@/components/admin/ConvidadoActions";
 import { getGuestStats, listGuests, listGrupos } from "@/lib/admin-data";
 import { conviteUrl, qrDataUrl } from "@/lib/qr-image";
@@ -43,7 +44,13 @@ export default async function ConvidadosPage() {
         </div>
       </Panel>
 
-      <Panel title="Importar em massa">
+      <Panel title="Criar lista rápida / importar planilha">
+        <div className="p-6">
+          <ImportarPlanilha />
+        </div>
+      </Panel>
+
+      <Panel title="Importar CSV (com cabeçalho)">
         <div className="p-6">
           <ImportarConvidados />
         </div>
