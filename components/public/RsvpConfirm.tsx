@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { confirmarPresencaGrupo, type RsvpState } from "@/app/actions/rsvp";
 
@@ -35,6 +36,14 @@ export function RsvpConfirm({
   integrantes: GrupoIntegrante[];
 }) {
   const [state, formAction] = useFormState(confirmarPresencaGrupo, initial);
+
+  // Espaço infantil: o próprio convidado declara quem vai usar e quem é o
+  // responsável pela criança na festa. Pré-preenche com as crianças do convite.
+  const criancasDoConvite = integrantes.filter((i) => i.eh_crianca).map((i) => i.nome);
+  const [usaEspaco, setUsaEspaco] = useState(false);
+  const [linhas, setLinhas] = useState<string[]>(() =>
+    criancasDoConvite.length > 0 ? criancasDoConvite : [""],
+  );
 
   if (state.message) {
     return (
@@ -95,6 +104,81 @@ export function RsvpConfirm({
           );
         })}
       </div>
+
+      <fieldset className="rounded-lg border border-sand/70 p-3">
+        <legend className="px-1 font-serif text-lg text-moss">Espaço infantil</legend>
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            name="espaco_infantil"
+            className="mt-1"
+            checked={usaEspaco}
+            onChange={(e) => setUsaEspaco(e.target.checked)}
+          />
+          <span>
+            Vamos usar o <strong className="text-moss">espaço infantil</strong> (acompanhado por monitores).
+            Informe abaixo cada criança e o responsável por ela na festa.
+          </span>
+        </label>
+
+        {usaEspaco && (
+          <div className="mt-3 grid gap-3">
+            {linhas.map((nomeInicial, i) => (
+              <div key={i} className="grid gap-2 rounded-md bg-ivory p-2.5 sm:grid-cols-2">
+                <input
+                  name="crianca_nome"
+                  defaultValue={nomeInicial}
+                  required
+                  placeholder="Nome da criança"
+                  className="field-input py-1.5 text-sm"
+                  aria-label={`Nome da criança ${i + 1}`}
+                />
+                <input
+                  name="crianca_idade"
+                  type="number"
+                  min={0}
+                  max={17}
+                  placeholder="Idade (opcional)"
+                  className="field-input py-1.5 text-sm"
+                  aria-label={`Idade da criança ${i + 1}`}
+                />
+                <input
+                  name="crianca_responsavel"
+                  required
+                  placeholder="Responsável pela criança na festa"
+                  className="field-input py-1.5 text-sm"
+                  aria-label={`Responsável pela criança ${i + 1}`}
+                />
+                <input
+                  name="crianca_obs"
+                  placeholder="Alergias / cuidados (opcional)"
+                  className="field-input py-1.5 text-sm"
+                  aria-label={`Cuidados da criança ${i + 1}`}
+                />
+                {linhas.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setLinhas((ls) => ls.filter((_, j) => j !== i))}
+                    className="justify-self-start text-xs text-danger underline sm:col-span-2"
+                  >
+                    remover criança
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setLinhas((ls) => [...ls, ""])}
+              className="justify-self-start text-sm text-olive underline"
+            >
+              + adicionar criança
+            </button>
+            <span className="text-xs text-muted">
+              Cada criança informada aqui entra na lista do espaço infantil para os monitores.
+            </span>
+          </div>
+        )}
+      </fieldset>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="instagram" className="field-label">Seu Instagram (opcional)</label>

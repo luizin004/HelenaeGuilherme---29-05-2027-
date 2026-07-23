@@ -1215,7 +1215,9 @@ export interface ChildRow {
   idade: number | null;
   observacoes: string | null;
   responsavel_id: string | null;
+  responsavel_festa: string | null;
   usara_espaco: boolean;
+  guest_id: string | null;
 }
 
 export async function listChildren(): Promise<ChildRow[]> {

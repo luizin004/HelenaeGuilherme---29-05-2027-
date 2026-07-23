@@ -11,6 +11,7 @@ export interface CriancaEditavel {
   nome: string;
   idade: number | null;
   responsavel_id: string | null;
+  responsavel_festa: string | null;
   observacoes: string | null;
   usara_espaco: boolean;
 }
@@ -58,8 +59,9 @@ export function CriancaActions({
             <input name="nome" defaultValue={c.nome} placeholder="Nome" required className="field-input py-1.5 text-sm" />
             <input name="idade" type="number" min={0} max={17} defaultValue={c.idade ?? ""} placeholder="Idade" className="field-input py-1.5 text-sm" />
           </div>
+          <input name="responsavel_festa" defaultValue={c.responsavel_festa ?? ""} placeholder="Responsável pela criança na festa" className="field-input py-1.5 text-sm" />
           <select name="responsavel_id" defaultValue={c.responsavel_id ?? ""} className="field-input py-1.5 text-sm">
-            <option value="">Responsável (opcional)</option>
+            <option value="">Convidado vinculado (opcional)</option>
             {responsaveis.map((r) => (
               <option key={r.id} value={r.id}>{r.nome}</option>
             ))}

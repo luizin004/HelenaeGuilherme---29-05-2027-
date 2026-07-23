@@ -75,11 +75,35 @@ export async function confirmarPresencaGrupo(_prev: RsvpState, formData: FormDat
     return { ok: false, message: "Não foi possível confirmar. Verifique o link do seu convite." };
   }
 
+  // Espaço infantil: crianças declaradas no RSVP alimentam a tela dos monitores.
+  const nomes = formData.getAll("crianca_nome").map((v) => String(v).trim());
+  const idades = formData.getAll("crianca_idade").map((v) => String(v).trim());
+  const responsaveis = formData.getAll("crianca_responsavel").map((v) => String(v).trim());
+  const obs = formData.getAll("crianca_obs").map((v) => String(v).trim());
+  const criancas = nomes
+    .map((nome, i) => ({ nome, idade: idades[i] ?? "", responsavel: responsaveis[i] ?? "", observacoes: obs[i] ?? "" }))
+    .filter((c) => c.nome !== "");
+
+  const usaEspaco = formData.get("espaco_infantil") === "on";
+  let criancasRegistradas = 0;
+  if (usaEspaco && criancas.length > 0) {
+    const { data: kidsData, error: kidsErr } = await supabase.rpc("hg_rsvp_kids", {
+      p_token: token,
+      p_criancas: criancas,
+    });
+    if (kidsErr) {
+      logger.error("Falha ao registrar crianças do espaço infantil", { code: kidsErr.code });
+    } else {
+      criancasRegistradas = Number(kidsData ?? 0);
+    }
+  }
+
   const total = Number(data ?? 0);
+  const sufixoKids = criancasRegistradas > 0 ? ` ${criancasRegistradas} criança(s) no espaço infantil.` : "";
   return {
     ok: true,
     message: anyConfirmado
-      ? `Presença registrada para ${total} convidado(s). Obrigado! 🤍`
+      ? `Presença registrada para ${total} convidado(s).${sufixoKids} Obrigado! 🤍`
       : `Ausência registrada. Vamos sentir sua falta — obrigado por avisar!`,
   };
 }

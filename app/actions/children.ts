@@ -14,6 +14,7 @@ export async function criarCrianca(_prev: ChildFormState, formData: FormData): P
   const nome = String(formData.get("nome") ?? "").trim();
   const idadeRaw = String(formData.get("idade") ?? "").trim();
   const responsavelId = String(formData.get("responsavel_id") ?? "");
+  const responsavelFesta = String(formData.get("responsavel_festa") ?? "").trim();
   const observacoes = String(formData.get("observacoes") ?? "").trim();
 
   if (!nome) return { ok: false, message: "Informe o nome da criança." };
@@ -27,6 +28,7 @@ export async function criarCrianca(_prev: ChildFormState, formData: FormData): P
     nome,
     idade: idade !== null && Number.isFinite(idade) ? idade : null,
     responsavel_id: responsavelId || null,
+    responsavel_festa: responsavelFesta || null,
     observacoes: observacoes || null,
   });
 
@@ -43,6 +45,7 @@ export async function atualizarCrianca(_prev: ChildFormState, formData: FormData
   const nome = String(formData.get("nome") ?? "").trim();
   const idadeRaw = String(formData.get("idade") ?? "").trim();
   const responsavelId = String(formData.get("responsavel_id") ?? "");
+  const responsavelFesta = String(formData.get("responsavel_festa") ?? "").trim();
   const observacoes = String(formData.get("observacoes") ?? "").trim();
   const usaraEspaco = formData.get("usara_espaco") === "on";
 
@@ -60,6 +63,7 @@ export async function atualizarCrianca(_prev: ChildFormState, formData: FormData
       nome,
       idade: idade !== null && Number.isFinite(idade) ? idade : null,
       responsavel_id: responsavelId || null,
+      responsavel_festa: responsavelFesta || null,
       observacoes: observacoes || null,
       usara_espaco: usaraEspaco,
     })

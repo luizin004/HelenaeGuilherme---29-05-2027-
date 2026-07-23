@@ -35,7 +35,7 @@ export default async function InfantilPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["Nome", "Idade", "Responsável", "Alergias / cuidados", "Espaço", "Ações"].map((h) => (
+                {["Nome", "Idade", "Responsável na festa", "Alergias / cuidados", "Espaço", "Origem", "Ações"].map((h) => (
                   <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
                     {h}
                   </th>
@@ -45,7 +45,7 @@ export default async function InfantilPage() {
             <tbody>
               {children.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-muted">
+                  <td colSpan={7} className="px-6 py-10 text-center text-muted">
                     Nenhuma criança cadastrada ainda.
                   </td>
                 </tr>
@@ -54,13 +54,22 @@ export default async function InfantilPage() {
                 <tr key={c.id} className="border-t border-line align-top hover:bg-ivory">
                   <td className="px-6 py-3 font-medium">{c.nome}</td>
                   <td className="px-6 py-3 text-muted">{c.idade ?? "—"}</td>
-                  <td className="px-6 py-3 text-muted">{c.responsavel_id ? nome.get(c.responsavel_id) ?? "—" : "—"}</td>
+                  <td className="px-6 py-3 text-muted">
+                    {c.responsavel_festa || (c.responsavel_id ? nome.get(c.responsavel_id) ?? "—" : "—")}
+                  </td>
                   <td className="px-6 py-3 text-muted">{c.observacoes ?? "—"}</td>
                   <td className="px-6 py-3">
                     {c.usara_espaco ? (
                       <span className="rounded-full bg-[#e6efe0] px-2.5 py-0.5 text-xs text-success">sim</span>
                     ) : (
                       <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs text-muted">não</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-3">
+                    {c.guest_id ? (
+                      <span className="rounded-full bg-gold-soft px-2.5 py-0.5 text-xs text-moss">RSVP</span>
+                    ) : (
+                      <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs text-muted">painel</span>
                     )}
                   </td>
                   <td className="px-6 py-3">
