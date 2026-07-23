@@ -25,7 +25,7 @@ function normalizarFaixaForm(formData: FormData): "adulto" | "jovem" | "crianca"
  *  • virou padrinho/madrinha → cria/reativa o registro em hg_wedding_party (por guest_id);
  *  • deixou de ser → soft-delete do registro. Sem lista duplicada e desconectada.
  */
-async function sincronizarPapelPadrinho(
+export async function sincronizarPapelPadrinho(
   supabase: DB,
   g: { guestId: string; nome: string; papel: string; telefone: string | null; lado: string | null },
 ) {

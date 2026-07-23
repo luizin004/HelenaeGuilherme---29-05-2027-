@@ -496,15 +496,21 @@ export interface GuestCommProfile {
   guest_id: string;
   nome_preferido: string | null;
   apelido_autorizado: string | null;
-  parentesco: string | null;
+  lado: string | null; // vínculo principal (helena/guilherme/ambos/familia_*/...)
+  parentesco: string | null; // tipo de vínculo (chave da lista controlada)
+  tipo_vinculo_outro: string | null; // texto livre quando parentesco = "outro"
   relacao_helena: string | null;
   relacao_guilherme: string | null;
+  relacao_ambos: string | null;
   proximidade: string | null;
   historia_autorizada: string | null;
   assuntos_permitidos: string | null;
   assuntos_proibidos: string | null;
   tom: string | null;
   formalidade: string | null;
+  emocao: string | null;
+  humor: string | null;
+  tamanho: string | null;
   tratamento: string | null;
   canal_preferido: string | null;
   cidade_partida: string | null;
@@ -516,12 +522,63 @@ export interface GuestCommProfile {
   opt_out: boolean;
   herdar_familia: boolean;
   observacao: string | null;
+  pessoa_idosa: boolean;
+  situacao_sensivel: boolean;
+  forcar_aprovacao: boolean;
+  perfil_bloqueado: boolean;
+  humor_autorizado: boolean;
 }
 export async function getGuestCommProfile(guestId: string): Promise<GuestCommProfile | null> {
   const supabase = createClient();
   if (!supabase) return null;
   const { data } = await supabase.from("hg_guest_comm_profiles").select("*").eq("guest_id", guestId).maybeSingle();
   return (data as GuestCommProfile) ?? null;
+}
+
+export interface GuestVinculoContexto {
+  guestId: string;
+  nome: string;
+  papel: string | null; // hg_guests.papel — fonte única (também usada pelos padrinhos/caixas)
+  status: string | null; // RSVP
+  ehCrianca: boolean;
+  faixaEtaria: string | null;
+  ehContatoPrincipal: boolean;
+}
+
+/**
+ * Reúne, do convidado + grupo, os dados que o temperamento (domain/comm/temperament)
+ * combina com o perfil de comunicação. Papel continua vindo de hg_guests — não
+ * duplicamos essa informação no perfil (fonte única, já usada pelos padrinhos).
+ */
+export async function getGuestVinculoContexto(guestId: string): Promise<GuestVinculoContexto | null> {
+  const supabase = createClient();
+  if (!supabase) return null;
+  const { data: g } = await supabase
+    .from("hg_guests")
+    .select("id,nome,papel,status,eh_crianca,faixa_etaria,group_id")
+    .eq("id", guestId)
+    .maybeSingle();
+  if (!g) return null;
+
+  let ehContatoPrincipal = false;
+  if (g.group_id) {
+    const { data: grupo } = await supabase
+      .from("hg_guest_groups")
+      .select("contato_principal_id")
+      .eq("id", g.group_id)
+      .maybeSingle();
+    ehContatoPrincipal = grupo?.contato_principal_id === guestId;
+  }
+
+  return {
+    guestId: g.id,
+    nome: g.nome,
+    papel: g.papel ?? null,
+    status: g.status ?? null,
+    ehCrianca: Boolean(g.eh_crianca),
+    faixaEtaria: g.faixa_etaria ?? null,
+    ehContatoPrincipal,
+  };
 }
 
 // ============================================================

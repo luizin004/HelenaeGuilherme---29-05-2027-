@@ -20,6 +20,11 @@ export type PapelCasamento =
   | "mae_noivo"
   | "dama"
   | "pajem"
+  | "familiar_cerimonia"
+  | "responsavel_crianca"
+  | "convidado_especial"
+  | "fornecedor"
+  | "cerimonial"
   | "outro";
 
 export const PAPEIS: { value: PapelCasamento; label: string }[] = [
@@ -32,6 +37,11 @@ export const PAPEIS: { value: PapelCasamento; label: string }[] = [
   { value: "mae_noivo", label: "Mãe do noivo" },
   { value: "dama", label: "Dama" },
   { value: "pajem", label: "Pajem" },
+  { value: "familiar_cerimonia", label: "Familiar com participação na cerimônia" },
+  { value: "responsavel_crianca", label: "Responsável por criança" },
+  { value: "convidado_especial", label: "Convidado especial" },
+  { value: "fornecedor", label: "Fornecedor" },
+  { value: "cerimonial", label: "Cerimonial" },
   { value: "outro", label: "Outro" },
 ];
 

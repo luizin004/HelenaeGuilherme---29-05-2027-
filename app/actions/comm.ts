@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { filtrarAudiencia, type FiltrosAudiencia } from "@/domain/comm/audience";
 import { listGuestsForAudience } from "@/lib/comm-data";
+import { sincronizarPapelPadrinho } from "@/app/actions/guests";
+import { PAPEIS } from "@/domain/convites/caixas";
+
+const PAPEL_CASAMENTO_VALIDO = new Set(PAPEIS.map((p) => p.value as string));
 
 export interface ActionState {
   ok: boolean;
@@ -404,15 +408,21 @@ export async function salvarPerfilComunicacao(_prev: ActionState, formData: Form
     guest_id: guestId,
     nome_preferido: txt("nome_preferido"),
     apelido_autorizado: txt("apelido_autorizado"),
-    parentesco: txt("parentesco"),
+    lado: txt("lado"), // vínculo principal
+    parentesco: txt("parentesco"), // tipo de vínculo (chave controlada)
+    tipo_vinculo_outro: txt("tipo_vinculo_outro"),
     relacao_helena: txt("relacao_helena"),
     relacao_guilherme: txt("relacao_guilherme"),
+    relacao_ambos: txt("relacao_ambos"),
     proximidade: txt("proximidade"),
     historia_autorizada: txt("historia_autorizada"),
     assuntos_permitidos: txt("assuntos_permitidos"),
     assuntos_proibidos: txt("assuntos_proibidos"),
     tom: txt("tom"),
     formalidade: txt("formalidade"),
+    emocao: txt("emocao"),
+    humor: txt("humor"),
+    tamanho: txt("tamanho"),
     tratamento: txt("tratamento"),
     canal_preferido: txt("canal_preferido"),
     cidade_partida: txt("cidade_partida"),
@@ -424,15 +434,39 @@ export async function salvarPerfilComunicacao(_prev: ActionState, formData: Form
     opt_out: bool("opt_out"),
     herdar_familia: bool("herdar_familia"),
     observacao: txt("observacao"),
+    pessoa_idosa: bool("pessoa_idosa"),
+    situacao_sensivel: bool("situacao_sensivel"),
+    forcar_aprovacao: bool("forcar_aprovacao"),
+    perfil_bloqueado: bool("perfil_bloqueado"),
+    humor_autorizado: bool("humor_autorizado"),
   };
 
   const supabase = createClient();
   if (!supabase) return { ok: false, message: "Backend não configurado." };
+
   const { error } = await supabase.from("hg_guest_comm_profiles").upsert(row, { onConflict: "guest_id" });
   if (error) return { ok: false, message: "Não foi possível salvar o perfil." };
+
+  // Papel no casamento é editável aqui, mas a FONTE ÚNICA continua hg_guests.papel
+  // (mesma usada pelos padrinhos/caixas) — nunca duplicamos essa lista.
+  const papelCasamento = String(formData.get("papel_casamento") ?? "").trim();
+  if (papelCasamento && PAPEL_CASAMENTO_VALIDO.has(papelCasamento)) {
+    const { data: guest } = await supabase.from("hg_guests").select("nome, telefone").eq("id", guestId).maybeSingle();
+    await supabase.from("hg_guests").update({ papel: papelCasamento }).eq("id", guestId);
+    await sincronizarPapelPadrinho(supabase, {
+      guestId,
+      nome: row.nome_preferido || guest?.nome || "",
+      papel: papelCasamento,
+      telefone: guest?.telefone ?? null,
+      lado: row.lado,
+    });
+  }
+
   await logAudit(supabase, { modulo: "comunicacao", acao: "update", registro: `hg_guest_comm_profiles:${guestId}` });
   revalidatePath(`/admin/comunicacao/perfis/${guestId}`);
   revalidatePath("/admin/comunicacao/perfis");
+  revalidatePath("/admin/padrinhos");
+  revalidatePath("/admin/convidados");
   return { ok: true, message: "Perfil de comunicação salvo." };
 }
 
