@@ -27,10 +27,11 @@ export default async function CotacoesPage() {
         <Notice>Conecte o Supabase e faça login para gerenciar cotações.</Notice>
       ) : (
         <Notice>
-          Registre propostas de fornecedores por item e compare lado a lado. Ao <strong>escolher</strong>{" "}
-          uma proposta, o item vira <strong>contratado</strong> com o valor da proposta e, se houver
-          parcelamento, o cronograma é gerado (datas você define em Parcelas). As demais propostas
-          ficam como recusadas, mas seguem guardadas.
+          Os itens vêm do <strong>Montar orçamento</strong> (e de Lançamentos). Registre propostas de
+          fornecedores por item e compare lado a lado. Ao <strong>escolher</strong> uma proposta, o item vira{" "}
+          <strong>contratado</strong> com o valor da proposta e, se houver parcelamento, o cronograma é gerado
+          (datas você define em <strong>Contas → Parcelas</strong>). As demais propostas ficam como recusadas,
+          mas seguem guardadas.
         </Notice>
       )}
 

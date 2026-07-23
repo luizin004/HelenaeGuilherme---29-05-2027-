@@ -2,6 +2,7 @@
 import { Notice, PageTitle, Panel } from "@/components/admin/ui";
 import { NovoPresente } from "@/components/admin/NovoPresente";
 import { PresenteEdit } from "@/components/admin/PresenteEdit";
+import { ImportarExportarPresentes } from "@/components/admin/ImportarPresentes";
 import { atualizarStatusPresente, excluirPresente } from "@/app/actions/gifts";
 import { listGifts } from "@/lib/admin-data";
 import { giftVisual } from "@/domain/gifts/visual";
@@ -29,6 +30,12 @@ export default async function PresentesAdminPage() {
       ) : (
         <Notice>Os presentes cadastrados aqui aparecem na página pública <code>/presentes</code>.</Notice>
       )}
+
+      <Panel title="Importar / exportar planilha">
+        <div className="p-6">
+          <ImportarExportarPresentes />
+        </div>
+      </Panel>
 
       <Panel title="Novo presente">
         <div className="p-6">

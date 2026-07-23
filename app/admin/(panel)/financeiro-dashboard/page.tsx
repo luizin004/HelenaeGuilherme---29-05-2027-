@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Notice, Panel } from "@/components/admin/ui";
 import { PageHeader, SummaryCard, EmptyState, Bar, FinanceStatusBadge } from "@/components/admin/finance/ui";
-import { loadFinance, dashboardFinanceiro } from "@/lib/finance-core";
+import { ProjecaoMensalView } from "@/components/admin/finance/ProjecaoMensal";
+import { loadFinance, dashboardFinanceiro, projetarMensal, type VisaoProjecao } from "@/lib/finance-core";
 import { listCortesias } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
 import { fmtDateBR } from "@/lib/format";
@@ -9,11 +10,15 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-export default async function FinanceiroDashboardPage() {
+const VISOES_VALIDAS: VisaoProjecao[] = ["vencimento", "competencia", "pagamento"];
+
+export default async function FinanceiroDashboardPage({ searchParams }: { searchParams: { visao?: string } }) {
   const [d, cortesias] = await Promise.all([loadFinance(), listCortesias()]);
   const economia = cortesias.reduce((n, c) => n + (c.valor_mercado_cents ?? 0), 0);
   const dash = dashboardFinanceiro(d, economia);
   const vazio = d.contas.length === 0;
+  const visao = (VISOES_VALIDAS.includes(searchParams.visao as VisaoProjecao) ? searchParams.visao : "vencimento") as VisaoProjecao;
+  const proj = projetarMensal(d, visao);
 
   return (
     <>
@@ -138,6 +143,15 @@ export default async function FinanceiroDashboardPage() {
               )}
             </Panel>
           </div>
+
+          <section className="mt-8">
+            <h2 className="mb-1 font-serif text-2xl text-moss">Projeção mensal</h2>
+            <p className="mb-4 text-sm text-muted">
+              Fluxo mês a mês — previsto, pago, pendente, vencido, entradas e saldo acumulado. Tudo vem da
+              mesma fonte das Contas; nada é digitado manualmente.
+            </p>
+            <ProjecaoMensalView proj={proj} visao={visao} basePath="/admin/financeiro-dashboard" />
+          </section>
         </>
       )}
     </>

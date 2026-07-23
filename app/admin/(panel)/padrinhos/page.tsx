@@ -14,6 +14,15 @@ const STATUS_BADGE: Record<string, string> = {
   recusado: "bg-[#f4e2dc] text-danger",
 };
 
+const ATALHOS: { href: string; ico: string; titulo: string; desc: string }[] = [
+  { href: "/admin/padrinhos/duplas", ico: "💞", titulo: "Duplas e casais", desc: "Formar pares e casais de padrinhos." },
+  { href: "/admin/padrinhos/grupos", ico: "👥", titulo: "Grupos", desc: "Organizar por grupos e lados." },
+  { href: "/admin/padrinhos/compromissos", ico: "📍", titulo: "Compromissos", desc: "Encontros, ensaios e datas." },
+  { href: "/admin/padrinhos/trajes", ico: "🤵", titulo: "Trajes e medidas", desc: "Tamanhos, provas e status." },
+  { href: "/admin/padrinhos/pendencias", ico: "⚠️", titulo: "Pendências", desc: "O que falta resolver com cada um." },
+  { href: "/admin/padrinhos/tarefas", ico: "✅", titulo: "Tarefas", desc: "To-dos e responsáveis." },
+];
+
 export default async function PadrinhosPage() {
   const [membros, pend] = await Promise.all([listPadrinhos(), getPadrinhosPendencias()]);
 
@@ -29,6 +38,24 @@ export default async function PadrinhosPage() {
         <Kpi label="Traje pendente" value={pend.trajePendente} />
         <Kpi label="Ensaio pendente" value={pend.ensaioPendente} />
       </KpiGrid>
+
+      <Panel title="Atalhos">
+        <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          {ATALHOS.map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="flex items-start gap-3 rounded-lg border border-line bg-white p-4 transition hover:border-olive hover:shadow-card"
+            >
+              <span className="text-2xl" aria-hidden>{a.ico}</span>
+              <span>
+                <span className="block font-medium text-moss">{a.titulo}</span>
+                <span className="block text-sm text-muted">{a.desc}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </Panel>
 
       <Panel title="Adicionar padrinho ou madrinha">
         <PadrinhoForm />

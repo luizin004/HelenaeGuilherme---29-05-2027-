@@ -2,13 +2,23 @@ import Link from "next/link";
 import { Notice, Panel } from "@/components/admin/ui";
 import { PageHeader, FinanceStatusBadge, SummaryCard, EmptyState } from "@/components/admin/finance/ui";
 import { PagamentoForm } from "@/components/admin/finance/PagamentoForm";
+import { ParcelasManager } from "@/components/admin/finance/ParcelasManager";
 import { estornarPagamento } from "@/app/actions/pagamentos";
+import { atualizarVencimentoParcela } from "@/app/actions/installments";
 import { loadFinance, filtrarAba, contarAbas, type AbaConta } from "@/lib/finance-core";
+import { listParcelaveis, getPayers } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
 import { fmtDateBR } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
+
+const SECOES = [
+  { key: "contas", label: "Contas" },
+  { key: "parcelas", label: "Parcelas" },
+  { key: "a_definir", label: "Parcelas a definir" },
+] as const;
+type Secao = (typeof SECOES)[number]["key"];
 
 const ABAS: { key: AbaConta; label: string }[] = [
   { key: "todas", label: "Todas" },
@@ -20,8 +30,143 @@ const ABAS: { key: AbaConta; label: string }[] = [
   { key: "canceladas", label: "Canceladas" },
 ];
 
-export default async function ContasPage({ searchParams }: { searchParams: { aba?: string } }) {
+export default async function ContasPage({ searchParams }: { searchParams: { aba?: string; sec?: string } }) {
+  const sec = (SECOES.some((s) => s.key === searchParams.sec) ? searchParams.sec : "contas") as Secao;
   const d = await loadFinance();
+
+  const metodos = d.metodos.filter((m) => m.ativo).map((m) => ({ id: m.id, nome: m.nome }));
+  const contasFin = d.contasFinanceiras.filter((c) => c.ativo).map((c) => ({ id: c.id, nome: c.nome }));
+
+  const SecTabs = (
+    <div className="mb-5 flex flex-wrap gap-1.5" role="tablist" aria-label="Seções de contas">
+      {SECOES.map((s) => (
+        <Link
+          key={s.key}
+          role="tab"
+          aria-selected={sec === s.key}
+          href={`/admin/contas?sec=${s.key}`}
+          className={`rounded-full px-4 py-1.5 text-xs font-medium uppercase tracking-wide transition ${
+            sec === s.key ? "bg-moss text-white" : "bg-white text-muted shadow-card hover:text-moss"
+          }`}
+        >
+          {s.label}
+        </Link>
+      ))}
+    </div>
+  );
+
+  const header = (
+    <PageHeader
+      title="Contas"
+      description="Todas as obrigações financeiras numa única fonte. As Parcelas (cronogramas) e as parcelas ainda a definir ficam nas sub-abas — mesma fonte, menos telas."
+      crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Contas", href: "/admin/contas" }]}
+    />
+  );
+
+  // ————————————————————————————— Sub-aba: Parcelas (cronogramas)
+  if (sec === "parcelas") {
+    const [rows, payers] = await Promise.all([listParcelaveis(), getPayers()]);
+    const responsaveis = payers.filter((p) => p.nome !== "Gratuito");
+    return (
+      <>
+        {header}
+        {SecTabs}
+        {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para gerenciar as parcelas.</Notice>}
+        <ParcelasManager rows={rows} contas={d.contas} hoje={d.hoje} metodos={metodos} contasFin={contasFin} responsaveis={responsaveis} />
+      </>
+    );
+  }
+
+  // ————————————————————————————— Sub-aba: Parcelas a definir
+  if (sec === "a_definir") {
+    const rows = await listParcelaveis();
+    const semCronograma = rows.filter((r) => r.parcelas.length === 0);
+    const semData = d.contas
+      .filter((c) => c.installmentId && !c.vencimento && !c.previsao && c.status !== "pago" && c.status !== "gratuito")
+      .sort((a, b) => a.descricao.localeCompare(b.descricao));
+
+    return (
+      <>
+        {header}
+        {SecTabs}
+        {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para ver as pendências.</Notice>}
+
+        <Notice>
+          O que ainda precisa ser definido para o cronograma ficar completo: despesas com valor mas <strong>sem
+          parcelas geradas</strong> e parcelas <strong>sem data de vencimento</strong>.
+        </Notice>
+
+        <Panel title={`Despesas sem cronograma (${semCronograma.length})`}>
+          {semCronograma.length === 0 ? (
+            <EmptyState title="Todas as despesas com valor já têm cronograma. 🤍" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    {["Descrição", "Valor", "Ação"].map((h) => (
+                      <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {semCronograma.map((r) => (
+                    <tr key={r.id} className="border-t border-line hover:bg-ivory">
+                      <td className="px-4 py-2.5 font-medium text-moss">{r.descricao}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 font-serif text-moss">{formatCents(r.valor_total_cents)}</td>
+                      <td className="px-4 py-2.5">
+                        <Link href="/admin/contas?sec=parcelas" className="text-xs text-olive underline">gerar cronograma</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        <Panel title={`Parcelas sem data de vencimento (${semData.length})`}>
+          {semData.length === 0 ? (
+            <EmptyState title="Nenhuma parcela sem data. Tudo agendado." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    {["Descrição", "Parcela", "Valor", "Definir vencimento"].map((h) => (
+                      <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {semData.map((c) => (
+                    <tr key={c.id} className="border-t border-line hover:bg-ivory">
+                      <td className="px-4 py-2.5 font-medium text-moss">{c.descricao}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted">{c.numero ? `${c.numero}/${c.totalParcelas}` : "única"}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 font-serif text-moss">{formatCents(c.valorCents)}</td>
+                      <td className="px-4 py-2.5">
+                        {c.installmentId ? (
+                          <form action={atualizarVencimentoParcela} className="flex items-center gap-1">
+                            <input type="hidden" name="id" value={c.installmentId} />
+                            <input type="date" name="vencimento" className="field-input py-1 text-xs" aria-label={`Vencimento de ${c.descricao}`} />
+                            <button type="submit" className="text-xs text-olive underline">salvar</button>
+                          </form>
+                        ) : (
+                          <span className="text-xs text-muted">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+      </>
+    );
+  }
+
+  // ————————————————————————————— Sub-aba: Contas (status)
   const aba = (ABAS.some((a) => a.key === searchParams.aba) ? searchParams.aba : "a_pagar") as AbaConta;
   const contagens = contarAbas(d.contas, d.hoje);
   const linhas = filtrarAba(d.contas, aba, d.hoje).sort((a, b) => {
@@ -34,9 +179,6 @@ export default async function ContasPage({ searchParams }: { searchParams: { aba
   const saldoAba = linhas.reduce((n, c) => n + c.saldoCents, 0);
   const pagoAba = linhas.reduce((n, c) => n + c.pagoCents, 0);
 
-  const metodos = d.metodos.filter((m) => m.ativo).map((m) => ({ id: m.id, nome: m.nome }));
-  const contasFin = d.contasFinanceiras.filter((c) => c.ativo).map((c) => ({ id: c.id, nome: c.nome }));
-
   // Pagamentos da despesa (histórico) por conta exibida.
   const paysPorChave = new Map<string, typeof d.pagamentos>();
   for (const p of d.pagamentos) {
@@ -48,11 +190,8 @@ export default async function ContasPage({ searchParams }: { searchParams: { aba
 
   return (
     <>
-      <PageHeader
-        title="Contas"
-        description="Todas as obrigações financeiras numa única fonte: uma conta paga não é copiada — o mesmo registro muda de aba conforme o status."
-        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Contas", href: "/admin/contas" }]}
-      />
+      {header}
+      {SecTabs}
 
       {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para ver as contas.</Notice>}
 
@@ -68,7 +207,7 @@ export default async function ContasPage({ searchParams }: { searchParams: { aba
             key={a.key}
             role="tab"
             aria-selected={aba === a.key}
-            href={`/admin/contas?aba=${a.key}`}
+            href={`/admin/contas?sec=contas&aba=${a.key}`}
             className={`rounded-full px-3.5 py-1.5 text-xs uppercase tracking-wide transition ${
               aba === a.key ? "bg-moss text-white" : "bg-white text-muted shadow-card hover:text-moss"
             }`}

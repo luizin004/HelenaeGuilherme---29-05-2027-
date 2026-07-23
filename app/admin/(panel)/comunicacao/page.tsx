@@ -13,6 +13,12 @@ const ATALHOS: { href: string; ico: string; titulo: string; desc: string }[] = [
   { href: "/admin/comunicacao/audios", ico: "🎙️", titulo: "Áudios", desc: "Gravar, aprovar e reutilizar áudios." },
   { href: "/admin/comunicacao/caixa-de-entrada", ico: "📥", titulo: "Caixa de entrada", desc: "Respostas dos convidados." },
   { href: "/admin/comunicacao/prompts", ico: "🪄", titulo: "Estúdio de prompts", desc: "Mensagens da IA, versionadas." },
+  { href: "/admin/comunicacao/mensagens", ico: "✉️", titulo: "Mensagens", desc: "Fila de envios e histórico." },
+  { href: "/admin/comunicacao/aprovacoes", ico: "✅", titulo: "Aprovações", desc: "Revisão humana antes de enviar." },
+  { href: "/admin/comunicacao/perfis", ico: "🧩", titulo: "Perfis de comunicação", desc: "Tom, apelidos e fases por convidado." },
+  { href: "/admin/comunicacao/respostas-rapidas", ico: "⚡", titulo: "Respostas rápidas", desc: "Modelos para responder na hora." },
+  { href: "/admin/comunicacao/calendario", ico: "📅", titulo: "Calendário", desc: "Linha do tempo dos disparos." },
+  { href: "/admin/comunicacao/relatorios", ico: "📊", titulo: "Relatórios", desc: "Desempenho dos envios." },
   { href: "/admin/padrinhos", ico: "👰", titulo: "Padrinhos & madrinhas", desc: "Cadastro, pendências e jornada." },
   { href: "/admin/configuracoes/comunicacao/whatsapp", ico: "🟢", titulo: "WhatsApp oficial", desc: "Configurar o canal de envio." },
 ];

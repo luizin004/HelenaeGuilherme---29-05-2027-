@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { parseBRLToCents } from "@/domain/money";
+import { parseGiftsCSV } from "@/domain/gifts/csv";
 
 export interface GiftFormState {
   ok: boolean;
@@ -111,6 +112,42 @@ export async function atualizarStatusPresente(formData: FormData): Promise<void>
     revalidatePath("/admin/presentes");
     revalidatePath("/presentes");
   }
+}
+
+/**
+ * Importa uma planilha (CSV) de presentes — ADICIONA novos itens à lista.
+ * Colunas: nome; descricao; valor; imagem_url; permite_cota. Nunca inventa preço
+ * (valor vazio ou inválido entra como 0). Linhas sem nome são ignoradas.
+ */
+export async function importarPresentes(_prev: GiftFormState, formData: FormData): Promise<GiftFormState> {
+  const file = formData.get("arquivo");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Selecione um arquivo .csv." };
+  if (file.size > 2_000_000) return { ok: false, message: "Arquivo muito grande (máx. 2 MB)." };
+
+  const text = await file.text();
+  const { rows, erros } = parseGiftsCSV(text);
+  if (rows.length === 0) return { ok: false, message: erros[0] ?? "Nenhuma linha válida encontrada." };
+
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+
+  const payload = rows.map((r) => ({
+    nome: r.nome,
+    descricao: r.descricao,
+    imagem_url: r.imagem_url,
+    preco: r.precoCents / 100,
+    permite_cota: r.permite_cota,
+    status: "disponivel",
+  }));
+
+  const { error } = await supabase.from("hg_gifts").insert(payload);
+  if (error) return { ok: false, message: "Não foi possível importar. Verifique se você está autenticado." };
+
+  await logAudit(supabase, { modulo: "presentes", acao: "import", valorNovo: { quantidade: rows.length } });
+  revalidatePath("/admin/presentes");
+  revalidatePath("/presentes");
+  const aviso = erros.length > 0 ? ` ${erros.length} aviso(s): ${erros.slice(0, 3).join(" ")}` : "";
+  return { ok: true, message: `${rows.length} presente(s) importado(s).${aviso}` };
 }
 
 /** Exclusão LÓGICA (soft-delete) de um presente. */
