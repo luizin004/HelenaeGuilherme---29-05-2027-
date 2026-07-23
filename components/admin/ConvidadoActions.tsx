@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { atualizarConvidado, excluirConvidado, regenerarQr, type GuestFormState } from "@/app/actions/guests";
+import { PAPEIS } from "@/domain/convites/caixas";
 
 const initial: GuestFormState = { ok: false, message: "" };
 
@@ -13,6 +14,7 @@ export interface ConvidadoEditavel {
   telefone: string | null;
   mesa: string | null;
   group_id: string | null;
+  papel: string | null;
   eh_crianca: boolean;
 }
 
@@ -64,10 +66,15 @@ export function ConvidadoActions({ g, grupos }: { g: ConvidadoEditavel; grupos: 
               <input type="checkbox" name="eh_crianca" defaultChecked={g.eh_crianca} /> É criança
             </label>
           </div>
-          <select name="group_id" defaultValue={g.group_id ?? ""} className="field-input py-1.5 text-sm">
-            <option value="">Sem grupo</option>
-            {grupos.map((gr) => <option key={gr.id} value={gr.id}>{gr.nome}</option>)}
-          </select>
+          <div className="grid grid-cols-2 gap-2">
+            <select name="papel" defaultValue={g.papel ?? "convidado"} className="field-input py-1.5 text-sm">
+              {PAPEIS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+            <select name="group_id" defaultValue={g.group_id ?? ""} className="field-input py-1.5 text-sm">
+              <option value="">Sem grupo</option>
+              {grupos.map((gr) => <option key={gr.id} value={gr.id}>{gr.nome}</option>)}
+            </select>
+          </div>
           <div className="flex items-center gap-3">
             <SaveButton />
             {state.message && (

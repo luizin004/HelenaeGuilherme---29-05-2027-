@@ -15,7 +15,8 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const ATALHOS: { href: string; ico: string; titulo: string; desc: string }[] = [
-  { href: "/admin/padrinhos/duplas", ico: "💞", titulo: "Duplas e casais", desc: "Formar pares e casais de padrinhos." },
+  { href: "/admin/padrinhos/duplas", ico: "💞", titulo: "Casais e caixas", desc: "Vincular casais, caixa individual e contadores." },
+  { href: "/admin/padrinhos/producao", ico: "📦", titulo: "Produção de caixas", desc: "Lista final de caixas confirmadas." },
   { href: "/admin/padrinhos/grupos", ico: "👥", titulo: "Grupos", desc: "Organizar por grupos e lados." },
   { href: "/admin/padrinhos/compromissos", ico: "📍", titulo: "Compromissos", desc: "Encontros, ensaios e datas." },
   { href: "/admin/padrinhos/trajes", ico: "🤵", titulo: "Trajes e medidas", desc: "Tamanhos, provas e status." },

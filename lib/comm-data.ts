@@ -22,6 +22,48 @@ export interface PartyMember {
   observacao: string | null;
   ordem: number;
   criado_em: string;
+  caixa_individual: boolean;
+  entrega_status: string;
+}
+
+export interface ParPadrinho {
+  id: string;
+  nome: string | null;
+  tipo: string;
+  member_a: string | null;
+  member_b: string | null;
+  nomeA: string | null;
+  nomeB: string | null;
+  caixas: number;
+  convites_grandes: number;
+  convites_pequenos: number;
+  status_producao: string;
+  status_entrega: string;
+}
+
+/** Pares/casais de padrinhos ativos, com os nomes dos integrantes resolvidos. */
+export async function listParesPadrinhos(): Promise<ParPadrinho[]> {
+  const supabase = createClient();
+  if (!supabase) return [];
+  const [{ data: pares }, membros] = await Promise.all([
+    supabase.from("hg_wedding_party_pairs").select("*").is("deleted_at", null).order("criado_em"),
+    listPadrinhos(),
+  ]);
+  const nome = new Map(membros.map((m) => [m.id, m.nome]));
+  return (pares ?? []).map((p) => ({
+    id: p.id,
+    nome: p.nome ?? null,
+    tipo: p.tipo ?? "casal",
+    member_a: p.member_a ?? null,
+    member_b: p.member_b ?? null,
+    nomeA: p.member_a ? nome.get(p.member_a) ?? null : null,
+    nomeB: p.member_b ? nome.get(p.member_b) ?? null : null,
+    caixas: Number(p.caixas ?? 1),
+    convites_grandes: Number(p.convites_grandes ?? 1),
+    convites_pequenos: Number(p.convites_pequenos ?? 0),
+    status_producao: p.status_producao ?? "pendente",
+    status_entrega: p.status_entrega ?? "pendente",
+  }));
 }
 
 export async function listPadrinhos(): Promise<PartyMember[]> {

@@ -87,7 +87,7 @@ export default async function ConvidadosPage() {
                   </td>
                   <td className="px-6 py-3">
                     <ConvidadoActions
-                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, group_id: g.group_id, eh_crianca: g.eh_crianca }}
+                      g={{ id: g.id, nome: g.nome, email: g.email, telefone: g.telefone, mesa: g.mesa, group_id: g.group_id, papel: g.papel, eh_crianca: g.eh_crianca }}
                       grupos={gruposOpts}
                     />
                   </td>

@@ -99,6 +99,118 @@ export async function excluirPadrinho(formData: FormData): Promise<void> {
   }
 }
 
+/** Revalida as telas que dependem de padrinhos/casais/caixas. */
+function revalidarPadrinhos() {
+  for (const t of ["/admin/padrinhos", "/admin/padrinhos/duplas", "/admin/padrinhos/producao", "/admin"]) {
+    revalidatePath(t);
+  }
+}
+
+/**
+ * Vincula DOIS padrinhos/madrinhas como casal/par (FASE 4).
+ * Integridade: 2 pessoas distintas, ambas padrinhos ativos, nenhuma já em par
+ * ativo. Marcar como par limpa a "caixa individual" das duas (o casal já é 1 caixa).
+ */
+export async function vincularPar(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const a = String(formData.get("member_a") ?? "").trim();
+  const b = String(formData.get("member_b") ?? "").trim();
+  const tipo = String(formData.get("tipo") ?? "casal").trim() || "casal";
+  const nome = String(formData.get("nome") ?? "").trim();
+
+  if (!a || !b) return { ok: false, message: "Selecione as duas pessoas do par." };
+  if (a === b) return { ok: false, message: "Escolha duas pessoas diferentes." };
+
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+
+  const { data: membros } = await supabase
+    .from("hg_wedding_party")
+    .select("id, nome, papel")
+    .in("id", [a, b])
+    .is("deleted_at", null);
+  if (!membros || membros.length !== 2) return { ok: false, message: "Padrinho(s) não encontrado(s)." };
+  if (!membros.every((m) => m.papel === "padrinho" || m.papel === "madrinha")) {
+    return { ok: false, message: "Ambos precisam ser padrinho ou madrinha." };
+  }
+
+  // Ninguém pode estar em dois pares ativos.
+  const { data: jaEmPar } = await supabase
+    .from("hg_wedding_party_pairs")
+    .select("id")
+    .is("deleted_at", null)
+    .or(`member_a.in.(${a},${b}),member_b.in.(${a},${b})`);
+  if (jaEmPar && jaEmPar.length > 0) {
+    return { ok: false, message: "Uma das pessoas já está em um casal. Desvincule antes." };
+  }
+
+  const rotulo = nome || membros.map((m) => m.nome).join(" e ");
+  const { error } = await supabase.from("hg_wedding_party_pairs").insert({
+    nome: rotulo,
+    member_a: a,
+    member_b: b,
+    tipo,
+    caixas: 1,
+    convites_grandes: 1,
+    convites_pequenos: 2,
+    status_producao: "pendente",
+    status_entrega: "pendente",
+  });
+  if (error) return { ok: false, message: "Não foi possível vincular. Verifique o login." };
+
+  // O casal já é 1 caixa: limpa marcação de caixa individual das duas pessoas.
+  await supabase.from("hg_wedding_party").update({ caixa_individual: false }).in("id", [a, b]);
+
+  await logAudit(supabase, { modulo: "padrinhos", acao: "vincular_par", valorNovo: { a, b, tipo } });
+  revalidarPadrinhos();
+  return { ok: true, message: `Casal "${rotulo}" vinculado (1 caixa).` };
+}
+
+/** Desvincula um casal (soft-delete). As pessoas voltam para "A vincular" (FASE 14.13). */
+export async function desvincularPar(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("hg_wedding_party_pairs")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (!error) {
+    await logAudit(supabase, { modulo: "padrinhos", acao: "desvincular_par", registro: `hg_wedding_party_pairs:${id}` });
+    revalidarPadrinhos();
+  }
+}
+
+/** Marca/desmarca um padrinho como "caixa individual" (FASE 5). */
+export async function marcarCaixaIndividual(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  const marcar = String(formData.get("marcar") ?? "true") === "true";
+  if (!id) return;
+  const supabase = createClient();
+  if (!supabase) return;
+
+  if (marcar) {
+    // Não pode marcar caixa individual para quem está em um par ativo.
+    const { data: emPar } = await supabase
+      .from("hg_wedding_party_pairs")
+      .select("id")
+      .is("deleted_at", null)
+      .or(`member_a.eq.${id},member_b.eq.${id}`);
+    if (emPar && emPar.length > 0) return;
+  }
+
+  const { error } = await supabase
+    .from("hg_wedding_party")
+    .update({ caixa_individual: marcar })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (!error) {
+    await logAudit(supabase, { modulo: "padrinhos", acao: marcar ? "caixa_individual" : "remover_caixa_individual", registro: `hg_wedding_party:${id}` });
+    revalidarPadrinhos();
+  }
+}
+
 /** Cria uma tarefa para um padrinho. */
 export async function criarTarefaPadrinho(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const titulo = String(formData.get("titulo") ?? "").trim();

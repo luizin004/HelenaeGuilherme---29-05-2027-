@@ -60,6 +60,7 @@ export interface Guest {
   telefone: string | null;
   eh_crianca: boolean;
   faixa_etaria: string | null;
+  papel: string | null;
   lado: Lado | null;
   status: StatusConvidado;
   respondeu_em: string | null;

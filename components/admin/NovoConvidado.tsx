@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { criarConvidado, type GuestFormState } from "@/app/actions/guests";
+import { PAPEIS } from "@/domain/convites/caixas";
 
 const initial: GuestFormState = { ok: false, message: "" };
 
@@ -26,6 +27,14 @@ export function NovoConvidado() {
       <div className="flex flex-col gap-1">
         <label htmlFor="telefone" className="field-label">Telefone</label>
         <input id="telefone" name="telefone" placeholder="(00) 90000-0000" className="field-input" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="papel" className="field-label">Papel</label>
+        <select id="papel" name="papel" defaultValue="convidado" className="field-input">
+          {PAPEIS.map((p) => (
+            <option key={p.value} value={p.value}>{p.label}</option>
+          ))}
+        </select>
       </div>
       <label className="flex items-center gap-2 py-3 text-sm text-muted">
         <input type="checkbox" name="eh_crianca" /> Criança
