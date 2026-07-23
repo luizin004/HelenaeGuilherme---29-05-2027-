@@ -36,15 +36,17 @@ export default async function DocumentosPage() {
 
   return (
     <>
-      <PageTitle>Documentos</PageTitle>
+      <PageTitle>Documentação dos noivos e dados para cotação</PageTitle>
 
       {!isSupabaseConfigured && <Notice>Conecte o Supabase para enviar documentos.</Notice>}
 
       <Notice>
-        Armazenamento <strong>privado</strong>. Os links de download são temporários (assinados, expiram em 1h).
+        Central de <strong>documentação dos noivos</strong> e das <strong>informações para orçamentos e cotações</strong>:
+        dados cadastrais, CPF/RG, comprovantes, contratos e tudo que os fornecedores costumam pedir para orçar.
+        Armazenamento <strong>privado</strong> — os links de download são temporários (assinados, expiram em 1h).
       </Notice>
 
-      <Panel title="Enviar documento">
+      <Panel title="Enviar documento ou dado para cotação">
         <div className="p-6">
           <UploadDocumento />
         </div>

@@ -24,6 +24,35 @@ function lerValorCents(raw: string): number | null | undefined {
   return parseBRLToCents(v); // pode lançar → tratado no chamador
 }
 
+type DB = NonNullable<ReturnType<typeof createClient>>;
+
+/**
+ * Garante que o fornecedor exista em `hg_suppliers` e devolve seu id.
+ * Se o nome for novo, o fornecedor é cadastrado automaticamente (status
+ * "prospeccao") — assim toda conta lançada com um fornecedor novo aparece
+ * espelhada na tela de Fornecedores, sem cadastro manual.
+ */
+async function garantirFornecedor(supabase: DB, nome: string): Promise<string | null> {
+  const limpo = nome.trim();
+  if (!limpo) return null;
+  const { data: existente } = await supabase
+    .from("hg_suppliers")
+    .select("id")
+    .is("deleted_at", null)
+    .ilike("nome", limpo)
+    .maybeSingle();
+  if (existente?.id) return existente.id;
+
+  const { data: novo, error } = await supabase
+    .from("hg_suppliers")
+    .insert({ nome: limpo, status: "prospeccao" })
+    .select("id")
+    .single();
+  if (error || !novo) return null;
+  await logAudit(supabase, { modulo: "fornecedores", acao: "auto_create", registro: `hg_suppliers:${novo.id}`, valorNovo: { nome: limpo } });
+  return novo.id;
+}
+
 /** Cadastra uma nova despesa (painel, autenticado). Dinheiro em centavos (regra 1). */
 export async function criarDespesa(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
   const descricao = String(formData.get("descricao") ?? "").trim();
@@ -31,6 +60,7 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
   const gratuito = formData.get("gratuito") === "on";
   const observacao = String(formData.get("observacao") ?? "").trim();
   const categoria = String(formData.get("categoria") ?? "").trim();
+  const fornecedor = String(formData.get("fornecedor") ?? "").trim();
 
   if (!descricao) return { ok: false, message: "Informe a descrição da despesa." };
   if (!ESTADOS.includes(estado)) return { ok: false, message: "Estado inválido." };
@@ -45,6 +75,9 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
   const supabase = createClient();
   if (!supabase) return { ok: false, message: "Backend não configurado." };
 
+  // Fornecedor novo → cadastrado automaticamente e espelhado em Fornecedores.
+  const supplierId = fornecedor ? await garantirFornecedor(supabase, fornecedor) : null;
+
   const { error } = await supabase.from("hg_expenses").insert({
     descricao,
     estado: gratuito ? "gratuito" : estado,
@@ -52,14 +85,17 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
     valor_total_cents: gratuito ? null : valorCents ?? null,
     observacao: observacao || null,
     categoria: categoria || null,
+    supplier_id: supplierId,
   });
 
   if (error) return { ok: false, message: "Não foi possível salvar. Verifique se você está autenticado." };
 
-  await logAudit(supabase, { modulo: "financeiro", acao: "create", valorNovo: { descricao, estado, gratuito } });
+  await logAudit(supabase, { modulo: "financeiro", acao: "create", valorNovo: { descricao, estado, gratuito, fornecedor: fornecedor || null } });
   revalidatePath("/admin/financeiro");
   revalidatePath("/admin/parcelas");
-  return { ok: true, message: `Despesa "${descricao}" cadastrada.` };
+  if (supplierId) revalidatePath("/admin/fornecedores");
+  const extra = fornecedor ? ` Fornecedor "${fornecedor}" vinculado.` : "";
+  return { ok: true, message: `Despesa "${descricao}" cadastrada.${extra}` };
 }
 
 /** Edita uma despesa: descrição, estado, gratuito, valor total, observação. */

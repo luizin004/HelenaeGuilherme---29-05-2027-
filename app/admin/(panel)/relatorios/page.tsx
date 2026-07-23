@@ -1,5 +1,5 @@
 import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
-import { listExpenses, listParcelasDetalhado, getExpensePayers, getPayers } from "@/lib/admin-data";
+import { listExpenses, listParcelasDetalhado, getExpensePayers, getPayers, getResponsavelResumo } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -56,12 +56,22 @@ function Tabela({ titulo, linhas }: { titulo: string; linhas: [string, Agg][] })
   );
 }
 
+function ResponsavelLinha({ label, valor, cor }: { label: string; valor: number; cor?: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <dt className="text-muted">{label}</dt>
+      <dd className={`font-serif ${cor ?? "text-moss"}`}>{formatCents(valor)}</dd>
+    </div>
+  );
+}
+
 export default async function RelatoriosPage() {
-  const [expenses, parcelas, expensePayers, payers] = await Promise.all([
+  const [expenses, parcelas, expensePayers, payers, respResumo] = await Promise.all([
     listExpenses(),
     listParcelasDetalhado(),
     getExpensePayers(),
     getPayers(),
+    getResponsavelResumo(),
   ]);
   const payerNome = new Map(payers.map((p) => [p.id, p.nome]));
 
@@ -120,6 +130,33 @@ export default async function RelatoriosPage() {
         <Tabela titulo="Por categoria" linhas={linhasCat} />
         <Tabela titulo="Por responsável" linhas={linhasResp} />
       </div>
+
+      <Panel title="Responsáveis — visão detalhada">
+        <div className="p-6">
+          <p className="mb-4 text-sm text-muted">
+            Consolidado por responsável (Helena, Guilherme, Toninho): quanto cada um assumiu nas parcelas,
+            o que já pagou, o que está em aberto, o que vence este mês e no próximo, e os aportes registrados.
+          </p>
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {respResumo.map((r) => (
+              <div key={r.nome} className="rounded-lg border border-line bg-white p-6 shadow-card">
+                <h3 className="mb-3 font-serif text-2xl text-moss">{r.nome}</h3>
+                <dl className="space-y-1.5 text-sm">
+                  <ResponsavelLinha label="Assumido" valor={r.assumidoCents} />
+                  <ResponsavelLinha label="Pago" valor={r.pagoCents} cor="text-success" />
+                  <ResponsavelLinha label="Em aberto" valor={r.abertoCents} cor="text-warn" />
+                  <ResponsavelLinha label="Vence este mês" valor={r.esteMesCents} />
+                  <ResponsavelLinha label="Próximo mês" valor={r.proxMesCents} />
+                  <div className="mt-2 border-t border-line pt-2">
+                    <ResponsavelLinha label="Aportes" valor={r.aportesCents} cor="text-olive" />
+                  </div>
+                </dl>
+              </div>
+            ))}
+            {respResumo.length === 0 && <p className="text-sm text-muted">Nenhum responsável configurado.</p>}
+          </div>
+        </div>
+      </Panel>
     </>
   );
 }

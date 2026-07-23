@@ -35,7 +35,11 @@ export default async function ReembolsosPage() {
       {!isSupabaseConfigured ? (
         <Notice>Conecte o Supabase e faça login para registrar reembolsos.</Notice>
       ) : (
-        <Notice>Quando alguém paga no lugar de outro responsável. Controle quem deve acertar com quem.</Notice>
+        <Notice>
+          Quando alguém paga no lugar de outra pessoa. O campo <strong>&quot;quem pagou&quot;</strong> é livre:
+          registre qualquer pessoa (mesmo fora dos responsáveis fixos) para devolver o valor a quem realmente
+          desembolsou. Controle aqui quem deve acertar com quem.
+        </Notice>
       )}
 
       <KpiGrid>

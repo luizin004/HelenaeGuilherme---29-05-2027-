@@ -12,6 +12,7 @@ import {
   getGiftTotals,
   getPayers,
   listExpenses,
+  listSuppliers,
 } from "@/lib/admin-data";
 import type { AggRow } from "@/lib/admin-data";
 import { formatCents } from "@/domain/money";
@@ -50,7 +51,7 @@ const ESTADO_BADGE: Record<string, string> = {
 };
 
 export default async function FinanceiroPage() {
-  const [summary, expenses, gifts, classificacoes, responsaveis, expensePayers, porResp, porClass] =
+  const [summary, expenses, gifts, classificacoes, responsaveis, expensePayers, porResp, porClass, suppliers] =
     await Promise.all([
       getExpensesSummary(),
       listExpenses(),
@@ -60,8 +61,10 @@ export default async function FinanceiroPage() {
       getExpensePayers(),
       getFinanceByResponsible(),
       getFinanceByCostCenter(),
+      listSuppliers(),
     ]);
   const nomeClass = new Map(classificacoes.map((c) => [c.id, c.nome]));
+  const fornecedores = suppliers.map((s) => s.nome);
 
   const aPagar = summary.totalOrcadoCents - summary.pagoCents;
 
@@ -100,7 +103,7 @@ export default async function FinanceiroPage() {
 
       <Panel title="Nova despesa">
         <div className="p-6">
-          <NovaDespesa />
+          <NovaDespesa fornecedores={fornecedores} />
         </div>
       </Panel>
 

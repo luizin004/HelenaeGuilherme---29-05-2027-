@@ -20,18 +20,31 @@ export function NovoReembolso({ responsaveis }: { responsaveis: { id: string; no
     <form action={formAction} className="grid gap-4 md:grid-cols-2">
       <div className="flex flex-col gap-1">
         <label className="field-label">Quem pagou</label>
-        <select name="pagador_payer_id" defaultValue="" className="field-input">
-          <option value="">Selecionar…</option>
-          {responsaveis.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}
-        </select>
+        <input
+          name="pagador_nome"
+          list="reembolso-pessoas"
+          required
+          autoComplete="off"
+          placeholder="Qualquer pessoa — ex.: Tia Elen, Guilherme…"
+          className="field-input"
+        />
+        <span className="text-xs text-muted">Campo livre: quem desembolsou (para receber de volta).</span>
       </div>
       <div className="flex flex-col gap-1">
         <label className="field-label">Quem deve reembolsar</label>
-        <select name="devedor_payer_id" defaultValue="" className="field-input">
-          <option value="">Selecionar…</option>
-          {responsaveis.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}
-        </select>
+        <input
+          name="devedor_nome"
+          list="reembolso-pessoas"
+          required
+          autoComplete="off"
+          placeholder="Qualquer pessoa — ex.: Toninho, Helena…"
+          className="field-input"
+        />
+        <span className="text-xs text-muted">Campo livre: quem deve acertar com quem pagou.</span>
       </div>
+      <datalist id="reembolso-pessoas">
+        {responsaveis.map((r) => <option key={r.id} value={r.nome} />)}
+      </datalist>
       <div className="flex flex-col gap-1">
         <label className="field-label">Valor (R$)</label>
         <input name="valor" inputMode="decimal" required placeholder="1.000,00" className="field-input" />

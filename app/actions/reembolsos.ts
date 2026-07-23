@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { parseBRLToCents } from "@/domain/money";
+import { getPayers } from "@/lib/admin-data";
 
 export interface ReembolsoState {
   ok: boolean;
@@ -12,18 +13,22 @@ export interface ReembolsoState {
 
 const STATUS = ["a_reembolsar", "parcial", "reembolsado", "compensado", "cancelado"];
 
-/** Registra um reembolso: quem pagou × quem deveria pagar. */
+/**
+ * Registra um reembolso: quem pagou × quem deve devolver.
+ * O campo "quem pagou/deve" é LIVRE (qualquer pessoa, mesmo fora dos
+ * responsáveis fixos) — guardamos o nome sempre. Se o nome digitado bater
+ * com um responsável cadastrado, também vinculamos o payer_id para o valor
+ * refletir nos relatórios por responsável.
+ */
 export async function criarReembolso(_prev: ReembolsoState, formData: FormData): Promise<ReembolsoState> {
-  const pagador = String(formData.get("pagador_payer_id") ?? "").trim();
   const pagadorNome = String(formData.get("pagador_nome") ?? "").trim();
-  const devedor = String(formData.get("devedor_payer_id") ?? "").trim();
   const devedorNome = String(formData.get("devedor_nome") ?? "").trim();
   const data = String(formData.get("data") ?? "").trim();
   const motivo = String(formData.get("motivo") ?? "").trim();
 
   if (!data) return { ok: false, message: "Informe a data." };
-  if (!pagador && !pagadorNome) return { ok: false, message: "Informe quem pagou." };
-  if (!devedor && !devedorNome) return { ok: false, message: "Informe quem deve reembolsar." };
+  if (!pagadorNome) return { ok: false, message: "Informe quem pagou." };
+  if (!devedorNome) return { ok: false, message: "Informe quem deve reembolsar." };
 
   let valorCents = 0;
   try {
@@ -36,11 +41,15 @@ export async function criarReembolso(_prev: ReembolsoState, formData: FormData):
   const supabase = createClient();
   if (!supabase) return { ok: false, message: "Backend não configurado." };
 
+  // Casa o texto livre com um responsável cadastrado (opcional, para relatórios).
+  const payers = await getPayers();
+  const acha = (nome: string) => payers.find((p) => p.nome.toLowerCase() === nome.toLowerCase())?.id ?? null;
+
   const { error } = await supabase.from("hg_reembolsos").insert({
-    pagador_payer_id: pagador || null,
-    pagador_nome: pagadorNome || null,
-    devedor_payer_id: devedor || null,
-    devedor_nome: devedorNome || null,
+    pagador_payer_id: acha(pagadorNome),
+    pagador_nome: pagadorNome,
+    devedor_payer_id: acha(devedorNome),
+    devedor_nome: devedorNome,
     valor_cents: valorCents,
     data,
     motivo: motivo || null,

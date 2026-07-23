@@ -66,7 +66,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { section: "Análises e documentos" },
   { label: "Relatórios", ico: "chart", href: "/admin/relatorios" },
   { label: "Comprovantes", ico: "receipt", href: "/admin/comprovantes" },
-  { label: "Documentos", ico: "folder", href: "/admin/documentos" },
+  { label: "Documentação & cotação", ico: "folder", href: "/admin/documentos" },
 
   { section: "Configurações financeiras" },
   { label: "Classificações financeiras", ico: "tag", href: "/admin/classificacoes" },

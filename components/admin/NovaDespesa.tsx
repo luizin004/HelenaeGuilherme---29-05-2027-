@@ -15,7 +15,7 @@ function Submit() {
   );
 }
 
-export function NovaDespesa() {
+export function NovaDespesa({ fornecedores = [] }: { fornecedores?: string[] }) {
   const [state, formAction] = useFormState(criarDespesa, initial);
 
   return (
@@ -23,6 +23,16 @@ export function NovaDespesa() {
       <div className="flex flex-col gap-1 md:col-span-2">
         <label htmlFor="d-desc" className="field-label">Descrição</label>
         <input id="d-desc" name="descricao" required placeholder="Ex.: Buffet, Decoração…" className="field-input" />
+      </div>
+      <div className="flex flex-col gap-1 md:col-span-2">
+        <label htmlFor="d-forn" className="field-label">Fornecedor (opcional)</label>
+        <input id="d-forn" name="fornecedor" list="forn-list" autoComplete="off" placeholder="Ex.: Supermercado Nova União" className="field-input" />
+        <datalist id="forn-list">
+          {fornecedores.map((f) => (
+            <option key={f} value={f} />
+          ))}
+        </datalist>
+        <span className="text-xs text-muted">Fornecedor novo é cadastrado automaticamente em Fornecedores.</span>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="d-valor" className="field-label">Valor total (R$) — deixe vazio se ainda a definir</label>
