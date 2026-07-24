@@ -4,6 +4,7 @@ import { join } from "node:path";
 import Link from "next/link";
 import { Footer } from "@/components/public/Footer";
 import { Logo } from "@/components/public/Logo";
+import { PresentearModal } from "@/components/public/PresentearModal";
 import { getGifts, getSettings, resolveCouple } from "@/lib/data";
 import { WEDDING } from "@/lib/constants";
 import { giftVisual } from "@/domain/gifts/visual";
@@ -87,7 +88,7 @@ export default async function PresentesPage() {
                 {g.descricao && <p className="mt-1 flex-1 text-sm text-muted">{g.descricao}</p>}
                 <div className="mt-4 flex items-center justify-between">
                   <span className="font-serif text-xl text-olive">{brl(Number(g.preco))}</span>
-                  <button className="btn btn-dark px-5 py-2.5">Presentear</button>
+                  <PresentearModal gift={{ id: g.id, nome: g.nome, preco: Number(g.preco), permite_cota: g.permite_cota }} />
                 </div>
               </div>
             </article>
