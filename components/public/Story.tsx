@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Reveal } from "./Reveal";
 
-const MARCOS = ["2017", "2021", "2024", "2027"];
+const MARCOS = ["2017", "2020", "2023", "2026", "2027"];
 
 export function Story() {
   return (
