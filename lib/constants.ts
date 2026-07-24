@@ -7,7 +7,7 @@ export const WEDDING = {
   conceito: "O início do nosso maior projeto",
   /** Data e hora oficial — 29/05/2027 15h (America/Sao_Paulo, UTC-3). */
   dataISO: "2027-05-29T15:00:00-03:00",
-  dataExtenso: "29 de Maio de 2027",
+  dataExtenso: "29 de maio de 2027",
   timezone: "America/Sao_Paulo",
   /** Prazo inicial do RSVP (configurável no painel). */
   rsvpDeadlineISO: "2027-03-30T23:59:59-03:00",
@@ -47,27 +47,37 @@ export const VENUES_FALLBACK: Venue[] = [
   },
 ];
 
+export interface NavLeaf { href: string; label: string }
+export interface NavGroup { label: string; children: NavLeaf[] }
+export type NavItem = NavLeaf | NavGroup;
+
 /**
  * Navegação principal do site — TODAS as telas acessíveis pelo cabeçalho.
  * Âncoras (#) rolam para as seções da home; caminhos (/) abrem as páginas.
- * Mantida em sincronia com o rodapé (components/public/Footer.tsx).
+ * Itens informativos (cerimônia, recepção, rota, hospedagem, programação,
+ * dúvidas) ficam agrupados em "Informações" para não sobrecarregar o menu.
+ * Privacidade/Termos ficam só no rodapé. Mantida em sincronia com o rodapé
+ * (components/public/Footer.tsx).
  */
-export const NAV_LINKS = [
+export const NAV_LINKS: NavItem[] = [
   { href: "/historia", label: "Nossa história" },
   { href: "/#detalhes", label: "O grande dia" },
   { href: "/#festa", label: "A festa" },
   { href: "/#galeria", label: "Galeria" },
-  { href: "/cerimonia", label: "Cerimônia" },
-  { href: "/recepcao", label: "Recepção" },
-  { href: "/como-chegar", label: "Como chegar" },
-  { href: "/hospedagem", label: "Hospedagem" },
-  { href: "/programacao", label: "Programação" },
-  { href: "/duvidas", label: "Dúvidas" },
+  {
+    label: "Informações",
+    children: [
+      { href: "/cerimonia", label: "Cerimônia" },
+      { href: "/recepcao", label: "Recepção" },
+      { href: "/como-chegar", label: "Como chegar" },
+      { href: "/hospedagem", label: "Hospedagem" },
+      { href: "/programacao", label: "Programação" },
+      { href: "/duvidas", label: "Dúvidas" },
+    ],
+  },
   { href: "/presentes", label: "Presentes" },
   { href: "/rancho", label: "O espaço (Rancho)" },
-  { href: "/privacidade", label: "Privacidade" },
-  { href: "/termos", label: "Termos" },
-] as const;
+];
 
 /** Cardápio da recepção (dados fornecidos pelo casal). */
 export const CARDAPIO: { nome: string; descricao: string; tag: string }[] = [

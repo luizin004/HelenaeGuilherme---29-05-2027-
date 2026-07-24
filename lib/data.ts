@@ -4,9 +4,9 @@ import type { GalleryPhoto, Gift, StoryEvent, Venue, WeddingSettings } from "@/l
 
 const STORY_FALLBACK: StoryEvent[] = [
   { id: "1", ano: "2017", titulo: "O encontro que mudou tudo", descricao: null, ordem: 1 },
-  { id: "2", ano: "24 anos", titulo: "Nosso primeiro sonho construído juntos", descricao: null, ordem: 2 },
-  { id: "3", ano: "27 anos", titulo: "Um passo ainda maior: a OralAligner", descricao: null, ordem: 3 },
-  { id: "4", ano: "30 anos", titulo: "Uma vida de conquistas compartilhadas", descricao: null, ordem: 4 },
+  { id: "2", ano: "2020 · Aos 24 anos", titulo: "Nosso primeiro sonho construído juntos", descricao: null, ordem: 2 },
+  { id: "3", ano: "2023 · Aos 27 anos", titulo: "Um passo ainda maior: a OralAligner", descricao: null, ordem: 3 },
+  { id: "4", ano: "2026 · Aos 30 anos", titulo: "Uma vida de conquistas compartilhadas", descricao: null, ordem: 4 },
   { id: "5", ano: "2027", titulo: "Dez anos de história e o início do nosso maior projeto", descricao: null, ordem: 5 },
 ];
 

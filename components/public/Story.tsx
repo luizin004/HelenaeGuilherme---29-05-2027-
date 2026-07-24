@@ -46,7 +46,7 @@ export function Story({ eventos }: { eventos: StoryEvent[] }) {
               {eventos.map((e, i) => (
                 <span key={e.id} className="flex items-center gap-3">
                   {i > 0 && <span className="text-gold/60">·</span>}
-                  {e.ano}
+                  {e.ano?.split(" · ")[0]}
                 </span>
               ))}
             </div>

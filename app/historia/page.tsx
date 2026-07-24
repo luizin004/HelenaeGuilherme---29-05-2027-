@@ -12,7 +12,7 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Nossa história · Helena & Guilherme",
-  description: "Duas pessoas que começaram do zero. Nada foi fácil — mas foi tudo por amor.",
+  description: "Antes do nosso “sim”, existiram dez anos de escolhas — a história de Helena e Guilherme.",
 };
 
 const HISTORIA_FALLBACK =
@@ -59,7 +59,6 @@ export default async function HistoriaPage() {
   const [settings, story] = await Promise.all([getSettings(), getStory()]);
   const couple = resolveCouple(settings);
   const paragrafos = (couple.historia ?? HISTORIA_FALLBACK).split("\n").filter(Boolean);
-  const ultimoIndex = paragrafos.length - 1;
 
   return (
     <main className="min-h-screen bg-ivory">
@@ -79,18 +78,22 @@ export default async function HistoriaPage() {
             Nossa história
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-cream/85">
-            Duas pessoas de Itabira. Nada foi fácil — mas foi tudo por amor.
+            Tudo começou com um encontro. O que veio depois, construímos juntos.
           </p>
         </div>
       </section>
 
-      {/* Texto completo */}
-      <section className="mx-auto max-w-2xl px-6 py-20">
+      {/* Abertura */}
+      <section className="mx-auto max-w-2xl px-6 py-20 text-center">
         <Reveal>
-          <div className="space-y-5 text-[1.08rem] leading-[1.85] text-muted">
+          <p className="eyebrow">Do zero, juntos</p>
+          <h2 className="mb-8 font-serif text-3xl leading-tight text-moss sm:text-4xl">
+            Antes do nosso “sim”, existiram dez anos de escolhas
+          </h2>
+          <div className="space-y-5 text-left text-[1.08rem] leading-[1.85] text-muted">
             {paragrafos.map((p, i) =>
-              i === 6 || i === ultimoIndex ? (
-                <p key={i} className="py-3 text-center font-serif text-xl italic text-olive sm:text-2xl">
+              i === 2 ? (
+                <p key={i} className="py-2 text-center font-serif text-xl italic text-olive sm:text-2xl">
                   {p}
                 </p>
               ) : (
@@ -130,14 +133,15 @@ export default async function HistoriaPage() {
       {/* CTA final */}
       <section className="mx-auto max-w-content px-6 py-20 text-center">
         <Reveal>
-          <p className="font-serif text-2xl text-moss sm:text-3xl">
-            Agora, começamos o nosso maior projeto: a nossa família.
+          <p className="mx-auto max-w-xl font-serif text-2xl leading-snug text-moss sm:text-3xl">
+            Foram dez anos transformando sonhos em conquistas. Agora, diante de Deus, começamos o
+            nosso maior e mais bonito projeto: a nossa família.
           </p>
-          <p className="mx-auto mt-3 max-w-lg text-muted">
-            Contamos com você para celebrar esse novo capítulo com a gente, em {WEDDING.dataExtenso}.
+          <p className="mx-auto mt-4 max-w-lg text-muted">
+            Esperamos você para celebrar o início desse novo capítulo conosco, em {WEDDING.dataExtenso}.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/#rsvp" className="btn btn-dark">Confirmar presença</Link>
+            <Link href="/#rsvp" className="btn btn-dark">Confirmar minha presença</Link>
             <Link href="/" className="btn btn-outline">Voltar ao início</Link>
           </div>
         </Reveal>
