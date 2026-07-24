@@ -27,13 +27,20 @@ export function Story({ eventos }: { eventos: StoryEvent[] }) {
           </div>
 
           <div className="flex flex-col justify-center bg-moss-deep px-8 py-10 text-cream sm:px-12 sm:py-14">
-            <p className="eyebrow text-gold">Do zero, juntos</p>
-            <p className="font-serif text-xl italic leading-relaxed text-cream/90 sm:text-2xl">
-              Dois jovens de Itabira, sonhos que pareciam andar sozinhos — até se encontrarem. Dez
-              anos de recomeços, negócios construídos com as próprias mãos e a certeza de que nada
-              valeria a pena sem o outro ao lado.
+            <p className="eyebrow text-gold">O caminho até o nosso “sim”</p>
+            <h3 className="font-serif text-2xl font-medium leading-snug text-cream sm:text-3xl">
+              Antes do “sim”, existiram dez anos de escolhas.
+            </h3>
+            <p className="mt-4 leading-relaxed text-cream/85">
+              Dois jovens de Itabira se encontraram longe de casa, em Belo Horizonte. Entre a
+              Engenharia, a Odontologia, sonhos arriscados, empresas construídas e muitos
+              recomeços, descobrimos que a vida se torna maior quando duas pessoas escolhem
+              caminhar na mesma direção.
             </p>
-            <p className="mt-4 text-sm text-cream/70">Nada foi fácil. Mas foi tudo por amor.</p>
+            <p className="mt-3 font-serif italic text-cream/70">
+              Esta é a história de como dois sonhos separados se transformaram em uma vida
+              construída a dois.
+            </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs uppercase tracking-[0.15em] text-cream/60">
               {eventos.map((e, i) => (
@@ -45,7 +52,7 @@ export function Story({ eventos }: { eventos: StoryEvent[] }) {
             </div>
 
             <span className="btn btn-light mt-8 w-fit">
-              Conhecer nossa história completa
+              Conhecer o caminho até o nosso “sim”
             </span>
           </div>
         </Link>
