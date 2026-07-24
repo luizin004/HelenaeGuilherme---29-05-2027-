@@ -22,7 +22,6 @@ export function Details({ venues }: { venues: Venue[] }) {
           </h2>
           <div className="grid gap-8 md:grid-cols-3">
             <Card
-              icon="⛪"
               titulo="Cerimônia"
               tempo={cerimonia?.horario ?? "15h00"}
               linha1={cerimonia?.nome ?? "Local a confirmar"}
@@ -30,7 +29,6 @@ export function Details({ venues }: { venues: Venue[] }) {
               href={cerimonia ? mapsHref(cerimonia) : undefined}
             />
             <Card
-              icon="🥂"
               titulo="Recepção"
               tempo={recepcao?.horario ?? "Logo após a cerimônia"}
               linha1={recepcao?.nome ?? "Espaço a confirmar"}
@@ -38,7 +36,6 @@ export function Details({ venues }: { venues: Venue[] }) {
               href={recepcao ? mapsHref(recepcao) : undefined}
             />
             <Card
-              icon="🌿"
               titulo="Traje"
               tempo={WEDDING.traje}
               linha1="Vista-se para celebrar"
@@ -52,22 +49,22 @@ export function Details({ venues }: { venues: Venue[] }) {
 }
 
 function Card({
-  icon, titulo, tempo, linha1, linha2, href,
+  titulo, tempo, linha1, linha2, href,
 }: {
-  icon: string; titulo: string; tempo: string; linha1: string; linha2: string; href?: string;
+  titulo: string; tempo: string; linha1: string; linha2: string; href?: string;
 }) {
   return (
-    <article className="rounded bg-white p-7 shadow-soft transition-transform hover:-translate-y-1.5 sm:p-9">
-      <div className="mb-4 text-4xl">{icon}</div>
-      <h3 className="mb-1 font-serif text-2xl font-semibold text-moss">{titulo}</h3>
-      <p className="mb-3 text-sm uppercase tracking-[0.1em] text-olive">{tempo}</p>
-      <p className="text-sm text-muted">
+    <article className="rounded bg-white p-8 text-center shadow-soft transition-transform hover:-translate-y-1.5 sm:p-10">
+      <div className="mx-auto mb-6 h-px w-10 bg-gold" />
+      <h3 className="mb-2 font-serif text-2xl text-moss">{titulo}</h3>
+      <p className="mb-4 text-xs uppercase tracking-[0.2em] text-olive">{tempo}</p>
+      <p className="text-sm leading-relaxed text-muted">
         {linha1}
         <br />
         {linha2}
       </p>
       {href && (
-        <a href={href} target="_blank" rel="noopener" className="btn btn-outline mt-5">
+        <a href={href} target="_blank" rel="noopener" className="btn btn-outline mt-6">
           Ver rota
         </a>
       )}
