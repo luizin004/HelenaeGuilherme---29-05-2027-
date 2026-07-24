@@ -32,7 +32,7 @@ Coloque os arquivos nas pastas, com estes nomes, e faça commit (redeploy autom�
 `aerea-montanhas.jpg` · `vista-geral.jpg` · `noite-deck.jpg` · `noite-bar.jpg` · `crianca-correndo.jpg`
 
 **`public/images/hoteis/`** — `it-itabira-hotel.jpg` · `premium-executive-hotel.jpg` ·
-`hotel-domus-itabira.jpg` · `pousada-agua-santa.jpg`
+`hotel-domus-itabira.jpg` · `hotel-job.webp`
 
 Até subir, os espaços mostram um gradiente da paleta (não quebra). O **vídeo do Rancho já funciona**.
 

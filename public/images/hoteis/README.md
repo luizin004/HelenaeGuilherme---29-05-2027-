@@ -9,7 +9,7 @@ o card mostra um gradiente da paleta (sem quebrar).
 | `it-itabira-hotel.jpg` | IT Itabira Hotel |
 | `premium-executive-hotel.jpg` | Premium Executive Hotel |
 | `hotel-domus-itabira.jpg` | Hotel Domus Itabira |
-| `pousada-agua-santa.jpg` | Hotel Pousada da Água Santa |
+| `hotel-job.webp` | Hotel Job |
 
 > Importante: use apenas fotos **reais e autorizadas** de cada estabelecimento —
 > não use imagens conceituais/geradas como se fossem a fachada oficial.

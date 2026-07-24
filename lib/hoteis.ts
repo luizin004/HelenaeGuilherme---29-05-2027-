@@ -46,13 +46,13 @@ export const HOTEIS: Hotel[] = [
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Domus+Itabira%2C+Rua+Malacacheta%2C+16%2C+Itabira+MG",
   },
   {
-    id: "pousada-agua-santa",
-    nome: "Hotel Pousada da Água Santa",
-    imagem: "/images/hoteis/pousada-agua-santa.jpg",
-    descricao: "Hospedagem central e acolhedora, próxima ao comércio e aos principais serviços.",
-    endereco: "Rua Água Santa, 2 – Centro, Itabira/MG",
-    telefone: "(31) 3831-3920",
-    mapsUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Pousada+da+Agua+Santa%2C+Rua+Agua+Santa%2C+2%2C+Itabira+MG",
+    id: "hotel-job",
+    nome: "Hotel Job",
+    imagem: "/images/hoteis/hotel-job.webp",
+    descricao: "Hospedagem prática e bem localizada no centro de Itabira, indicada para convidados que buscam facilidade de acesso ao comércio e aos principais serviços da cidade.",
+    endereco: "Rua São José, 201 – Centro, Itabira/MG – CEP 35900-002",
+    telefone: "(31) 3834-2638",
+    mapsUrl: "https://www.google.com/maps/search/?api=1&query=Hotel+Job%2C+Rua+Sao+Jose%2C+201%2C+Itabira+MG",
   },
 ];
 
