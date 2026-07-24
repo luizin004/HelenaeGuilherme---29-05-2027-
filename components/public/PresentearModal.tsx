@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { parseBRLToCents, formatCents } from "@/domain/money";
 
-const VALOR_MINIMO_CENTS = 30_000; // R$ 300,00 (mesma regra do backend)
+const VALOR_MINIMO_CENTS = 2_000; // R$ 20,00 (mesmo piso técnico do backend)
 
 type Metodo = "PIX" | "CREDIT_CARD" | "BOLETO";
 
