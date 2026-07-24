@@ -38,7 +38,7 @@ export default async function FluxoCaixaPage({ searchParams }: { searchParams: {
       <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Saldo inicial" value={formatCents(saldoInicial)} tooltip="Soma do saldo inicial das contas financeiras cadastradas." />
         <SummaryCard label="Entradas (aportes)" value={formatCents(realizado.totalEntradasCents)} tone="success" tooltip="Aportes registrados." href="/admin/aportes" />
-        <SummaryCard label="Saídas realizadas" value={formatCents(realizado.totalSaidasCents)} tooltip="Pagamentos efetivamente registrados (estornos fora)." href="/admin/contas?aba=pagas" />
+        <SummaryCard label="Saídas realizadas" value={formatCents(realizado.totalSaidasCents)} tooltip="Pagamentos efetivamente registrados (estornos fora)." href="/admin/financeiro?t=contas&sec=contas&aba=pagas" />
         <SummaryCard
           label="Saldo do período"
           value={formatCents(saldoInicial + realizado.saldoCents)}

@@ -122,7 +122,7 @@ export default async function CalendarioPage({ searchParams }: { searchParams: {
                   <div className="flex items-center gap-4">
                     <span className="w-24 shrink-0 text-sm text-muted">{fmtDateBR(e.data)}</span>
                     <div>
-                      <Link href={e.tipo === "aporte" ? "/admin/aportes" : "/admin/contas?aba=todas"} className="text-sm font-medium text-moss underline-offset-2 hover:underline">
+                      <Link href={e.tipo === "aporte" ? "/admin/aportes" : "/admin/financeiro?t=contas&sec=contas&aba=todas"} className="text-sm font-medium text-moss underline-offset-2 hover:underline">
                         {e.titulo}
                       </Link>
                       {e.detalhe && <p className="text-xs text-muted">{e.detalhe}</p>}

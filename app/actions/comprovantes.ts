@@ -67,7 +67,7 @@ export async function registrarComprovante(_prev: ComprovanteState, formData: Fo
     valorNovo: { valorCents, installmentId: installmentId || null },
   });
   revalidatePath("/admin/comprovantes");
-  revalidatePath("/admin/parcelas");
+  revalidatePath("/admin/financeiro");
   return { ok: true, message: "Comprovante anexado." + (installmentId ? " Parcela marcada como paga." : "") };
 }
 

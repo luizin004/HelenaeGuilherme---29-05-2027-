@@ -27,10 +27,7 @@ export const ADMIN_MENU: MenuEntry[] = [
 
   { section: "Financeiro" },
   { label: "Dashboard financeiro", ico: "dashboard", href: "/admin/financeiro-dashboard" },
-  { label: "Orçamento", ico: "calculator", href: "/admin/orcamento" },
-  { label: "Cotações e propostas", ico: "file-text", href: "/admin/cotacoes" },
-  { label: "Lançamentos", ico: "wallet", href: "/admin/financeiro" },
-  { label: "Contas", ico: "clock", href: "/admin/contas" },
+  { label: "Orçamento, cotações e contas", ico: "wallet", href: "/admin/financeiro" },
   { label: "Calendário financeiro", ico: "calendar-check", href: "/admin/calendario" },
   { label: "Fluxo de caixa", ico: "coins", href: "/admin/fluxo-caixa" },
   { label: "Evania (assistente)", ico: "heart", href: "/admin/evania" },

@@ -63,6 +63,7 @@ export async function criarProposta(_prev: QuoteFormState, formData: FormData): 
 
   await logAudit(supabase, { modulo: "cotacoes", acao: "create", registro: `hg_expenses:${expenseId}`, valorNovo: { valorCents } });
   revalidatePath("/admin/cotacoes");
+  revalidatePath("/admin/financeiro");
   return { ok: true, message: "Proposta registrada." };
 }
 
@@ -81,6 +82,7 @@ export async function excluirProposta(formData: FormData): Promise<void> {
   if (!error) {
     await logAudit(supabase, { modulo: "cotacoes", acao: "delete", registro: `hg_quotes:${id}` });
     revalidatePath("/admin/cotacoes");
+    revalidatePath("/admin/financeiro");
   }
 }
 
@@ -162,5 +164,4 @@ export async function escolherProposta(formData: FormData): Promise<void> {
   });
   revalidatePath("/admin/cotacoes");
   revalidatePath("/admin/financeiro");
-  revalidatePath("/admin/parcelas");
 }

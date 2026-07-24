@@ -38,9 +38,9 @@ export function ParcelasManager({
   return (
     <>
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <SummaryCard label="Pago" value={formatCents(pagoCents)} tone="success" tooltip="Pagamentos válidos registrados nas parcelas." href="/admin/contas?aba=pagas" />
-        <SummaryCard label="Em aberto" value={formatCents(abertoCents)} tone="warn" tooltip="Saldo pendente de todas as parcelas." href="/admin/contas?aba=a_pagar" />
-        <SummaryCard label="Vencidas" value={String(vencidas)} tone={vencidas > 0 ? "danger" : "default"} tooltip="Parcelas com saldo e vencimento no passado." href="/admin/contas?aba=vencidas" />
+        <SummaryCard label="Pago" value={formatCents(pagoCents)} tone="success" tooltip="Pagamentos válidos registrados nas parcelas." href="/admin/financeiro?t=contas&sec=contas&aba=pagas" />
+        <SummaryCard label="Em aberto" value={formatCents(abertoCents)} tone="warn" tooltip="Saldo pendente de todas as parcelas." href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" />
+        <SummaryCard label="Vencidas" value={String(vencidas)} tone={vencidas > 0 ? "danger" : "default"} tooltip="Parcelas com saldo e vencimento no passado." href="/admin/financeiro?t=contas&sec=contas&aba=vencidas" />
       </div>
 
       {rows.length === 0 && (

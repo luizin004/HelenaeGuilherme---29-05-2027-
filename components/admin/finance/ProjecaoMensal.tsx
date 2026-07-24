@@ -61,7 +61,7 @@ export function ProjecaoMensalView({
               {proj.meses.map((m) => {
                 const isCasamento = m.ym === YM_CASAMENTO;
                 return (
-                  <Link key={m.ym} href="/admin/contas?aba=todas" className="block" title={`${labelMesPT(m.ym)} · previsto ${formatCents(m.previstoCents)} · pago ${formatCents(m.pagoCents)} · pendente ${formatCents(m.pendenteCents)}${m.vencidoCents ? ` · vencido ${formatCents(m.vencidoCents)}` : ""}${m.entradasCents ? ` · entradas ${formatCents(m.entradasCents)}` : ""}`}>
+                  <Link key={m.ym} href="/admin/financeiro?t=contas&sec=contas&aba=todas" className="block" title={`${labelMesPT(m.ym)} · previsto ${formatCents(m.previstoCents)} · pago ${formatCents(m.pagoCents)} · pendente ${formatCents(m.pendenteCents)}${m.vencidoCents ? ` · vencido ${formatCents(m.vencidoCents)}` : ""}${m.entradasCents ? ` · entradas ${formatCents(m.entradasCents)}` : ""}`}>
                     <div className="mb-0.5 flex items-center justify-between text-xs">
                       <span className={`font-medium ${isCasamento ? "text-wood" : "text-moss"}`}>
                         {labelMesPT(m.ym)}{isCasamento ? " · casamento" : ""}
@@ -122,7 +122,7 @@ export function ProjecaoMensalView({
           {proj.semDataCents > 0 && (
             <Notice>
               Há <strong>{formatCents(proj.semDataCents)}</strong> em contas <strong>sem data</strong> — elas não entram
-              nos meses acima. Defina vencimento em <Link href="/admin/contas?sec=a_definir" className="underline">Contas → Parcelas a definir</Link>.
+              nos meses acima. Defina vencimento em <Link href="/admin/financeiro?t=contas&sec=a_definir" className="underline">Contas → Parcelas a definir</Link>.
             </Notice>
           )}
         </>

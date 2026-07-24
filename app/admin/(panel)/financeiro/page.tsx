@@ -1,174 +1,64 @@
-import { Kpi, KpiGrid, Notice, Panel } from "@/components/admin/ui";
+import Link from "next/link";
 import { PageHeader } from "@/components/admin/finance/ui";
-import { ClassificarDespesa } from "@/components/admin/ClassificarDespesa";
-import { NovaDespesa } from "@/components/admin/NovaDespesa";
-import { DespesaActions } from "@/components/admin/DespesaActions";
-import {
-  getClassificacoesOptions,
-  getExpensePayers,
-  getExpensesSummary,
-  getFinanceByCostCenter,
-  getFinanceByResponsible,
-  getGiftTotals,
-  getPayers,
-  listExpenses,
-  listSuppliers,
-} from "@/lib/admin-data";
-import type { AggRow } from "@/lib/admin-data";
-import { formatCents } from "@/domain/money";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-
-function ResumoPanel({ titulo, linhas, vazio }: { titulo: string; linhas: AggRow[]; vazio: string }) {
-  return (
-    <section className="overflow-hidden rounded-lg bg-white shadow-card">
-      <div className="border-b border-line px-6 py-4 font-serif text-xl text-moss">{titulo}</div>
-      {linhas.length === 0 ? (
-        <p className="p-6 text-sm text-muted">{vazio}</p>
-      ) : (
-        <table className="w-full text-sm">
-          <tbody>
-            {linhas.map((l, i) => (
-              <tr key={i} className="border-t border-line first:border-0">
-                <td className="px-6 py-2.5">{l.nome}</td>
-                <td className="px-6 py-2.5 text-right font-serif text-base text-moss">{formatCents(l.totalCents)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </section>
-  );
-}
+import { OrcamentoTab } from "@/components/admin/financeiro/OrcamentoTab";
+import { CotacoesTab } from "@/components/admin/financeiro/CotacoesTab";
+import { LancamentosTab } from "@/components/admin/financeiro/LancamentosTab";
+import { ContasTab } from "@/components/admin/financeiro/ContasTab";
 
 export const dynamic = "force-dynamic";
 
-const ESTADO_BADGE: Record<string, string> = {
-  orcado: "bg-[#eef1e6] text-olive",
-  contratado: "bg-[#e6efe0] text-success",
-  pago: "bg-[#e6efe0] text-success",
-  previsto: "bg-[#f6ecd6] text-warn",
-  gratuito: "bg-gold-soft text-moss",
+const ABAS = [
+  { key: "orcamento", label: "Orçamento" },
+  { key: "cotacoes", label: "Cotações & propostas" },
+  { key: "lancamentos", label: "Lançamentos" },
+  { key: "contas", label: "Contas" },
+] as const;
+type Aba = (typeof ABAS)[number]["key"];
+
+const DESCRICAO: Record<Aba, string> = {
+  orcamento: "Marque o que o casamento vai precisar — cada item selecionado já entra nas outras abas.",
+  cotacoes: "Compare propostas de fornecedores por item e escolha a melhor.",
+  lancamentos: "Cadastre os custos, classifique e defina a condição de pagamento de cada um.",
+  contas: "Acompanhe o que está a pagar, vencendo, pago — e os cronogramas de parcelas.",
 };
 
-export default async function FinanceiroPage() {
-  const [summary, expenses, gifts, classificacoes, responsaveis, expensePayers, porResp, porClass, suppliers] =
-    await Promise.all([
-      getExpensesSummary(),
-      listExpenses(),
-      getGiftTotals(),
-      getClassificacoesOptions(),
-      getPayers(),
-      getExpensePayers(),
-      getFinanceByResponsible(),
-      getFinanceByCostCenter(),
-      listSuppliers(),
-    ]);
-  const nomeClass = new Map(classificacoes.map((c) => [c.id, c.nome]));
-  const fornecedores = suppliers.map((s) => s.nome);
-
-  const aPagar = summary.totalOrcadoCents - summary.pagoCents;
+/**
+ * Orçamento, Cotações, Lançamentos e Contas viviam em 4 telas separadas com
+ * muita informação repetida (o mesmo item de despesa aparecia em todas). Agora
+ * é uma tela só, em abas — o fluxo natural (orçar → cotar → lançar → pagar)
+ * fica visível e a navegação entre eles não perde contexto.
+ */
+export default async function FinanceiroPage({ searchParams }: { searchParams: { t?: string; aba?: string; sec?: string } }) {
+  const aba = (ABAS.some((a) => a.key === searchParams.t) ? searchParams.t : "lancamentos") as Aba;
 
   return (
     <>
       <PageHeader
-        title="Lançamentos"
-        description="Visão geral das movimentações. Cada despesa usa um campo único de classificação financeira e aparece automaticamente em Contas, Calendário, Projeção e Fluxo."
-        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Lançamentos", href: "/admin/financeiro" }]}
+        title="Financeiro"
+        description={DESCRICAO[aba]}
+        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Orçamento, cotações e contas", href: "/admin/financeiro" }]}
       />
 
-      {!isSupabaseConfigured && (
-        <Notice>Conecte o Supabase para ver os lançamentos reais.</Notice>
-      )}
-
-      <KpiGrid>
-        <Kpi label="Orçado (conhecido)" value={formatCents(summary.totalOrcadoCents)} hint={`${summary.comValor} itens com valor`} />
-        <Kpi label="Pago" value={formatCents(summary.pagoCents)} />
-        <Kpi label="A pagar" value={formatCents(aPagar)} />
-        <Kpi label="Recebido (presentes)" value={formatCents(Math.round(gifts.recebido * 100))} hint={`${gifts.contribuicoes} contribuições`} />
-      </KpiGrid>
-
-      <Notice>
-        {summary.semValor > 0 && (
-          <>
-            <strong>{summary.semValor} itens ainda sem valor</strong> (não contam como R$ 0 — regra 11).{" "}
-          </>
-        )}
-        {summary.gratuitos > 0 && <><strong>{summary.gratuitos} itens gratuitos</strong> (não geram parcela).</>}
-      </Notice>
-
-      <div className="mb-8 grid gap-6 md:grid-cols-2">
-        <ResumoPanel titulo="Por responsável (desembolso)" linhas={porResp} vazio="Classifique os responsáveis nas despesas." />
-        <ResumoPanel titulo="Por classificação financeira" linhas={porClass} vazio="Sem despesas classificadas ainda." />
+      <div className="mb-6 flex flex-wrap gap-1.5" role="tablist" aria-label="Abas do financeiro">
+        {ABAS.map((a) => (
+          <Link
+            key={a.key}
+            role="tab"
+            aria-selected={aba === a.key}
+            href={`/admin/financeiro?t=${a.key}`}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              aba === a.key ? "bg-moss text-white" : "bg-white text-muted shadow-card hover:text-moss"
+            }`}
+          >
+            {a.label}
+          </Link>
+        ))}
       </div>
 
-      <Panel title="Nova despesa">
-        <div className="p-6">
-          <NovaDespesa fornecedores={fornecedores} />
-        </div>
-      </Panel>
-
-      <Panel title="Lançamentos">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                {["Descrição", "Classificação", "Estado", "Valor", "Classificar (classificação · responsável)", "Ações"].map((h) => (
-                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-muted">
-                    Faça login para visualizar os lançamentos (dados protegidos por RLS).
-                  </td>
-                </tr>
-              )}
-              {expenses.map((e) => (
-                <tr key={e.id} className="border-t border-line align-top hover:bg-ivory">
-                  <td className="px-6 py-3 font-medium">{e.descricao}</td>
-                  <td className="px-6 py-3 text-xs text-muted">
-                    {(e.classification_id && nomeClass.get(e.classification_id)) || e.categoria || "—"}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className={`inline-block rounded-full px-3 py-0.5 text-xs uppercase tracking-wide ${ESTADO_BADGE[e.estado] ?? "bg-cream text-muted"}`}>
-                      {e.estado}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-3 font-serif text-base text-moss">
-                    {e.gratuito ? "Gratuito" : e.valor_total_cents === null ? "— a definir" : formatCents(e.valor_total_cents)}
-                  </td>
-                  <td className="px-6 py-3" title={e.observacao ?? ""}>
-                    <ClassificarDespesa
-                      expenseId={e.id}
-                      classificacoes={classificacoes}
-                      responsaveis={responsaveis}
-                      classificacaoAtual={e.classification_id}
-                      responsavelAtual={expensePayers[e.id] ?? null}
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <DespesaActions
-                      d={{
-                        id: e.id,
-                        descricao: e.descricao,
-                        estado: e.estado,
-                        gratuito: e.gratuito,
-                        valor_total_cents: e.valor_total_cents,
-                        observacao: e.observacao,
-                        categoria: e.categoria,
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Panel>
+      {aba === "orcamento" && <OrcamentoTab />}
+      {aba === "cotacoes" && <CotacoesTab />}
+      {aba === "lancamentos" && <LancamentosTab />}
+      {aba === "contas" && <ContasTab searchParams={searchParams} />}
     </>
   );
 }

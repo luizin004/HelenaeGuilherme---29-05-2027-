@@ -29,7 +29,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
         actions={
           <>
             <Link href="/admin/financeiro" className="btn btn-outline text-xs">Lançamentos</Link>
-            <Link href="/admin/contas?aba=a_pagar" className="btn btn-dark text-xs">Contas a pagar</Link>
+            <Link href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" className="btn btn-dark text-xs">Contas a pagar</Link>
           </>
         }
       />
@@ -39,19 +39,19 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
       {vazio ? (
         <Panel title="Comece por aqui">
           <EmptyState title="Ainda não há movimentações financeiras.">
-            1. Monte o <Link href="/admin/orcamento" className="underline">Orçamento</Link> · 2. Registre valores em{" "}
+            1. Monte o <Link href="/admin/financeiro?t=orcamento" className="underline">Orçamento</Link> · 2. Registre valores em{" "}
             <Link href="/admin/financeiro" className="underline">Lançamentos</Link> · 3. Compare propostas em{" "}
-            <Link href="/admin/cotacoes" className="underline">Cotações</Link> — o dashboard preenche sozinho.
+            <Link href="/admin/financeiro?t=cotacoes" className="underline">Cotações</Link> — o dashboard preenche sozinho.
           </EmptyState>
         </Panel>
       ) : (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryCard label="Previsto total" value={formatCents(dash.previstoCents)} tooltip="Soma de todas as contas ativas (sem cortesias)." href="/admin/contas?aba=todas" />
+            <SummaryCard label="Previsto total" value={formatCents(dash.previstoCents)} tooltip="Soma de todas as contas ativas (sem cortesias)." href="/admin/financeiro?t=contas&sec=contas&aba=todas" />
             <SummaryCard label="Contratado" value={formatCents(dash.contratadoCents)} tooltip="Despesas em estado contratado ou pago." href="/admin/financeiro" />
-            <SummaryCard label="Pago" value={formatCents(dash.pagoCents)} tone="success" tooltip="Pagamentos válidos registrados (estornos não contam)." href="/admin/contas?aba=pagas" />
-            <SummaryCard label="Pendente" value={formatCents(dash.pendenteCents)} tone="warn" tooltip="Saldo em aberto de todas as contas." href="/admin/contas?aba=a_pagar" />
-            <SummaryCard label="Vencido" value={formatCents(dash.vencidoCents)} tone={dash.vencidoCents > 0 ? "danger" : "default"} tooltip="Saldo pendente com vencimento no passado." href="/admin/contas?aba=vencidas" />
+            <SummaryCard label="Pago" value={formatCents(dash.pagoCents)} tone="success" tooltip="Pagamentos válidos registrados (estornos não contam)." href="/admin/financeiro?t=contas&sec=contas&aba=pagas" />
+            <SummaryCard label="Pendente" value={formatCents(dash.pendenteCents)} tone="warn" tooltip="Saldo em aberto de todas as contas." href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" />
+            <SummaryCard label="Vencido" value={formatCents(dash.vencidoCents)} tone={dash.vencidoCents > 0 ? "danger" : "default"} tooltip="Saldo pendente com vencimento no passado." href="/admin/financeiro?t=contas&sec=contas&aba=vencidas" />
             <SummaryCard label="Aportes" value={formatCents(dash.aportesCents)} tooltip="Entradas registradas pelos responsáveis." href="/admin/aportes" />
             <SummaryCard
               label="Saldo disponível"
@@ -84,7 +84,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
               )}
             </Panel>
 
-            <Panel title="Próximas contas" action={<Link href="/admin/contas?aba=vencendo" className="text-xs text-olive underline">ver todas</Link>}>
+            <Panel title="Próximas contas" action={<Link href="/admin/financeiro?t=contas&sec=contas&aba=vencendo" className="text-xs text-olive underline">ver todas</Link>}>
               {dash.proximasContas.length === 0 ? (
                 <EmptyState title="Nada vencendo em breve." />
               ) : (
@@ -105,7 +105,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
               )}
             </Panel>
 
-            <Panel title="Contas vencidas" action={<Link href="/admin/contas?aba=vencidas" className="text-xs text-olive underline">ver todas</Link>}>
+            <Panel title="Contas vencidas" action={<Link href="/admin/financeiro?t=contas&sec=contas&aba=vencidas" className="text-xs text-olive underline">ver todas</Link>}>
               {dash.contasVencidas.length === 0 ? (
                 <EmptyState title="Nenhuma conta vencida. 🤍" />
               ) : (
@@ -126,7 +126,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
             <Panel title="Últimas movimentações" action={<Link href="/admin/comprovantes" className="text-xs text-olive underline">comprovantes</Link>}>
               {dash.ultimosPagamentos.length === 0 ? (
                 <EmptyState title="Nenhum pagamento registrado ainda.">
-                  Registre pagamentos em <Link href="/admin/contas?aba=a_pagar" className="underline">Contas a pagar</Link> — inclusive parciais.
+                  Registre pagamentos em <Link href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" className="underline">Contas a pagar</Link> — inclusive parciais.
                 </EmptyState>
               ) : (
                 <ul className="divide-y divide-line">
