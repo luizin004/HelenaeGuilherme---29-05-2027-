@@ -70,14 +70,14 @@ export const NAV_LINKS = [
 ] as const;
 
 /** Cardápio da recepção (dados fornecidos pelo casal). */
-export const CARDAPIO: { nome: string; descricao: string; icone: string }[] = [
-  { nome: "Churrasco fogo de chão", descricao: "Costelão, picanha, leitoa e salmão na brasa", icone: "🔥" },
-  { nome: "Buffet gourmet", descricao: "Pratos quentes e acompanhamentos", icone: "🍽️" },
-  { nome: "Mesa gourmet", descricao: "Estação com curadoria especial", icone: "🧀" },
-  { nome: "Pizza volante", descricao: "Pizzas artesanais passando pela festa", icone: "🍕" },
-  { nome: "Doces finos", descricao: "Confeitaria para adoçar a noite", icone: "🍬" },
-  { nome: "Açaí", descricao: "Estação de açaí", icone: "🫐" },
-  { nome: "Sorvete", descricao: "Para refrescar a celebração", icone: "🍨" },
+export const CARDAPIO: { nome: string; descricao: string; tag: string }[] = [
+  { nome: "Churrasco fogo de chão", descricao: "Costelão, picanha, leitoa e salmão na brasa", tag: "Principal" },
+  { nome: "Buffet gourmet", descricao: "Pratos quentes e acompanhamentos", tag: "Buffet" },
+  { nome: "Mesa gourmet", descricao: "Estação com curadoria especial", tag: "Estação" },
+  { nome: "Pizza volante", descricao: "Pizzas artesanais passando pela festa", tag: "Volante" },
+  { nome: "Doces finos", descricao: "Confeitaria para adoçar a noite", tag: "Doce" },
+  { nome: "Açaí", descricao: "Estação de açaí", tag: "Estação" },
+  { nome: "Sorvete", descricao: "Para refrescar a celebração", tag: "Estação" },
 ];
 
 /** Atrações musicais (dados fornecidos pelo casal). */
