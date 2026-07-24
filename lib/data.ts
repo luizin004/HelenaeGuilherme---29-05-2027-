@@ -3,10 +3,11 @@ import { VENUES_FALLBACK, WEDDING } from "@/lib/constants";
 import type { GalleryPhoto, Gift, StoryEvent, Venue, WeddingSettings } from "@/lib/database.types";
 
 const STORY_FALLBACK: StoryEvent[] = [
-  { id: "1", ano: "2019", titulo: "O primeiro encontro", descricao: null, ordem: 1 },
-  { id: "2", ano: "2022", titulo: "Fomos morar juntos", descricao: null, ordem: 2 },
-  { id: "3", ano: "2025", titulo: "O pedido de casamento", descricao: null, ordem: 3 },
-  { id: "4", ano: "2027", titulo: "O grande dia", descricao: null, ordem: 4 },
+  { id: "1", ano: "2017", titulo: "O encontro que mudou tudo", descricao: null, ordem: 1 },
+  { id: "2", ano: "24 anos", titulo: "Nosso primeiro sonho construído juntos", descricao: null, ordem: 2 },
+  { id: "3", ano: "27 anos", titulo: "Um passo ainda maior: a OralAligner", descricao: null, ordem: 3 },
+  { id: "4", ano: "30 anos", titulo: "Uma vida de conquistas compartilhadas", descricao: null, ordem: 4 },
+  { id: "5", ano: "2027", titulo: "Dez anos de história e o início do nosso maior projeto", descricao: null, ordem: 5 },
 ];
 
 export async function getSettings(): Promise<WeddingSettings | null> {

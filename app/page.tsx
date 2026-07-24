@@ -38,7 +38,7 @@ export default async function HomePage() {
         local={WEDDING.cidade}
       />
       <Countdown dataISO={couple.dataISO} />
-      <Story historia={couple.historia} eventos={story} />
+      <Story eventos={story} />
       <Details venues={venues} />
       <Festa />
       <Gallery fotos={gallery} />

@@ -53,7 +53,7 @@ export const VENUES_FALLBACK: Venue[] = [
  * Mantida em sincronia com o rodapé (components/public/Footer.tsx).
  */
 export const NAV_LINKS = [
-  { href: "/#historia", label: "Nossa história" },
+  { href: "/historia", label: "Nossa história" },
   { href: "/#detalhes", label: "O grande dia" },
   { href: "/#festa", label: "A festa" },
   { href: "/#galeria", label: "Galeria" },
