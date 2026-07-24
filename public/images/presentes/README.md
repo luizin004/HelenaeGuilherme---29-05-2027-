@@ -21,7 +21,7 @@ Enquanto não existir, o card mostra a capa temática (sem quebrar).
 | `piquenique-dos-recem-casados.webp` ✅ | Piquenique dos recém-casados |
 | `experiencia-gastronomica-na-lua-de-mel.webp` ✅ | Experiência gastronômica na lua de mel |
 | `jogo-de-cama-para-o-novo-capitulo.jpg` ✅ | Jogo de cama para o novo capítulo |
-| `noite-de-filmes-em-casa.jpg` | Noite de filmes em casa |
+| `noite-de-filmes-em-casa.webp` ✅ | Noite de filmes em casa |
 | `passeio-especial-na-lua-de-mel.webp` ✅ | Passeio especial na lua de mel |
 | `jantar-romantico-na-viagem.webp` ✅ | Jantar romântico na viagem |
 | `kit-churrasco-do-guilherme.jpg` ✅ | Kit churrasco do Guilherme |
@@ -54,7 +54,7 @@ Enquanto não existir, o card mostra a capa temática (sem quebrar).
 | `vale-jantar-depois-de-um-dia-cansativo.webp` ✅ | Vale jantar depois de um dia cansativo |
 | `ajuda-para-encher-a-geladeira-dos-recem-casados.webp` ✅ | Ajuda para encher a geladeira dos recém-casados |
 | `patrocinio-oficial-da-primeira-viagem-de-casados.webp` ✅ | Patrocínio oficial da primeira viagem de casados |
-| `cota-para-o-guilherme-dizer-pode-comprar-amor.jpg` | Cota para o Guilherme dizer "pode comprar, amor" |
+| `cota-para-o-guilherme-dizer-pode-comprar-amor.webp` ✅ | Cota para o Guilherme dizer "pode comprar, amor" |
 
 **Como subir:** GitHub → pasta `public/images/presentes/` → *Add file → Upload files* →
 commit na branch. O site republica sozinho.
