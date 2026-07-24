@@ -14,11 +14,16 @@ import type { Gift } from "@/lib/database.types";
 export const revalidate = 60;
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** Foto convencional em /public/images/presentes/<slug>.jpg — só se o arquivo existir. */
+const EXTENSOES_FOTO = ["jpg", "jpeg", "webp", "png"];
+
+/** Foto convencional em /public/images/presentes/<slug>.<ext> — só se o arquivo existir. */
 function fotoLocalDoPresente(nome: string): string | null {
   const slug = giftSlug(nome);
-  const rel = `/images/presentes/${slug}.jpg`;
-  return existsSync(join(process.cwd(), "public", rel)) ? rel : null;
+  for (const ext of EXTENSOES_FOTO) {
+    const rel = `/images/presentes/${slug}.${ext}`;
+    if (existsSync(join(process.cwd(), "public", rel))) return rel;
+  }
+  return null;
 }
 
 const DEMO: Gift[] = [
