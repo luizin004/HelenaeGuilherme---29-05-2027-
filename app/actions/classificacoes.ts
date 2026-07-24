@@ -15,11 +15,8 @@ function revalidar() {
   for (const t of [
     "/admin/classificacoes",
     "/admin/financeiro",
-    "/admin/contas",
     "/admin/financeiro-dashboard",
     "/admin/relatorios",
-    "/admin/orcamento",
-    "/admin/cotacoes",
   ])
     revalidatePath(t);
 }

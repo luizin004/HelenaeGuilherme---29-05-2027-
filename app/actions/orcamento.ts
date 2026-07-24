@@ -64,9 +64,8 @@ export async function gerarDespesasDoOrcamento(_prev: OrcamentoState, formData: 
     acao: "gerar_despesas",
     valorNovo: { quantidade: novas.length },
   });
-  revalidatePath("/admin/orcamento");
   revalidatePath("/admin/financeiro");
-  revalidatePath("/admin/projecao");
+  revalidatePath("/admin/financeiro-dashboard");
   return {
     ok: true,
     message: `${novas.length} item(ns) adicionado(s) ao financeiro como "previsto / a definir".`,

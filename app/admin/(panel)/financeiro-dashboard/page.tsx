@@ -58,7 +58,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
               value={formatCents(dash.saldoDisponivelCents)}
               tone={dash.saldoDisponivelCents < 0 ? "danger" : "success"}
               tooltip="Aportes − pagamentos realizados."
-              href="/admin/fluxo-caixa"
+              href="/admin/financeiro?t=fluxo"
             />
             <SummaryCard label="Economia (cortesias)" value={formatCents(dash.economiaCents)} tooltip="Valor de mercado dos itens gratuitos — não é saída de caixa." href="/admin/cortesias" />
           </div>

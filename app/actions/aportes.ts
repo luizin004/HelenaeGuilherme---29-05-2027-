@@ -44,7 +44,7 @@ export async function criarAporte(_prev: AporteState, formData: FormData): Promi
 
   await logAudit(supabase, { modulo: "aportes", acao: "create", valorNovo: { valorCents } });
   revalidatePath("/admin/aportes");
-  revalidatePath("/admin/fluxo-caixa");
+  revalidatePath("/admin/financeiro");
   revalidatePath("/admin/responsaveis");
   return { ok: true, message: "Aporte registrado." };
 }
@@ -63,7 +63,7 @@ export async function excluirAporte(formData: FormData): Promise<void> {
   if (!error) {
     await logAudit(supabase, { modulo: "aportes", acao: "delete", registro: `hg_aportes:${id}` });
     revalidatePath("/admin/aportes");
-    revalidatePath("/admin/fluxo-caixa");
+    revalidatePath("/admin/financeiro");
     revalidatePath("/admin/responsaveis");
   }
 }

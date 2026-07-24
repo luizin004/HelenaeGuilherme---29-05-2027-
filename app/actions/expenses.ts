@@ -92,7 +92,6 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
 
   await logAudit(supabase, { modulo: "financeiro", acao: "create", valorNovo: { descricao, estado, gratuito, fornecedor: fornecedor || null } });
   revalidatePath("/admin/financeiro");
-  revalidatePath("/admin/parcelas");
   if (supplierId) revalidatePath("/admin/fornecedores");
   const extra = fornecedor ? ` Fornecedor "${fornecedor}" vinculado.` : "";
   return { ok: true, message: `Despesa "${descricao}" cadastrada.${extra}` };
@@ -142,7 +141,6 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
     valorNovo: { descricao, estado, gratuito, valor_total_cents: patch.valor_total_cents },
   });
   revalidatePath("/admin/financeiro");
-  revalidatePath("/admin/parcelas");
   return { ok: true, message: `Despesa "${descricao}" atualizada.` };
 }
 
@@ -192,7 +190,6 @@ export async function excluirDespesa(formData: FormData): Promise<void> {
   if (!error) {
     await logAudit(supabase, { modulo: "financeiro", acao: "delete", registro: `hg_expenses:${id}` });
     revalidatePath("/admin/financeiro");
-    revalidatePath("/admin/parcelas");
   }
 }
 

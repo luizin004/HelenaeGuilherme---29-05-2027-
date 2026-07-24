@@ -13,15 +13,9 @@ export interface PagamentoFormState {
 
 /** Telas que dependem de um pagamento — revalidadas juntas (§25). */
 const TELAS_FINANCEIRAS = [
-  "/admin/contas",
-  "/admin/contas-a-pagar",
-  "/admin/contas-pagas",
   "/admin/financeiro",
   "/admin/financeiro-dashboard",
   "/admin/calendario",
-  "/admin/parcelas",
-  "/admin/projecao",
-  "/admin/fluxo-caixa",
   "/admin/relatorios",
   "/admin/comprovantes",
 ];

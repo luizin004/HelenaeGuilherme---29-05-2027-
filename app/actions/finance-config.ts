@@ -11,7 +11,7 @@ export interface ConfigFormState {
 }
 
 function revalidar() {
-  for (const t of ["/admin/metodos-pagamento", "/admin/contas-financeiras", "/admin/contas", "/admin/fluxo-caixa"])
+  for (const t of ["/admin/metodos-pagamento", "/admin/contas-financeiras", "/admin/financeiro"])
     revalidatePath(t);
 }
 

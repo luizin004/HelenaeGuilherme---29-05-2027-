@@ -21,8 +21,7 @@ interface ExistingInstallment {
 /** Telas que dependem do cronograma — revalidadas juntas (fonte única, §25). */
 function revalidarFinanceiro() {
   for (const t of [
-    "/admin/parcelas", "/admin/financeiro", "/admin/contas",
-    "/admin/calendario", "/admin/projecao", "/admin/fluxo-caixa",
+    "/admin/financeiro", "/admin/calendario",
     "/admin/financeiro-dashboard", "/admin/responsaveis", "/admin/divisao",
   ]) revalidatePath(t);
 }
@@ -175,7 +174,6 @@ export async function pagarParcela(formData: FormData): Promise<void> {
       acao: pago ? "pagar_parcela" : "estornar_parcela",
       registro: `hg_expense_installments:${id}`,
     });
-    revalidatePath("/admin/parcelas");
     revalidatePath("/admin/financeiro");
   }
 }
