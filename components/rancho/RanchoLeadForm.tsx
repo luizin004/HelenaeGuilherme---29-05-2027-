@@ -41,7 +41,7 @@ export function RanchoLeadForm() {
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="l-tel" className="field-label">Telefone / WhatsApp</label>
-        <input id="l-tel" name="telefone" placeholder="(00) 90000-0000" className="field-input" />
+        <input id="l-tel" name="telefone" type="tel" inputMode="tel" placeholder="(00) 90000-0000" className="field-input" />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="l-email" className="field-label">E-mail (opcional)</label>

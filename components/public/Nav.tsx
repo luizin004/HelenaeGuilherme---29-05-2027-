@@ -16,6 +16,16 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Trava o scroll do fundo enquanto o menu do celular está aberto.
+  useEffect(() => {
+    if (!open) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [open]);
+
   const linkCls = scrolled ? "text-ink hover:text-olive" : "text-white/90 hover:text-gold";
 
   return (
@@ -42,8 +52,8 @@ export function Nav() {
             </Link>
 
             <button
-              className="flex flex-col gap-1.5 md:hidden"
-              aria-label="Abrir menu"
+              className="-m-2.5 flex flex-col gap-1.5 p-2.5 md:hidden"
+              aria-label={open ? "Fechar menu" : "Abrir menu"}
               aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
             >

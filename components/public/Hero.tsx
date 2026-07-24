@@ -29,7 +29,7 @@ export function Hero({
       <div className="relative z-10 animate-fadeUp px-6">
         <Logo className="mx-auto mb-7 h-24 w-auto opacity-95" white />
         <p className="mb-6 text-sm uppercase tracking-[0.42em] text-white/85">Vamos nos casar</p>
-        <h1 className="font-serif text-6xl font-medium leading-none sm:text-7xl md:text-8xl">
+        <h1 className="font-serif text-5xl font-medium leading-none sm:text-7xl md:text-8xl">
           {noiva} <span className="italic text-gold">&amp;</span> {noivo}
         </h1>
         <p className="mx-auto mt-5 max-w-md font-serif text-xl italic text-gold-soft md:text-2xl">
@@ -44,7 +44,7 @@ export function Hero({
       <a
         href="#historia"
         aria-label="Rolar para baixo"
-        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-2xl text-white"
+        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 p-3 text-2xl text-white"
       >
         ↓
       </a>

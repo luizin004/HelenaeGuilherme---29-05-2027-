@@ -8,7 +8,7 @@ const FEATURES = [
 
 export function Kids() {
   return (
-    <section id="infantil" className="bg-sand">
+    <section id="infantil" className="scroll-mt-20 bg-sand md:scroll-mt-28">
       <div className="mx-auto max-w-content px-6 py-24 text-center">
         <Reveal>
           <p className="eyebrow">Para os pequenos</p>

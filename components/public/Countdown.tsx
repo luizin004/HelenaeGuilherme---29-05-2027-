@@ -42,7 +42,7 @@ export function Countdown({ dataISO }: { dataISO: string }) {
       <h2 className="mb-8 text-3xl font-medium text-moss">
         {t?.done ? "É hoje! 🤍" : "Faltam"}
       </h2>
-      <div className="mx-auto flex max-w-xl flex-wrap justify-center gap-x-10 gap-y-6">
+      <div className="mx-auto flex max-w-xl flex-wrap justify-center gap-x-6 gap-y-6 sm:gap-x-10">
         {UNITS.map((u) => (
           <div key={u.key} className="min-w-20">
             <span className="block font-serif text-5xl font-medium leading-none text-olive md:text-6xl">

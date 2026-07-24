@@ -13,7 +13,7 @@ export function Details({ venues }: { venues: Venue[] }) {
   const recepcao = venues.find((v) => v.tipo === "recepcao");
 
   return (
-    <section id="detalhes" className="bg-cream">
+    <section id="detalhes" className="scroll-mt-20 bg-cream md:scroll-mt-28">
       <div className="mx-auto max-w-content px-6 py-24 text-center">
         <Reveal>
           <p className="eyebrow">Guarde a data</p>
@@ -57,7 +57,7 @@ function Card({
   icon: string; titulo: string; tempo: string; linha1: string; linha2: string; href?: string;
 }) {
   return (
-    <article className="rounded bg-white p-9 shadow-soft transition-transform hover:-translate-y-1.5">
+    <article className="rounded bg-white p-7 shadow-soft transition-transform hover:-translate-y-1.5 sm:p-9">
       <div className="mb-4 text-4xl">{icon}</div>
       <h3 className="mb-1 font-serif text-2xl font-semibold text-moss">{titulo}</h3>
       <p className="mb-3 text-sm uppercase tracking-[0.1em] text-olive">{tempo}</p>

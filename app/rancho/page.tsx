@@ -91,7 +91,7 @@ export default async function RanchoPage() {
       </section>
 
       {/* Conheça o Rancho */}
-      <section id="conhecer" className="bg-cream px-6 py-20">
+      <section id="conhecer" className="scroll-mt-16 bg-cream px-6 py-20">
         <div className="mx-auto grid max-w-content items-center gap-10 md:grid-cols-2">
           <Foto src={FOTOS.sobre} label="Vista geral do espaço" className="aspect-[4/3]" />
           <div>

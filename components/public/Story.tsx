@@ -3,7 +3,7 @@ import type { StoryEvent } from "@/lib/database.types";
 
 export function Story({ historia, eventos }: { historia: string | null; eventos: StoryEvent[] }) {
   return (
-    <section id="historia" className="mx-auto max-w-content px-6 py-24 text-center">
+    <section id="historia" className="mx-auto max-w-content scroll-mt-20 px-6 py-24 text-center md:scroll-mt-28">
       <Reveal>
         <p className="eyebrow">O começo de tudo</p>
         <h2 className="section-title after:mx-auto after:mt-5 after:block after:h-px after:w-16 after:bg-gold after:content-['']">

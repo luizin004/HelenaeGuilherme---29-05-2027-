@@ -56,8 +56,8 @@ export function RanchoGallery({ fotos }: { fotos: readonly Foto[] }) {
           aria-label={fotos[aberta].label}
           onClick={fechar}
         >
-          <button type="button" onClick={fechar} aria-label="Fechar" className="absolute right-5 top-5 text-2xl text-cream">✕</button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); nav(-1); }} aria-label="Anterior" className="absolute left-3 text-3xl text-cream/80 hover:text-cream md:left-8">‹</button>
+          <button type="button" onClick={fechar} aria-label="Fechar" className="absolute right-3 top-3 p-3 text-2xl text-cream">✕</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); nav(-1); }} aria-label="Anterior" className="absolute left-1 p-3 text-3xl text-cream/80 hover:text-cream md:left-6">‹</button>
           <figure className="max-h-[85vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
             <div
               className="aspect-[3/2] w-[85vw] max-w-4xl rounded-lg"
@@ -65,7 +65,7 @@ export function RanchoGallery({ fotos }: { fotos: readonly Foto[] }) {
             />
             <figcaption className="mt-3 text-center text-sm text-cream/85">{fotos[aberta].label}</figcaption>
           </figure>
-          <button type="button" onClick={(e) => { e.stopPropagation(); nav(1); }} aria-label="Próxima" className="absolute right-3 text-3xl text-cream/80 hover:text-cream md:right-8">›</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); nav(1); }} aria-label="Próxima" className="absolute right-1 p-3 text-3xl text-cream/80 hover:text-cream md:right-6">›</button>
         </div>
       )}
     </>

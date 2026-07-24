@@ -15,7 +15,7 @@ export function Rsvp() {
   }
 
   return (
-    <section id="rsvp" className="bg-cream">
+    <section id="rsvp" className="scroll-mt-20 bg-cream md:scroll-mt-28">
       <div className="mx-auto max-w-xl px-6 py-24 text-center">
         <Reveal>
           <p className="eyebrow">Contamos com você</p>

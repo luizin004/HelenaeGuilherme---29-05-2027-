@@ -69,7 +69,13 @@ export default async function PresentesPage() {
                 style={{ background: `linear-gradient(135deg, ${v.from}, ${v.to})` }}
               >
                 {foto ? (
-                  <img src={foto} alt={g.nome} className="h-full w-full object-cover" />
+                  <img
+                    src={foto}
+                    alt={g.nome}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <span className="absolute inset-0 flex items-center justify-center text-6xl opacity-90 drop-shadow-sm">
                     {v.emoji}

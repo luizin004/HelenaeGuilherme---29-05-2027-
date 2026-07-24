@@ -3,7 +3,7 @@ import { CARDAPIO, ATRACOES } from "@/lib/constants";
 
 export function Festa() {
   return (
-    <section id="festa" className="bg-moss-deep px-6 py-24 text-cream">
+    <section id="festa" className="scroll-mt-20 bg-moss-deep px-6 py-24 text-cream md:scroll-mt-28">
       <div className="mx-auto max-w-content">
         <Reveal>
           <p className="eyebrow text-gold">A celebração</p>
