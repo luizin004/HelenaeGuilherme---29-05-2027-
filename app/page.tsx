@@ -9,16 +9,15 @@ import { Kids } from "@/components/public/Kids";
 import { Gifts } from "@/components/public/Gifts";
 import { Rsvp } from "@/components/public/Rsvp";
 import { Footer } from "@/components/public/Footer";
-import { getGallery, getSettings, getStory, getVenues, resolveCouple } from "@/lib/data";
+import { getGallery, getSettings, getVenues, resolveCouple } from "@/lib/data";
 import { WEDDING } from "@/lib/constants";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [settings, venues, story, gallery] = await Promise.all([
+  const [settings, venues, gallery] = await Promise.all([
     getSettings(),
     getVenues(),
-    getStory(),
     getGallery(),
   ]);
 
@@ -38,7 +37,7 @@ export default async function HomePage() {
         local={WEDDING.cidade}
       />
       <Countdown dataISO={couple.dataISO} />
-      <Story eventos={story} />
+      <Story />
       <Details venues={venues} />
       <Festa />
       <Gallery fotos={gallery} />
