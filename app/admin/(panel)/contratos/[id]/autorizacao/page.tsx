@@ -1,18 +1,18 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutorizacaoActions } from "@/components/admin/AutorizacaoActions";
 import { EscopoContratoForm } from "@/components/admin/EscopoContratoForm";
 import { emitirAutorizacao } from "@/app/actions/contratacao";
 import { getAutorizacao } from "@/lib/admin-data";
-import { getSettings, resolveCouple } from "@/lib/data";
-import { formatCents } from "@/domain/money";
+import { getSettings, getVenues, resolveCouple } from "@/lib/data";
+import { formatCents, sumCents } from "@/domain/money";
 import { fmtDateBR, hojeISO } from "@/lib/format";
 import { WEDDING } from "@/lib/constants";
 import {
   destinatarioNotaFiscal,
   linhaContratantes,
   linhaEndereco,
-  linhasPagamento,
   montarTextoAutorizacao,
   numeroAutorizacao,
   resumoPagamento,
@@ -21,10 +21,15 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+/** Título de seção: numeral dourado + rótulo em versalete. */
+function Secao({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-line pt-4">
-      <h2 className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-olive">{titulo}</h2>
+    <section className="break-inside-avoid">
+      <h2 className="mb-2.5 flex items-center gap-2.5">
+        <span className="font-serif text-base leading-none text-gold">{n}</span>
+        <span className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-moss">{titulo}</span>
+        <span className="h-px flex-1 bg-line" />
+      </h2>
       {children}
     </section>
   );
@@ -32,7 +37,7 @@ function Secao({ titulo, children }: { titulo: string; children: React.ReactNode
 
 function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <p className="text-sm leading-relaxed">
+    <p className="text-[13px] leading-relaxed">
       <span className="text-muted">{rotulo}: </span>
       <span className="text-ink">{valor}</span>
     </p>
@@ -40,7 +45,7 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
 }
 
 export default async function AutorizacaoPage({ params }: { params: { id: string } }) {
-  const [dados, settings] = await Promise.all([getAutorizacao(params.id), getSettings()]);
+  const [dados, settings, venues] = await Promise.all([getAutorizacao(params.id), getSettings(), getVenues()]);
   if (!dados) notFound();
 
   const { contrato, fornecedor, dados: cfg, parcelas, incluiCotacao, categoria } = dados;
@@ -51,6 +56,20 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
     year: "numeric",
     timeZone: WEDDING.timezone,
   });
+  const cerimonia = venues.find((v) => v.tipo === "cerimonia") ?? null;
+  const recepcao = venues.find((v) => v.tipo === "recepcao") ?? null;
+  const horaCerimonia =
+    cerimonia?.horario ??
+    new Date(couple.dataISO).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: WEDDING.timezone,
+    });
+
+  const valorCents = Math.round(Number(contrato.valor) * 100);
+  const parcelasOrdenadas = parcelas.slice().sort((a, b) => a.numero - b.numero);
+  const somaParcelas = sumCents(parcelasOrdenadas.map((p) => p.valor_cents));
+  const divergeTotal = parcelasOrdenadas.length > 0 && somaParcelas !== valorCents;
 
   const input: AutorizacaoInput = {
     seq: contrato.autorizacao_seq,
@@ -58,7 +77,7 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
     hoje: hojeISO(),
     titulo: contrato.titulo,
     categoria,
-    valorCents: Math.round(Number(contrato.valor) * 100),
+    valorCents,
     escopo: contrato.escopo ?? incluiCotacao,
     observacoes: contrato.observacoes,
     fornecedor: fornecedor
@@ -93,21 +112,33 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
       observacoes: cfg.nf_observacoes,
     },
     condicoesGerais: cfg.condicoes_gerais,
-    evento: { data: dataEvento, local: WEDDING.cidade },
-    parcelas: parcelas.map((p) => ({ numero: p.numero, valor_cents: p.valor_cents, vencimento: p.vencimento })),
+    evento: {
+      data: `${dataEvento}, às ${horaCerimonia}`,
+      local: [cerimonia?.nome, recepcao?.nome, WEDDING.cidade].filter(Boolean).join(" · "),
+    },
+    parcelas: parcelasOrdenadas.map((p) => ({ numero: p.numero, valor_cents: p.valor_cents, vencimento: p.vencimento })),
   };
 
   const numero = numeroAutorizacao(input.seq, input.emitidaEm);
   const emitida = input.seq !== null;
   const nf = destinatarioNotaFiscal(input);
   const texto = montarTextoAutorizacao(input);
+  const emissaoISO = contrato.autorizacao_emitida_em ? contrato.autorizacao_emitida_em.slice(0, 10) : hojeISO();
   const contatoFornecedor = [fornecedor?.contato_nome, fornecedor?.telefone, fornecedor?.email]
     .filter(Boolean)
     .join(" · ");
 
   return (
     <>
-      {/* Barra de ações — não sai na impressão */}
+      {/* Papel A4 e cores de fundo preservadas no PDF (o padrão do navegador é descartá-las). */}
+      <style>{`
+        @page { size: A4; margin: 14mm 12mm; }
+        @media print {
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+      `}</style>
+
+      {/* Barra de trabalho — não sai no PDF */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href="/admin/contratos" className="text-sm text-olive underline">
           ← voltar para Contratos
@@ -124,9 +155,16 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
       </div>
 
       {!emitida && (
-        <div className="mb-6 rounded-lg bg-gold-soft px-5 py-4 text-sm text-moss print:hidden">
+        <div className="mb-4 rounded-lg bg-gold-soft px-5 py-4 text-sm text-moss print:hidden">
           Este documento ainda é um <strong>rascunho</strong>. Confira os dados e clique em
           &quot;Emitir e numerar&quot; para gerar o número oficial antes de enviar ao fornecedor.
+        </div>
+      )}
+
+      {divergeTotal && (
+        <div className="mb-4 rounded-lg bg-[#f4e2dc] px-5 py-4 text-sm text-danger print:hidden">
+          As parcelas somam {formatCents(somaParcelas)}, diferente do valor do contrato (
+          {formatCents(valorCents)}). Ajuste no Financeiro antes de enviar.
         </div>
       )}
 
@@ -139,118 +177,183 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
         />
       </div>
 
-      {/* Documento */}
-      <article className="mx-auto max-w-3xl rounded-lg bg-white p-10 shadow-card print:max-w-none print:rounded-none print:p-0 print:shadow-none">
-        <header className="mb-6 text-center">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-muted">
-            {couple.noiva} &amp; {couple.noivo} · {dataEvento}
+      {/* ------------------------------ DOCUMENTO ------------------------------ */}
+      <article className="mx-auto max-w-[820px] overflow-hidden rounded-lg bg-white shadow-card print:max-w-none print:rounded-none print:shadow-none">
+        {/* Cabeçalho: monograma, nomes e data — identidade do casamento */}
+        <header className="border-b-2 border-gold bg-sand px-12 py-9 text-center print:px-8 print:py-6">
+          <img
+            src="/logo.png"
+            alt="Monograma Helena e Guilherme"
+            className="mx-auto h-16 w-auto object-contain print:h-14"
+          />
+          <p className="mt-3 font-serif text-[26px] leading-tight text-moss-deep">
+            Casamento {couple.noiva} &amp; {couple.noivo}
           </p>
-          <h1 className="mt-3 font-serif text-2xl leading-snug text-moss">
-            Aprovação de orçamento e autorização de contratação
-          </h1>
-          <p className="mt-2 text-sm text-muted">
-            Documento {numero} · emitido em{" "}
-            {fmtDateBR(contrato.autorizacao_emitida_em ? contrato.autorizacao_emitida_em.slice(0, 10) : hojeISO())}
+          <p className="mt-1.5 text-[11px] uppercase tracking-[0.2em] text-olive">
+            {dataEvento} · {WEDDING.cidade}
           </p>
         </header>
 
-        <div className="grid gap-5">
-          <Secao titulo="1. Contratantes">
+        {/* Faixa do documento */}
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line bg-cream px-12 py-4 print:px-8 print:py-3">
+          <h1 className="font-serif text-xl leading-snug text-moss-deep">
+            Aprovação de orçamento e autorização de contratação
+          </h1>
+          <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
+            {numero} · {fmtDateBR(emissaoISO)}
+          </p>
+        </div>
+
+        {/* Dados do evento */}
+        <div className="grid gap-4 border-b border-line px-12 py-5 sm:grid-cols-3 print:px-8 print:py-4">
+          {[
+            { r: "Data", v: dataEvento },
+            {
+              r: "Cerimônia",
+              v: cerimonia ? `${cerimonia.nome} · ${horaCerimonia}` : `${horaCerimonia}`,
+            },
+            { r: "Recepção", v: recepcao ? `${recepcao.nome} — ${recepcao.cidade}` : WEDDING.cidade },
+          ].map((c) => (
+            <div key={c.r}>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-gold">{c.r}</p>
+              <p className="mt-1 text-[13px] leading-snug text-ink">{c.v}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-6 px-12 py-8 print:px-8 print:py-6">
+          <Secao n="1" titulo="Contratantes">
             <Linha rotulo="Nome" valor={linhaContratantes(input.contratantes)} />
             <Linha rotulo="Endereço" valor={linhaEndereco(input.contratantes)} />
             {cfg.contratante_email && <Linha rotulo="E-mail" valor={cfg.contratante_email} />}
             {cfg.contratante_telefone && <Linha rotulo="Telefone" valor={cfg.contratante_telefone} />}
           </Secao>
 
-          <Secao titulo="2. Contratado (fornecedor)">
+          <Secao n="2" titulo="Contratado (fornecedor)">
             <Linha rotulo="Nome" valor={fornecedor?.nome ?? "— fornecedor não vinculado —"} />
             {fornecedor?.documento && <Linha rotulo="CNPJ / CPF" valor={fornecedor.documento} />}
             {fornecedor?.endereco && <Linha rotulo="Endereço" valor={fornecedor.endereco} />}
             {contatoFornecedor && <Linha rotulo="Contato" valor={contatoFornecedor} />}
           </Secao>
 
-          <Secao titulo="3. Objeto">
-            <Linha rotulo="Serviço / produto" valor={`${contrato.titulo}${categoria ? ` (${categoria})` : ""}`} />
+          <Secao n="3" titulo="Objeto — o que está sendo contratado">
+            <p className="font-serif text-lg leading-snug text-moss">
+              {contrato.titulo}
+              {categoria && <span className="ml-2 text-[13px] font-sans text-muted">({categoria})</span>}
+            </p>
             {input.escopo ? (
-              <div className="mt-2">
-                <p className="text-sm text-muted">Escopo aprovado:</p>
-                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm">
-                  {input.escopo.split("\n").filter(Boolean).map((l, i) => (
-                    <li key={i}>{l}</li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-ink">
+                {input.escopo.split("\n").filter(Boolean).map((l, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-gold">·</span>
+                    <span>{l}</span>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-1 text-[13px] text-muted">
                 Escopo não detalhado — descreva em &quot;editar escopo e observações&quot;.
               </p>
             )}
           </Secao>
 
-          <Secao titulo="4. Valor e condições de pagamento">
-            <p className="font-serif text-2xl text-moss">{formatCents(input.valorCents)}</p>
-            <p className="mt-1 text-sm text-ink">{resumoPagamento(input.parcelas)}</p>
-            {input.parcelas.length > 0 && (
-              <table className="mt-3 w-full border-collapse text-sm">
-                <tbody>
-                  {linhasPagamento(input.parcelas).map((l, i) => (
-                    <tr key={i} className="border-t border-line">
-                      <td className="py-1.5">{l}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            {input.parcelas.length === 0 && (
-              <p className="mt-1 text-xs text-muted print:hidden">
-                Gere as parcelas no Financeiro para que o cronograma apareça aqui.
-              </p>
-            )}
+          <Secao n="4" titulo="Valor e forma de pagamento">
+            <table className="w-full border-collapse text-[13px]">
+              <thead>
+                <tr className="bg-cream text-left">
+                  <th className="border border-line px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-moss">
+                    Parcela
+                  </th>
+                  <th className="border border-line px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em] text-moss">
+                    Vencimento
+                  </th>
+                  <th className="border border-line px-3 py-2 text-right text-[10px] font-medium uppercase tracking-[0.12em] text-moss">
+                    Valor
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {parcelasOrdenadas.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="border border-line px-3 py-3 text-center text-muted">
+                      Condição de pagamento a definir entre as partes.
+                    </td>
+                  </tr>
+                )}
+                {parcelasOrdenadas.map((p) => (
+                  <tr key={p.id}>
+                    <td className="border border-line px-3 py-2">{p.numero}ª parcela</td>
+                    <td className="border border-line px-3 py-2">
+                      {p.vencimento ? fmtDateBR(p.vencimento) : "a combinar"}
+                    </td>
+                    <td className="border border-line px-3 py-2 text-right tabular-nums">
+                      {formatCents(p.valor_cents)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gold-soft">
+                  <td colSpan={2} className="border border-line px-3 py-2.5 font-medium uppercase tracking-wide text-moss-deep">
+                    Valor total aprovado
+                  </td>
+                  <td className="border border-line px-3 py-2.5 text-right font-serif text-lg text-moss-deep tabular-nums">
+                    {formatCents(valorCents)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+            <p className="mt-2 text-[12px] text-muted">{resumoPagamento(input.parcelas)}</p>
           </Secao>
 
-          <Secao titulo="5. Dados para emissão da nota fiscal">
-            <Linha rotulo="Destinatário" valor={nf.nome} />
-            <Linha rotulo="CPF / CNPJ" valor={nf.documento} />
-            <Linha rotulo="Endereço" valor={nf.endereco} />
-            {cfg.nf_ie && <Linha rotulo="Inscrição estadual" valor={cfg.nf_ie} />}
-            {cfg.nf_im && <Linha rotulo="Inscrição municipal" valor={cfg.nf_im} />}
-            {cfg.nf_email && <Linha rotulo="Enviar a NF para" valor={cfg.nf_email} />}
-            {cfg.nf_observacoes && <p className="mt-1 text-sm text-muted">{cfg.nf_observacoes}</p>}
-          </Secao>
-
-          <Secao titulo="6. Evento">
-            <Linha rotulo="Data" valor={dataEvento} />
-            <Linha rotulo="Local" valor={WEDDING.cidade} />
-            {contrato.data_evento && <Linha rotulo="Data de execução do serviço" valor={fmtDateBR(contrato.data_evento)} />}
+          <Secao n="5" titulo="Dados para emissão da nota fiscal">
+            <div className="rounded border border-line bg-ivory px-4 py-3">
+              <Linha rotulo="Destinatário" valor={nf.nome} />
+              <Linha rotulo="CNPJ / CPF" valor={nf.documento} />
+              {cfg.nf_ie && <Linha rotulo="Inscrição estadual" valor={cfg.nf_ie} />}
+              {cfg.nf_im && <Linha rotulo="Inscrição municipal" valor={cfg.nf_im} />}
+              <Linha rotulo="Endereço" valor={nf.endereco} />
+              {cfg.nf_email && <Linha rotulo="Enviar a NF para" valor={cfg.nf_email} />}
+              {cfg.nf_observacoes && <p className="mt-1.5 text-[12px] text-muted">{cfg.nf_observacoes}</p>}
+            </div>
           </Secao>
 
           {(contrato.observacoes || cfg.condicoes_gerais) && (
-            <Secao titulo="7. Observações e condições gerais">
-              {contrato.observacoes && <p className="text-sm leading-relaxed">{contrato.observacoes}</p>}
+            <Secao n="6" titulo="Observações e condições gerais">
+              {contrato.observacoes && <p className="text-[13px] leading-relaxed">{contrato.observacoes}</p>}
               {cfg.condicoes_gerais && (
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted">{cfg.condicoes_gerais}</p>
+                <p className="mt-2 whitespace-pre-line text-[12.5px] leading-relaxed text-muted">
+                  {cfg.condicoes_gerais}
+                </p>
               )}
             </Secao>
           )}
 
-          <Secao titulo="Declaração">
-            <p className="text-sm leading-relaxed">
-              Aprovamos o orçamento acima e autorizamos a contratação nas condições descritas.
-              Solicitamos o envio do <strong>contrato para assinatura</strong>, contemplando o mesmo
-              escopo, valor e cronograma de pagamento aqui registrados.
+          <div className="break-inside-avoid rounded border-l-[3px] border-gold bg-cream px-5 py-4">
+            <p className="text-[13px] leading-relaxed text-ink">
+              Aprovamos o orçamento acima e <strong>autorizamos a contratação</strong> nas condições
+              descritas. Solicitamos o envio do <strong>contrato para assinatura</strong>,
+              contemplando o mesmo escopo, valor e cronograma de pagamento aqui registrados.
             </p>
-          </Secao>
+          </div>
+
+          <div className="mt-10 grid gap-10 break-inside-avoid sm:grid-cols-2">
+            {[
+              { nome: cfg.contratante_nome || "Contratante", papel: "Contratante" },
+              { nome: fornecedor?.nome || "Contratado", papel: "Contratado" },
+            ].map((a) => (
+              <div key={a.papel} className="text-center">
+                <div className="border-t border-ink/40" />
+                <p className="mt-1.5 text-[12px] text-ink">{a.nome}</p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-muted">{a.papel}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-14 grid gap-10 sm:grid-cols-2">
-          {[cfg.contratante_nome || "Contratante", fornecedor?.nome || "Contratado"].map((nome, i) => (
-            <div key={i} className="text-center">
-              <div className="border-t border-ink/40" />
-              <p className="mt-1 text-xs text-muted">{nome}</p>
-              <p className="text-[11px] text-muted">{i === 0 ? "Contratante" : "Contratado"}</p>
-            </div>
-          ))}
-        </div>
+        <footer className="border-t border-line bg-sand px-12 py-3 text-center text-[10px] uppercase tracking-[0.16em] text-muted print:px-8">
+          {couple.noiva} &amp; {couple.noivo} · {dataEvento} · Documento {numero}
+        </footer>
       </article>
     </>
   );
