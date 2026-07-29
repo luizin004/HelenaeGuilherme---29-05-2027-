@@ -97,9 +97,32 @@ export async function atualizarContrato(
   return { ok: true, message: `Contrato "${titulo}" atualizado.` };
 }
 
-/** Exclusão LÓGICA (soft-delete) de um contrato. */
+const BUCKET = "hg-documentos";
+
+/** Anexa (ou substitui) o arquivo do contrato já enviado ao Storage privado. */
+export async function anexarArquivoContrato(id: string, path: string): Promise<ContractFormState> {
+  if (!id || !path) return { ok: false, message: "Dados inválidos." };
+
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+
+  const { error } = await supabase
+    .from("hg_contracts")
+    .update({ arquivo_url: path })
+    .eq("id", id)
+    .is("deleted_at", null);
+
+  if (error) return { ok: false, message: "Não foi possível anexar o arquivo." };
+
+  await logAudit(supabase, { modulo: "contratos", acao: "update", registro: `hg_contracts:${id}`, valorNovo: { arquivo_url: path } });
+  revalidatePath("/admin/contratos");
+  return { ok: true, message: "Arquivo anexado ao contrato." };
+}
+
+/** Exclusão LÓGICA (soft-delete) de um contrato + remoção do arquivo anexado. */
 export async function excluirContrato(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "").trim();
+  const path = String(formData.get("path") ?? "").trim();
   if (!id) return;
 
   const supabase = createClient();
@@ -112,6 +135,7 @@ export async function excluirContrato(formData: FormData): Promise<void> {
     .is("deleted_at", null);
 
   if (!error) {
+    if (path) await supabase.storage.from(BUCKET).remove([path]);
     await logAudit(supabase, { modulo: "contratos", acao: "delete", registro: `hg_contracts:${id}` });
     revalidatePath("/admin/contratos");
   }

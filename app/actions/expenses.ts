@@ -53,6 +53,43 @@ async function garantirFornecedor(supabase: DB, nome: string): Promise<string | 
   return novo.id;
 }
 
+const ESTADOS_CONTRATADOS = ["contratado", "pago"];
+
+/**
+ * Quando uma despesa vira "contratado" (ou "pago"), sincroniza um registro
+ * em `hg_contracts` (1 por despesa) — assim o item aparece automaticamente
+ * em Contratos, pronto para anexar o arquivo assinado entre as partes.
+ * Itens ainda "previsto"/"orçado" não geram contrato.
+ */
+async function sincronizarContrato(
+  supabase: DB,
+  params: { expenseId: string; descricao: string; supplierId: string | null; valorCents: number | null },
+) {
+  const valor = params.valorCents ? params.valorCents / 100 : 0;
+  const { data: existente } = await supabase
+    .from("hg_contracts")
+    .select("id")
+    .eq("expense_id", params.expenseId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (existente?.id) {
+    await supabase
+      .from("hg_contracts")
+      .update({ titulo: params.descricao, supplier_id: params.supplierId, valor })
+      .eq("id", existente.id);
+    return;
+  }
+
+  await supabase.from("hg_contracts").insert({
+    expense_id: params.expenseId,
+    titulo: params.descricao,
+    supplier_id: params.supplierId,
+    valor,
+    status: "rascunho",
+  });
+}
+
 /** Cadastra uma nova despesa (painel, autenticado). Dinheiro em centavos (regra 1). */
 export async function criarDespesa(_prev: ExpenseFormState, formData: FormData): Promise<ExpenseFormState> {
   const descricao = String(formData.get("descricao") ?? "").trim();
@@ -78,17 +115,26 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
   // Fornecedor novo → cadastrado automaticamente e espelhado em Fornecedores.
   const supplierId = fornecedor ? await garantirFornecedor(supabase, fornecedor) : null;
 
-  const { error } = await supabase.from("hg_expenses").insert({
-    descricao,
-    estado: gratuito ? "gratuito" : estado,
-    gratuito,
-    valor_total_cents: gratuito ? null : valorCents ?? null,
-    observacao: observacao || null,
-    categoria: categoria || null,
-    supplier_id: supplierId,
-  });
+  const { data: novaDespesa, error } = await supabase
+    .from("hg_expenses")
+    .insert({
+      descricao,
+      estado: gratuito ? "gratuito" : estado,
+      gratuito,
+      valor_total_cents: gratuito ? null : valorCents ?? null,
+      observacao: observacao || null,
+      categoria: categoria || null,
+      supplier_id: supplierId,
+    })
+    .select("id")
+    .single();
 
-  if (error) return { ok: false, message: "Não foi possível salvar. Verifique se você está autenticado." };
+  if (error || !novaDespesa) return { ok: false, message: "Não foi possível salvar. Verifique se você está autenticado." };
+
+  if (!gratuito && ESTADOS_CONTRATADOS.includes(estado)) {
+    await sincronizarContrato(supabase, { expenseId: novaDespesa.id, descricao, supplierId, valorCents: valorCents ?? null });
+    revalidatePath("/admin/contratos");
+  }
 
   await logAudit(supabase, { modulo: "financeiro", acao: "create", valorNovo: { descricao, estado, gratuito, fornecedor: fornecedor || null } });
   revalidatePath("/admin/financeiro");
@@ -131,8 +177,24 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
   if (gratuito) patch.valor_total_cents = null;
   else if (valorCents !== undefined) patch.valor_total_cents = valorCents;
 
-  const { error } = await supabase.from("hg_expenses").update(patch).eq("id", id).is("deleted_at", null);
-  if (error) return { ok: false, message: "Não foi possível salvar. Verifique o login." };
+  const { data: despesaAtualizada, error } = await supabase
+    .from("hg_expenses")
+    .update(patch)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id, supplier_id, valor_total_cents")
+    .single();
+  if (error || !despesaAtualizada) return { ok: false, message: "Não foi possível salvar. Verifique o login." };
+
+  if (!gratuito && ESTADOS_CONTRATADOS.includes(estado)) {
+    await sincronizarContrato(supabase, {
+      expenseId: despesaAtualizada.id,
+      descricao,
+      supplierId: despesaAtualizada.supplier_id,
+      valorCents: despesaAtualizada.valor_total_cents,
+    });
+    revalidatePath("/admin/contratos");
+  }
 
   await logAudit(supabase, {
     modulo: "financeiro",

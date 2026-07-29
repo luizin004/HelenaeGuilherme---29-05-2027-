@@ -135,6 +135,9 @@ export function DespesaRow({
                     <option value="pago">Pago</option>
                   </select>
                 </div>
+                <p className="text-[11px] text-muted">
+                  &quot;Contratado&quot; ou &quot;Pago&quot; aparece automaticamente em Contratos para anexar o arquivo assinado.
+                </p>
                 <input name="categoria" defaultValue={d.categoria ?? ""} list="cat-list-edit" placeholder="Categoria" className="field-input py-1.5 text-sm" />
                 <datalist id="cat-list-edit">
                   {CATEGORIAS.map((c) => (

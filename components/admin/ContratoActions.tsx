@@ -14,6 +14,7 @@ export interface ContratoEditavel {
   valor: number;
   data_evento: string | null;
   status: string;
+  arquivo_url: string | null;
 }
 
 function SaveButton() {
@@ -48,6 +49,7 @@ export function ContratoActions({
           }}
         >
           <input type="hidden" name="id" value={c.id} />
+          <input type="hidden" name="path" value={c.arquivo_url ?? ""} />
           <button type="submit" className="text-xs text-danger underline">excluir</button>
         </form>
       </div>

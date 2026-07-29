@@ -1183,6 +1183,8 @@ export interface ContractRow {
   valor: number;
   data_evento: string | null;
   status: string;
+  arquivo_url: string | null;
+  expense_id: string | null;
 }
 
 export async function listContracts(): Promise<ContractRow[]> {

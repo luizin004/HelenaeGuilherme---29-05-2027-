@@ -47,6 +47,9 @@ export function NovaDespesa({ fornecedores = [] }: { fornecedores?: string[] }) 
           <option value="contratado">Contratado</option>
           <option value="pago">Pago</option>
         </select>
+        <span className="text-xs text-muted">
+          &quot;Contratado&quot; ou &quot;Pago&quot; aparece automaticamente em Contratos para anexar o arquivo assinado.
+        </span>
       </div>
       <div className="flex flex-col gap-1 md:col-span-2">
         <label htmlFor="d-cat" className="field-label">Categoria (opcional)</label>
