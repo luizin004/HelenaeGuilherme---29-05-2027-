@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { registrarComprovante } from "@/app/actions/comprovantes";
 import { formatCents } from "@/domain/money";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const BUCKET = "hg-documentos";
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -85,7 +86,7 @@ export function UploadComprovante({
     <form ref={formRef} onSubmit={onSubmit} className="mt-2 grid gap-2 rounded-lg border border-line bg-ivory p-3 text-left">
       <div className="grid gap-2 sm:grid-cols-2">
         <input name="titulo" placeholder="Título (ex.: Recibo entrada)" className="field-input py-1.5 text-sm" />
-        <input name="valor" inputMode="decimal" placeholder="Valor do comprovante (R$)" className="field-input py-1.5 text-sm" />
+        <MoneyInput name="valor" placeholder="Valor do comprovante (R$)" className="field-input py-1.5 text-sm" />
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <input name="data_pagamento" type="date" className="field-input py-1.5 text-sm" />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { criarCentroCusto, atualizarCentroCusto, alternarCentroCusto, type CentroState } from "@/app/actions/centros";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: CentroState = { ok: false, message: "" };
 
@@ -25,7 +26,7 @@ export function NovoCentroCusto() {
       </div>
       <div className="flex flex-col gap-1">
         <label className="field-label">Orçamento (R$, opcional)</label>
-        <input name="orcamento" inputMode="decimal" placeholder="45.000,00" className="field-input" />
+        <MoneyInput name="orcamento" placeholder="R$ 0,00" className="field-input" />
       </div>
       <div className="flex flex-col gap-1">
         <label className="field-label">Cor</label>
@@ -65,7 +66,7 @@ export function CentroCustoEdit({ c }: { c: CentroEditavel }) {
         <form action={formAction} className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-line bg-ivory p-3">
           <input type="hidden" name="id" value={c.id} />
           <input name="nome" defaultValue={c.nome} required placeholder="Nome" className="field-input py-1.5 text-sm" />
-          <input name="orcamento" defaultValue={c.orcamento_cents !== null ? (c.orcamento_cents / 100).toFixed(2).replace(".", ",") : ""} inputMode="decimal" placeholder="Orçamento (R$)" className="field-input py-1.5 text-sm" />
+          <MoneyInput name="orcamento" defaultValueCents={c.orcamento_cents} placeholder="Orçamento (R$)" className="field-input py-1.5 text-sm" />
           <input name="cor" type="color" defaultValue={c.cor ?? "#6f7352"} className="h-9 w-12 rounded border border-line" />
           <Btn label="Salvar" />
           {state.message && <span className={`text-xs ${state.ok ? "text-olive" : "text-danger"}`}>{state.message}</span>}

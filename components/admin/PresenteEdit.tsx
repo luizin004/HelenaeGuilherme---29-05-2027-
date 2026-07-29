@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { atualizarPresente, type GiftFormState } from "@/app/actions/gifts";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: GiftFormState = { ok: false, message: "" };
 
@@ -39,7 +40,7 @@ export function PresenteEdit({ g }: { g: PresenteEditavel }) {
           <input type="hidden" name="id" value={g.id} />
           <div className="grid grid-cols-2 gap-2">
             <input name="nome" defaultValue={g.nome} placeholder="Nome" required className="field-input py-1.5 text-sm" />
-            <input name="preco" defaultValue={g.preco ? Number(g.preco).toFixed(2).replace(".", ",") : ""} inputMode="decimal" placeholder="Valor (R$)" className="field-input py-1.5 text-sm" />
+            <MoneyInput name="preco" defaultValueCents={g.preco ? Math.round(Number(g.preco) * 100) : null} placeholder="Valor (R$)" className="field-input py-1.5 text-sm" />
           </div>
           <input name="descricao" defaultValue={g.descricao ?? ""} placeholder="Descrição" className="field-input py-1.5 text-sm" />
           <input name="imagem_url" defaultValue={g.imagem_url ?? ""} placeholder="URL da imagem" className="field-input py-1.5 text-sm" />

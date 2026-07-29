@@ -10,6 +10,7 @@ import { CATEGORIAS } from "@/domain/orcamento/catalogo";
 import { formatCents } from "@/domain/money";
 import { fmtDateBR } from "@/lib/format";
 import type { Option, InstallmentItem } from "@/lib/admin-data";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: ExpenseFormState = { ok: false, message: "" };
 
@@ -20,11 +21,6 @@ const ESTADO_BADGE: Record<string, string> = {
   previsto: "bg-[#f6ecd6] text-warn",
   gratuito: "bg-gold-soft text-moss",
 };
-
-function centsToInput(cents: number | null): string {
-  if (cents === null) return "";
-  return (cents / 100).toFixed(2).replace(".", ",");
-}
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -124,10 +120,9 @@ export function DespesaRow({
                 <input type="hidden" name="id" value={d.id} />
                 <input name="descricao" defaultValue={d.descricao} placeholder="Descrição" required className="field-input py-1.5 text-sm" />
                 <div className="grid grid-cols-2 gap-2">
-                  <input
+                  <MoneyInput
                     name="valor"
-                    defaultValue={centsToInput(d.valor_total_cents)}
-                    inputMode="decimal"
+                    defaultValueCents={d.valor_total_cents}
                     placeholder="Valor (R$)"
                     className="field-input py-1.5 text-sm"
                   />

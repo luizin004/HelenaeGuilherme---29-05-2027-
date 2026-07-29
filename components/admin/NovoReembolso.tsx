@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { criarReembolso, type ReembolsoState } from "@/app/actions/reembolsos";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: ReembolsoState = { ok: false, message: "" };
 
@@ -47,7 +48,7 @@ export function NovoReembolso({ responsaveis }: { responsaveis: { id: string; no
       </datalist>
       <div className="flex flex-col gap-1">
         <label className="field-label">Valor (R$)</label>
-        <input name="valor" inputMode="decimal" required placeholder="1.000,00" className="field-input" />
+        <MoneyInput name="valor" required placeholder="R$ 0,00" className="field-input" />
       </div>
       <div className="flex flex-col gap-1">
         <label className="field-label">Data</label>

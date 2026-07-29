@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { criarProposta, type QuoteFormState } from "@/app/actions/quotes";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: QuoteFormState = { ok: false, message: "" };
 
@@ -46,8 +47,8 @@ export function NovaProposta({
         <input name="fornecedor_nome" placeholder="…ou nome avulso" className="field-input py-1.5 text-sm" />
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
-        <input name="valor" inputMode="decimal" placeholder="Valor total (R$)" required className="field-input py-1.5 text-sm" />
-        <input name="entrada" inputMode="decimal" placeholder="Entrada (R$)" className="field-input py-1.5 text-sm" />
+        <MoneyInput name="valor" placeholder="Valor total (R$)" required className="field-input py-1.5 text-sm" />
+        <MoneyInput name="entrada" placeholder="Entrada (R$)" className="field-input py-1.5 text-sm" />
         <input name="parcelas" type="number" min={0} max={60} placeholder="Parcelas" className="field-input py-1.5 text-sm" />
       </div>
       <div className="grid gap-2 sm:grid-cols-2">

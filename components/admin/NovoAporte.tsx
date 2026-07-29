@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { criarAporte, type AporteState } from "@/app/actions/aportes";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: AporteState = { ok: false, message: "" };
 
@@ -33,7 +34,7 @@ export function NovoAporte({ responsaveis }: { responsaveis: { id: string; nome:
       </div>
       <div className="flex flex-col gap-1">
         <label className="field-label">Valor (R$)</label>
-        <input name="valor" inputMode="decimal" required placeholder="5.000,00" className="field-input" />
+        <MoneyInput name="valor" required placeholder="R$ 0,00" className="field-input" />
       </div>
       <div className="flex flex-col gap-1">
         <label className="field-label">Data</label>

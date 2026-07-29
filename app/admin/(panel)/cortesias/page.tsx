@@ -4,12 +4,9 @@ import { definirValorMercado } from "@/app/actions/expenses";
 import { listCortesias } from "@/lib/admin-data";
 import { formatCents, sumCents } from "@/domain/money";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 export const dynamic = "force-dynamic";
-
-function centsToInput(c: number | null): string {
-  return c === null ? "" : (c / 100).toFixed(2).replace(".", ",");
-}
 
 export default async function CortesiasPage() {
   const cortesias = await listCortesias();
@@ -56,7 +53,7 @@ export default async function CortesiasPage() {
                   <td className="px-4 py-2.5">
                     <form action={definirValorMercado} className="flex items-center gap-2">
                       <input type="hidden" name="id" value={c.id} />
-                      <input name="valor_mercado" defaultValue={centsToInput(c.valor_mercado_cents)} inputMode="decimal" placeholder="0,00" className="field-input w-32 py-1 text-sm" />
+                      <MoneyInput name="valor_mercado" defaultValueCents={c.valor_mercado_cents} placeholder="R$ 0,00" className="field-input w-32 py-1 text-sm" />
                       <button type="submit" className="text-xs text-olive underline">salvar</button>
                     </form>
                   </td>

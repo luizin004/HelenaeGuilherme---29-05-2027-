@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { atualizarContrato, excluirContrato, type ContractFormState } from "@/app/actions/contracts";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: ContractFormState = { ok: false, message: "" };
 
@@ -56,7 +57,7 @@ export function ContratoActions({
           <input type="hidden" name="id" value={c.id} />
           <input name="titulo" defaultValue={c.titulo} placeholder="Título" required className="field-input py-1.5 text-sm" />
           <div className="grid grid-cols-2 gap-2">
-            <input name="valor" defaultValue={c.valor ? c.valor.toFixed(2).replace(".", ",") : ""} inputMode="decimal" placeholder="Valor (R$)" className="field-input py-1.5 text-sm" />
+            <MoneyInput name="valor" defaultValueCents={c.valor ? Math.round(c.valor * 100) : null} placeholder="Valor (R$)" className="field-input py-1.5 text-sm" />
             <input name="data_evento" type="date" defaultValue={c.data_evento ?? ""} className="field-input py-1.5 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-2">

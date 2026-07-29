@@ -2,6 +2,7 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { criarPresente, type GiftFormState } from "@/app/actions/gifts";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: GiftFormState = { ok: false, message: "" };
 
@@ -25,7 +26,7 @@ export function NovoPresente() {
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="g-preco" className="field-label">Valor (R$)</label>
-        <input id="g-preco" name="preco" inputMode="decimal" placeholder="250,00" className="field-input" />
+        <MoneyInput id="g-preco" name="preco" placeholder="R$ 0,00" className="field-input" />
       </div>
       <div className="flex flex-col gap-1 md:col-span-2">
         <label htmlFor="g-desc" className="field-label">Descrição (opcional)</label>

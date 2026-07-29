@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { criarDespesa, type ExpenseFormState } from "@/app/actions/expenses";
 import { CATEGORIAS } from "@/domain/orcamento/catalogo";
+import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: ExpenseFormState = { ok: false, message: "" };
 
@@ -36,7 +37,7 @@ export function NovaDespesa({ fornecedores = [] }: { fornecedores?: string[] }) 
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="d-valor" className="field-label">Valor total (R$) — deixe vazio se ainda a definir</label>
-        <input id="d-valor" name="valor" inputMode="decimal" placeholder="1.500,00" className="field-input" />
+        <MoneyInput id="d-valor" name="valor" placeholder="R$ 0,00" className="field-input" />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="d-estado" className="field-label">Estado</label>
