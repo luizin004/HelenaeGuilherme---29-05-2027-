@@ -60,6 +60,87 @@ export async function salvarDadosContratacao(
   return { ok: true, message: "Dados de contratação salvos." };
 }
 
+/** Textos livres do modelo do documento. */
+const MODELO_TEXTOS = [
+  "cabecalho_titulo",
+  "cabecalho_legenda",
+  "titulo",
+  "declaracao",
+  "rodape",
+  "assinatura_1",
+  "assinatura_2",
+  "rotulo_contratantes",
+  "rotulo_contratado",
+  "rotulo_objeto",
+  "rotulo_pagamento",
+  "rotulo_nota_fiscal",
+  "rotulo_observacoes",
+] as const;
+
+/** Blocos que podem ser escondidos no documento. */
+const MODELO_BLOCOS = [
+  "mostrar_monograma",
+  "mostrar_evento",
+  "mostrar_objeto",
+  "mostrar_nota_fiscal",
+  "mostrar_declaracao",
+  "mostrar_assinaturas",
+  "mostrar_rodape",
+] as const;
+
+const CORES_VALIDAS = ["gold", "olive", "moss"];
+
+/**
+ * Salva o modelo do documento (textos, blocos visíveis e cor de destaque).
+ * Campo deixado em branco volta a usar o texto padrão na hora de gerar.
+ */
+export async function salvarModeloDocumento(
+  _prev: ContratacaoState,
+  formData: FormData,
+): Promise<ContratacaoState> {
+  const supabase = createClient();
+  if (!supabase) return { ok: false, message: "Backend não configurado." };
+
+  const patch: Record<string, string | boolean | null> = {};
+  for (const campo of MODELO_TEXTOS) {
+    const valor = String(formData.get(campo) ?? "").trim();
+    patch[campo] = valor || null;
+  }
+  for (const bloco of MODELO_BLOCOS) {
+    patch[bloco] = formData.get(bloco) === "on";
+  }
+  const cor = String(formData.get("cor_destaque") ?? "gold");
+  patch.cor_destaque = CORES_VALIDAS.includes(cor) ? cor : "gold";
+
+  const { error } = await supabase
+    .from("hg_documento_modelo")
+    .upsert({ id: 1, ...patch, atualizado_em: new Date().toISOString() });
+
+  if (error) return { ok: false, message: "Não foi possível salvar o modelo." };
+
+  await logAudit(supabase, { modulo: "contratos", acao: "update", registro: "hg_documento_modelo:1" });
+  revalidatePath("/admin/contratos");
+  return { ok: true, message: "Modelo do documento salvo." };
+}
+
+/** Volta o modelo inteiro ao padrão de fábrica. */
+export async function restaurarModeloDocumento(): Promise<void> {
+  const supabase = createClient();
+  if (!supabase) return;
+
+  const patch: Record<string, string | boolean | null> = { cor_destaque: "gold" };
+  for (const campo of MODELO_TEXTOS) patch[campo] = null;
+  for (const bloco of MODELO_BLOCOS) patch[bloco] = true;
+
+  const { error } = await supabase
+    .from("hg_documento_modelo")
+    .upsert({ id: 1, ...patch, atualizado_em: new Date().toISOString() });
+  if (error) return;
+
+  await logAudit(supabase, { modulo: "contratos", acao: "update", registro: "hg_documento_modelo:1" });
+  revalidatePath("/admin/contratos");
+}
+
 /** Salva o escopo (o que está incluso) de um contrato específico. */
 export async function salvarEscopoContrato(
   _prev: ContratacaoState,

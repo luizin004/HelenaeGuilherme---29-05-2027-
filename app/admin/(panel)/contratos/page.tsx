@@ -5,12 +5,14 @@ import { ContratoActions } from "@/components/admin/ContratoActions";
 import { UploadContrato } from "@/components/admin/UploadContrato";
 import { UploadComprovante } from "@/components/admin/UploadComprovante";
 import { DadosContratacaoForm } from "@/components/admin/DadosContratacaoForm";
+import { ModeloDocumentoForm } from "@/components/admin/ModeloDocumentoForm";
 import { excluirComprovante } from "@/app/actions/comprovantes";
 import {
   listContracts,
   listSuppliers,
   listItensContratados,
   getDadosContratacao,
+  getModeloDocumento,
   type ContractRow,
 } from "@/lib/admin-data";
 import { formatCents, sumCents } from "@/domain/money";
@@ -72,11 +74,12 @@ function BlocoContrato({
 }
 
 export default async function ContratosPage() {
-  const [contracts, suppliers, itens, dadosContratacao] = await Promise.all([
+  const [contracts, suppliers, itens, dadosContratacao, modelo] = await Promise.all([
     listContracts(),
     listSuppliers(),
     listItensContratados(),
     getDadosContratacao(),
+    getModeloDocumento(),
   ]);
   const dadosPreenchidos = !!(dadosContratacao.contratante_nome && dadosContratacao.contratante_documento);
   const supplierName = new Map(suppliers.map((s) => [s.id, s.nome]));
@@ -133,6 +136,13 @@ export default async function ContratosPage() {
 
       <Panel title="Dados para contratação e nota fiscal">
         <DadosContratacaoForm d={dadosContratacao} preenchido={dadosPreenchidos} />
+      </Panel>
+
+      <Panel title="Modelo do documento (PDF)">
+        <ModeloDocumentoForm
+          modelo={modelo}
+          exemploHref={contracts.length > 0 ? `/admin/contratos/${contracts[0].id}/autorizacao` : null}
+        />
       </Panel>
 
       <Panel title="Novo contrato">

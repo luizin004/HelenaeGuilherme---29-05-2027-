@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { AutorizacaoActions } from "@/components/admin/AutorizacaoActions";
 import { EscopoContratoForm } from "@/components/admin/EscopoContratoForm";
 import { emitirAutorizacao } from "@/app/actions/contratacao";
-import { getAutorizacao } from "@/lib/admin-data";
+import { getAutorizacao, getModeloDocumento } from "@/lib/admin-data";
+import { classesDestaque, textoDoModelo } from "@/domain/contratacao/modelo";
 import { getSettings, getVenues, resolveCouple } from "@/lib/data";
 import { formatCents, sumCents } from "@/domain/money";
 import { fmtDateBR, hojeISO } from "@/lib/format";
@@ -21,12 +22,22 @@ import {
 
 export const dynamic = "force-dynamic";
 
-/** Título de seção: numeral dourado + rótulo em versalete. */
-function Secao({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
+/** Título de seção: numeral na cor de destaque + rótulo em versalete. */
+function Secao({
+  n,
+  titulo,
+  corTexto,
+  children,
+}: {
+  n: number;
+  titulo: string;
+  corTexto: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="break-inside-avoid">
       <h2 className="mb-2.5 flex items-center gap-2.5">
-        <span className="font-serif text-base leading-none text-gold">{n}</span>
+        <span className={`font-serif text-base leading-none ${corTexto}`}>{n}</span>
         <span className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-moss">{titulo}</span>
         <span className="h-px flex-1 bg-line" />
       </h2>
@@ -45,7 +56,12 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
 }
 
 export default async function AutorizacaoPage({ params }: { params: { id: string } }) {
-  const [dados, settings, venues] = await Promise.all([getAutorizacao(params.id), getSettings(), getVenues()]);
+  const [dados, settings, venues, modelo] = await Promise.all([
+    getAutorizacao(params.id),
+    getSettings(),
+    getVenues(),
+    getModeloDocumento(),
+  ]);
   if (!dados) notFound();
 
   const { contrato, fornecedor, dados: cfg, parcelas, incluiCotacao, categoria, exigeNotaFiscal } = dados;
@@ -129,6 +145,25 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
     .filter(Boolean)
     .join(" · ");
 
+  // Modelo editável: textos com marcadores + blocos visíveis + cor de destaque.
+  const cor = classesDestaque(modelo.cor_destaque);
+  const vars = {
+    noivos: `${couple.noiva} & ${couple.noivo}`,
+    noiva: couple.noiva,
+    noivo: couple.noivo,
+    data: dataEvento,
+    local: WEDDING.cidade,
+    numero,
+    emissao: fmtDateBR(emissaoISO),
+    fornecedor: fornecedor?.nome ?? "—",
+    objeto: contrato.titulo,
+    valor: formatCents(valorCents),
+  };
+  const txt = (campo: Parameters<typeof textoDoModelo>[1]) => textoDoModelo(modelo, campo, vars);
+  // Numeração das seções acompanha os blocos ligados/desligados.
+  let seq = 0;
+  const proximo = () => ++seq;
+
   return (
     <>
       {/* Papel A4 e cores de fundo preservadas no PDF (o padrão do navegador é descartá-las). */}
@@ -181,84 +216,84 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
       {/* ------------------------------ DOCUMENTO ------------------------------ */}
       <article className="mx-auto max-w-[820px] overflow-hidden rounded-lg bg-white shadow-card print:max-w-none print:rounded-none print:shadow-none">
         {/* Cabeçalho: monograma, nomes e data — identidade do casamento */}
-        <header className="border-b-2 border-gold bg-sand px-12 py-9 text-center print:px-8 print:py-6">
-          <img
-            src="/logo.png"
-            alt="Monograma Helena e Guilherme"
-            className="mx-auto h-16 w-auto object-contain print:h-14"
-          />
-          <p className="mt-3 font-serif text-[26px] leading-tight text-moss-deep">
-            Casamento {couple.noiva} &amp; {couple.noivo}
-          </p>
-          <p className="mt-1.5 text-[11px] uppercase tracking-[0.2em] text-olive">
-            {dataEvento} · {WEDDING.cidade}
-          </p>
+        <header className={`border-b-2 bg-sand px-12 py-9 text-center print:px-8 print:py-6 ${cor.borda}`}>
+          {modelo.mostrar_monograma && (
+            <img
+              src="/logo.png"
+              alt="Monograma Helena e Guilherme"
+              className="mx-auto h-16 w-auto object-contain print:h-14"
+            />
+          )}
+          <p className="mt-3 font-serif text-[26px] leading-tight text-moss-deep">{txt("cabecalho_titulo")}</p>
+          <p className="mt-1.5 text-[11px] uppercase tracking-[0.2em] text-olive">{txt("cabecalho_legenda")}</p>
         </header>
 
         {/* Faixa do documento */}
         <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line bg-cream px-12 py-4 print:px-8 print:py-3">
-          <h1 className="font-serif text-xl leading-snug text-moss-deep">
-            Aprovação de orçamento e autorização de contratação
-          </h1>
+          <h1 className="font-serif text-xl leading-snug text-moss-deep">{txt("titulo")}</h1>
           <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
             {numero} · {fmtDateBR(emissaoISO)}
           </p>
         </div>
 
         {/* Dados do evento */}
-        <div className="grid gap-4 border-b border-line px-12 py-5 sm:grid-cols-3 print:px-8 print:py-4">
-          {[
-            { r: "Data", v: dataEvento },
-            {
-              r: "Cerimônia",
-              v: cerimonia ? `${cerimonia.nome} · ${horaCerimonia}` : `${horaCerimonia}`,
-            },
-            { r: "Recepção", v: recepcao ? `${recepcao.nome} — ${recepcao.cidade}` : WEDDING.cidade },
-          ].map((c) => (
-            <div key={c.r}>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-gold">{c.r}</p>
-              <p className="mt-1 text-[13px] leading-snug text-ink">{c.v}</p>
-            </div>
-          ))}
-        </div>
+        {modelo.mostrar_evento && (
+          <div className="grid gap-4 border-b border-line px-12 py-5 sm:grid-cols-3 print:px-8 print:py-4">
+            {[
+              { r: "Data", v: dataEvento },
+              {
+                r: "Cerimônia",
+                v: cerimonia ? `${cerimonia.nome} · ${horaCerimonia}` : `${horaCerimonia}`,
+              },
+              { r: "Recepção", v: recepcao ? `${recepcao.nome} — ${recepcao.cidade}` : WEDDING.cidade },
+            ].map((c) => (
+              <div key={c.r}>
+                <p className={`text-[10px] uppercase tracking-[0.16em] ${cor.texto}`}>{c.r}</p>
+                <p className="mt-1 text-[13px] leading-snug text-ink">{c.v}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="grid gap-6 px-12 py-8 print:px-8 print:py-6">
-          <Secao n="1" titulo="Contratantes">
+          <Secao n={proximo()} titulo={txt("rotulo_contratantes")} corTexto={cor.texto}>
             <Linha rotulo="Nome" valor={linhaContratantes(input.contratantes)} />
             <Linha rotulo="Endereço" valor={linhaEndereco(input.contratantes)} />
             {cfg.contratante_email && <Linha rotulo="E-mail" valor={cfg.contratante_email} />}
             {cfg.contratante_telefone && <Linha rotulo="Telefone" valor={cfg.contratante_telefone} />}
           </Secao>
 
-          <Secao n="2" titulo="Contratado (fornecedor)">
+          <Secao n={proximo()} titulo={txt("rotulo_contratado")} corTexto={cor.texto}>
             <Linha rotulo="Nome" valor={fornecedor?.nome ?? "— fornecedor não vinculado —"} />
             {fornecedor?.documento && <Linha rotulo="CNPJ / CPF" valor={fornecedor.documento} />}
             {fornecedor?.endereco && <Linha rotulo="Endereço" valor={fornecedor.endereco} />}
             {contatoFornecedor && <Linha rotulo="Contato" valor={contatoFornecedor} />}
           </Secao>
 
-          <Secao n="3" titulo="Objeto — o que está sendo contratado">
-            <p className="font-serif text-lg leading-snug text-moss">
-              {contrato.titulo}
-              {categoria && <span className="ml-2 text-[13px] font-sans text-muted">({categoria})</span>}
-            </p>
-            {input.escopo ? (
-              <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-ink">
-                {input.escopo.split("\n").filter(Boolean).map((l, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-gold">·</span>
-                    <span>{l}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-1 text-[13px] text-muted">
-                Escopo não detalhado — descreva em &quot;editar escopo e observações&quot;.
+          {modelo.mostrar_objeto && (
+            <Secao n={proximo()} titulo={txt("rotulo_objeto")} corTexto={cor.texto}>
+              <p className="font-serif text-lg leading-snug text-moss">
+                {contrato.titulo}
+                {categoria && <span className="ml-2 text-[13px] font-sans text-muted">({categoria})</span>}
               </p>
-            )}
-          </Secao>
+              {input.escopo ? (
+                <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-ink">
+                  {input.escopo.split("\n").filter(Boolean).map((l, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className={cor.texto}>·</span>
+                      <span>{l}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-[13px] text-muted">
+                  Escopo não detalhado — descreva em &quot;editar escopo e observações&quot;.
+                </p>
+              )}
+            </Secao>
+          )}
 
-          <Secao n="4" titulo="Valor e forma de pagamento">
+          <Secao n={proximo()} titulo={txt("rotulo_pagamento")} corTexto={cor.texto}>
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr className="bg-cream text-left">
@@ -294,7 +329,7 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-gold-soft">
+                <tr className={cor.fundoSuave}>
                   <td colSpan={2} className="border border-line px-3 py-2.5 font-medium uppercase tracking-wide text-moss-deep">
                     Valor total aprovado
                   </td>
@@ -307,7 +342,8 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
             <p className="mt-2 text-[12px] text-muted">{resumoPagamento(input.parcelas)}</p>
           </Secao>
 
-          <Secao n="5" titulo="Nota fiscal">
+          {modelo.mostrar_nota_fiscal && (
+          <Secao n={proximo()} titulo={txt("rotulo_nota_fiscal")} corTexto={cor.texto}>
             {exigeNotaFiscal ? (
               <>
                 <p className="mb-2 text-[13px] text-ink">
@@ -330,9 +366,10 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
               </p>
             )}
           </Secao>
+          )}
 
           {(contrato.observacoes || cfg.condicoes_gerais) && (
-            <Secao n="6" titulo="Observações e condições gerais">
+            <Secao n={proximo()} titulo={txt("rotulo_observacoes")} corTexto={cor.texto}>
               {contrato.observacoes && <p className="text-[13px] leading-relaxed">{contrato.observacoes}</p>}
               {cfg.condicoes_gerais && (
                 <p className="mt-2 whitespace-pre-line text-[12.5px] leading-relaxed text-muted">
@@ -342,31 +379,33 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
             </Secao>
           )}
 
-          <div className="break-inside-avoid rounded border-l-[3px] border-gold bg-cream px-5 py-4">
-            <p className="text-[13px] leading-relaxed text-ink">
-              Aprovamos o orçamento acima e <strong>autorizamos a contratação</strong> nas condições
-              descritas. Solicitamos o envio do <strong>contrato para assinatura</strong>,
-              contemplando o mesmo escopo, valor e cronograma de pagamento aqui registrados.
-            </p>
-          </div>
+          {modelo.mostrar_declaracao && (
+            <div className={`break-inside-avoid rounded border-l-[3px] px-5 py-4 ${cor.borda} ${cor.fundoSuave}`}>
+              <p className="text-[13px] leading-relaxed text-ink">{txt("declaracao")}</p>
+            </div>
+          )}
 
-          <div className="mt-10 grid gap-10 break-inside-avoid sm:grid-cols-2">
-            {[
-              { nome: cfg.contratante_nome || "Contratante", papel: "Contratante" },
-              { nome: fornecedor?.nome || "Contratado", papel: "Contratado" },
-            ].map((a) => (
-              <div key={a.papel} className="text-center">
-                <div className="border-t border-ink/40" />
-                <p className="mt-1.5 text-[12px] text-ink">{a.nome}</p>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-muted">{a.papel}</p>
-              </div>
-            ))}
-          </div>
+          {modelo.mostrar_assinaturas && (
+            <div className="mt-10 grid gap-10 break-inside-avoid sm:grid-cols-2">
+              {[
+                { nome: cfg.contratante_nome || txt("assinatura_1"), papel: txt("assinatura_1") },
+                { nome: fornecedor?.nome || txt("assinatura_2"), papel: txt("assinatura_2") },
+              ].map((a, i) => (
+                <div key={i} className="text-center">
+                  <div className="border-t border-ink/40" />
+                  <p className="mt-1.5 text-[12px] text-ink">{a.nome}</p>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-muted">{a.papel}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <footer className="border-t border-line bg-sand px-12 py-3 text-center text-[10px] uppercase tracking-[0.16em] text-muted print:px-8">
-          {couple.noiva} &amp; {couple.noivo} · {dataEvento} · Documento {numero}
-        </footer>
+        {modelo.mostrar_rodape && (
+          <footer className="border-t border-line bg-sand px-12 py-3 text-center text-[10px] uppercase tracking-[0.16em] text-muted print:px-8">
+            {txt("rodape")}
+          </footer>
+        )}
       </article>
     </>
   );

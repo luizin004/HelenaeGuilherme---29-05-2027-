@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Guest } from "@/lib/database.types";
 import { normalizarFaixa } from "@/domain/convites/caixas";
 import { agendaContratacao, type AgendaContratacao } from "@/domain/evania/contratacao";
+import { resolverModelo, type ModeloDocumento } from "@/domain/contratacao/modelo";
 import { diasAte, hojeISO } from "@/lib/format";
 
 export interface ExpenseRow {
@@ -1277,6 +1278,14 @@ const DADOS_CONTRATACAO_VAZIO: DadosContratacao = {
   nf_observacoes: null,
   condicoes_gerais: null,
 };
+
+/** Modelo (textos + composição) do documento de autorização. */
+export async function getModeloDocumento(): Promise<ModeloDocumento> {
+  const supabase = createClient();
+  if (!supabase) return resolverModelo(null);
+  const { data } = await supabase.from("hg_documento_modelo").select("*").eq("id", 1).maybeSingle();
+  return resolverModelo((data as Partial<ModeloDocumento>) ?? null);
+}
 
 export async function getDadosContratacao(): Promise<DadosContratacao> {
   const supabase = createClient();
