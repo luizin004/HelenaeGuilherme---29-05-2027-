@@ -1,6 +1,6 @@
 import { Kpi, KpiGrid, Notice, Panel } from "@/components/admin/ui";
 import { NovaDespesa } from "@/components/admin/NovaDespesa";
-import { DespesaRow } from "@/components/admin/DespesaRow";
+import { LancamentosTable, type LinhaLancamento } from "@/components/admin/financeiro/LancamentosTable";
 import {
   getClassificacoesOptions,
   getExpensePayers,
@@ -99,53 +99,30 @@ export async function LancamentosTab() {
       </Panel>
 
       <Panel title="Lançamentos">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                {["Descrição", "Classificação", "Estado", "Valor", "Classificar (classificação · responsável)", "Ações"].map((h) => (
-                  <th key={h} className="whitespace-nowrap bg-cream px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-muted">
-                    Faça login para visualizar os lançamentos (dados protegidos por RLS).
-                  </td>
-                </tr>
-              )}
-              {expenses.map((e) => {
-                const info = parcelasPorDespesa.get(e.id);
-                return (
-                  <DespesaRow
-                    key={e.id}
-                    d={{
-                      id: e.id,
-                      descricao: e.descricao,
-                      estado: e.estado,
-                      gratuito: e.gratuito,
-                      valor_total_cents: e.valor_total_cents,
-                      observacao: e.observacao,
-                      categoria: e.categoria,
-                    }}
-                    classificacaoNome={(e.classification_id && nomeClass.get(e.classification_id)) || e.categoria || "—"}
-                    classificacoes={classificacoes}
-                    responsaveis={responsaveis}
-                    classificacaoAtual={e.classification_id}
-                    responsavelAtual={expensePayers[e.id] ?? null}
-                    metodos={metodos}
-                    temParcelas={(info?.parcelas.length ?? 0) > 0}
-                    parcelas={info?.parcelas ?? []}
-                  />
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <LancamentosTable
+          linhas={expenses.map((e): LinhaLancamento => {
+            const info = parcelasPorDespesa.get(e.id);
+            return {
+              d: {
+                id: e.id,
+                descricao: e.descricao,
+                estado: e.estado,
+                gratuito: e.gratuito,
+                valor_total_cents: e.valor_total_cents,
+                observacao: e.observacao,
+                categoria: e.categoria,
+              },
+              classificacaoNome: (e.classification_id && nomeClass.get(e.classification_id)) || e.categoria || "—",
+              classificacaoAtual: e.classification_id,
+              responsavelAtual: expensePayers[e.id] ?? null,
+              temParcelas: (info?.parcelas.length ?? 0) > 0,
+              parcelas: info?.parcelas ?? [],
+            };
+          })}
+          classificacoes={classificacoes}
+          responsaveis={responsaveis}
+          metodos={metodos}
+        />
       </Panel>
     </>
   );
