@@ -7,6 +7,11 @@ import { formatCents, sumCents } from "@/domain/money";
 import { fmtDateBR } from "@/lib/format";
 import { WEDDING } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  montarLembreteContratacao,
+  prazoEmPalavras,
+  type ItemContratacao,
+} from "@/domain/evania/contratacao";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +63,23 @@ function montarMensagem(agenda: EvaniaAgenda): string {
   return "Bom dia! Nenhum pagamento programado para hoje nem para os próximos 7 dias. Tudo em dia. 🤍 — Evania";
 }
 
+function ListaContratacao({ itens, hoje }: { itens: ItemContratacao[]; hoje: string }) {
+  if (itens.length === 0) return <p className="px-6 py-4 text-sm text-muted">Nada aqui.</p>;
+  return (
+    <ul className="divide-y divide-line">
+      {itens.map((i) => (
+        <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 px-6 py-2.5 text-sm">
+          <span>
+            <span className="font-medium">{i.descricao}</span>
+            {i.categoria && <span className="ml-2 text-xs text-muted">{i.categoria}</span>}
+          </span>
+          <span className="text-xs text-muted">{prazoEmPalavras(i, hoje)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ListaParcelas({ itens }: { itens: ParcelaDetalhe[] }) {
   if (itens.length === 0) return <p className="px-6 py-4 text-sm text-muted">Nada aqui.</p>;
   return (
@@ -79,8 +101,16 @@ export default async function EvaniaPage() {
   const [config, agenda] = await Promise.all([getEvaniaConfig(), getEvaniaAgenda()]);
   const cfg = config ?? DEFAULT_CONFIG;
   const mensagem = montarMensagem(agenda);
+  const contratacao = agenda.contratacao;
+  const lembreteContratacao = montarLembreteContratacao(contratacao, agenda.hojeISO, {
+    noiva: WEDDING.noiva,
+    noivo: WEDDING.noivo,
+  });
 
   const diagnosticos = [
+    { label: "Contratações vencidas", n: contratacao.vencidos.length, href: "/admin/financeiro?t=lancamentos", cor: "text-danger" },
+    { label: "Prazo de contratação hoje", n: contratacao.hoje.length, href: "/admin/financeiro?t=lancamentos", cor: "text-warn" },
+    { label: "Pendentes sem prazo", n: contratacao.semPrazo.length, href: "/admin/financeiro?t=lancamentos", cor: "text-muted" },
     { label: "Parcelas vencidas", n: agenda.vencidas.length, href: "/admin/contas-a-pagar", cor: "text-danger" },
     { label: "Pagas sem comprovante", n: agenda.pagasSemComprovante.length, href: "/admin/contratos", cor: "text-warn" },
     { label: "Itens sem valor (a cotar)", n: agenda.itensSemValor, href: "/admin/financeiro?t=cotacoes", cor: "text-warn" },
@@ -108,8 +138,41 @@ export default async function EvaniaPage() {
         <Kpi label="Vencidas" value={formatCents(sumCents(agenda.vencidas.map((p) => p.valor_cents)))} hint={`${agenda.vencidas.length} parcela(s)`} />
       </KpiGrid>
 
-      <Panel title="Mensagem do dia (copie para o grupo)">
+      <Panel title="Mensagem do dia — pagamentos (copie para o grupo)">
         <div className="p-6"><CopyMensagem texto={mensagem} /></div>
+      </Panel>
+
+      <PageTitle>Lembretes de contratação</PageTitle>
+
+      <Notice>
+        Antes de pagar, é preciso <strong>contratar</strong>. A Evania acompanha o{" "}
+        <strong>prazo para contratar</strong> definido na composição de cada custo e avisa o que já
+        venceu, o que vence hoje e o que vence nos próximos 7 dias — para nenhum fornecedor bom
+        fechar a agenda antes de vocês.
+      </Notice>
+
+      <KpiGrid>
+        <Kpi label="Contratações vencidas" value={contratacao.vencidos.length} hint="passaram do prazo" />
+        <Kpi label="Vence hoje" value={contratacao.hoje.length} />
+        <Kpi label="Próximos 7 dias" value={contratacao.semana.length} />
+        <Kpi label="Faltam contratar" value={contratacao.pendentes} hint={`${contratacao.semPrazo.length} sem prazo`} />
+      </KpiGrid>
+
+      <Panel title="Lembrete de contratação (copie para o grupo)">
+        <div className="p-6"><CopyMensagem texto={lembreteContratacao} /></div>
+      </Panel>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title={`Passaram do prazo (${contratacao.vencidos.length})`}>
+          <ListaContratacao itens={contratacao.vencidos} hoje={agenda.hojeISO} />
+        </Panel>
+        <Panel title={`Vencem em até 7 dias (${contratacao.semana.length})`}>
+          <ListaContratacao itens={contratacao.semana} hoje={agenda.hojeISO} />
+        </Panel>
+      </div>
+
+      <Panel title={`Pendentes sem prazo definido (${contratacao.semPrazo.length})`}>
+        <ListaContratacao itens={contratacao.semPrazo} hoje={agenda.hojeISO} />
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-2">

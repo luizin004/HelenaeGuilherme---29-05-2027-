@@ -98,6 +98,8 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
   const observacao = String(formData.get("observacao") ?? "").trim();
   const categoria = String(formData.get("categoria") ?? "").trim();
   const fornecedor = String(formData.get("fornecedor") ?? "").trim();
+  const exigeNota = formData.get("exige_nota_fiscal") === "on";
+  const prazo = String(formData.get("prazo_contratacao") ?? "").trim();
 
   if (!descricao) return { ok: false, message: "Informe a descrição da despesa." };
   if (!ESTADOS.includes(estado)) return { ok: false, message: "Estado inválido." };
@@ -125,6 +127,8 @@ export async function criarDespesa(_prev: ExpenseFormState, formData: FormData):
       observacao: observacao || null,
       categoria: categoria || null,
       supplier_id: supplierId,
+      exige_nota_fiscal: exigeNota,
+      prazo_contratacao: prazo || null,
     })
     .select("id")
     .single();
@@ -151,6 +155,8 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
   const gratuito = formData.get("gratuito") === "on";
   const observacao = String(formData.get("observacao") ?? "").trim();
   const categoria = String(formData.get("categoria") ?? "").trim();
+  const exigeNota = formData.get("exige_nota_fiscal") === "on";
+  const prazo = String(formData.get("prazo_contratacao") ?? "").trim();
 
   if (!id) return { ok: false, message: "Despesa inválida." };
   if (!descricao) return { ok: false, message: "Informe a descrição." };
@@ -173,6 +179,8 @@ export async function atualizarDespesa(_prev: ExpenseFormState, formData: FormDa
     gratuito,
     observacao: observacao || null,
     categoria: categoria || null,
+    exige_nota_fiscal: exigeNota,
+    prazo_contratacao: prazo || null,
   };
   if (gratuito) patch.valor_total_cents = null;
   else if (valorCents !== undefined) patch.valor_total_cents = valorCents;

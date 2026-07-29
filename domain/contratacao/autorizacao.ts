@@ -59,6 +59,8 @@ export interface AutorizacaoInput {
   condicoesGerais: string | null;
   evento: { data: string; local: string };
   parcelas: ParcelaAutorizacao[];
+  /** Quando falso, o item foi acordado sem emissão de NF (recibo basta). */
+  exigeNotaFiscal: boolean;
 }
 
 /** Número do documento: AC-2026-0007. Sem emissão ainda → "RASCUNHO". */
@@ -151,17 +153,21 @@ export function montarTextoAutorizacao(i: AutorizacaoInput): string {
   );
   for (const l of linhasPagamento(i.parcelas)) linhas.push(`  • ${l}`);
 
-  linhas.push(
-    ``,
-    `DADOS PARA NOTA FISCAL`,
-    `Destinatário: ${nf.nome}`,
-    `CPF/CNPJ: ${nf.documento}`,
-    `Endereço: ${nf.endereco}`,
-  );
-  if (i.notaFiscal.ie) linhas.push(`Inscrição estadual: ${i.notaFiscal.ie}`);
-  if (i.notaFiscal.im) linhas.push(`Inscrição municipal: ${i.notaFiscal.im}`);
-  if (i.notaFiscal.email) linhas.push(`Enviar a NF para: ${i.notaFiscal.email}`);
-  if (i.notaFiscal.observacoes) linhas.push(i.notaFiscal.observacoes);
+  if (i.exigeNotaFiscal) {
+    linhas.push(
+      ``,
+      `NOTA FISCAL — emissão obrigatória para:`,
+      `Destinatário: ${nf.nome}`,
+      `CPF/CNPJ: ${nf.documento}`,
+      `Endereço: ${nf.endereco}`,
+    );
+    if (i.notaFiscal.ie) linhas.push(`Inscrição estadual: ${i.notaFiscal.ie}`);
+    if (i.notaFiscal.im) linhas.push(`Inscrição municipal: ${i.notaFiscal.im}`);
+    if (i.notaFiscal.email) linhas.push(`Enviar a NF para: ${i.notaFiscal.email}`);
+    if (i.notaFiscal.observacoes) linhas.push(i.notaFiscal.observacoes);
+  } else {
+    linhas.push(``, `NOTA FISCAL: não haverá emissão — recibo simples é suficiente.`);
+  }
 
   linhas.push(``, `EVENTO: ${i.evento.data} · ${i.evento.local}`);
   if (i.observacoes) linhas.push(``, `OBSERVAÇÕES: ${i.observacoes}`);

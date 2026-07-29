@@ -50,6 +50,7 @@ const base: AutorizacaoInput = {
     observacoes: null,
   },
   condicoesGerais: "Alterações de escopo exigem aprovação prévia por escrito.",
+  exigeNotaFiscal: true,
   evento: { data: "29 de maio de 2027", local: "Itabira — MG" },
   parcelas: [
     { numero: 1, valor_cents: 180100, vencimento: "2026-08-10" },
@@ -151,9 +152,15 @@ describe("montarTextoAutorizacao", () => {
   });
 
   it("inclui os dados de nota fiscal e o pedido de contrato", () => {
-    expect(texto).toContain("DADOS PARA NOTA FISCAL");
+    expect(texto).toContain("NOTA FISCAL — emissão obrigatória");
     expect(texto).toContain("nf@exemplo.com");
     expect(texto).toContain("envio do contrato para assinatura");
+  });
+
+  it("item sem NF avisa que recibo basta e omite os dados de faturamento", () => {
+    const semNota = montarTextoAutorizacao({ ...base, exigeNotaFiscal: false });
+    expect(semNota).toContain("não haverá emissão");
+    expect(semNota).not.toContain("nf@exemplo.com");
   });
 
   it("omite fornecedor ausente sem quebrar", () => {

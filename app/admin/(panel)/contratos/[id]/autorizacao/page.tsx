@@ -48,7 +48,7 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
   const [dados, settings, venues] = await Promise.all([getAutorizacao(params.id), getSettings(), getVenues()]);
   if (!dados) notFound();
 
-  const { contrato, fornecedor, dados: cfg, parcelas, incluiCotacao, categoria } = dados;
+  const { contrato, fornecedor, dados: cfg, parcelas, incluiCotacao, categoria, exigeNotaFiscal } = dados;
   const couple = resolveCouple(settings);
   const dataEvento = new Date(couple.dataISO).toLocaleDateString("pt-BR", {
     day: "numeric",
@@ -112,6 +112,7 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
       observacoes: cfg.nf_observacoes,
     },
     condicoesGerais: cfg.condicoes_gerais,
+    exigeNotaFiscal,
     evento: {
       data: `${dataEvento}, às ${horaCerimonia}`,
       local: [cerimonia?.nome, recepcao?.nome, WEDDING.cidade].filter(Boolean).join(" · "),
@@ -306,16 +307,28 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
             <p className="mt-2 text-[12px] text-muted">{resumoPagamento(input.parcelas)}</p>
           </Secao>
 
-          <Secao n="5" titulo="Dados para emissão da nota fiscal">
-            <div className="rounded border border-line bg-ivory px-4 py-3">
-              <Linha rotulo="Destinatário" valor={nf.nome} />
-              <Linha rotulo="CNPJ / CPF" valor={nf.documento} />
-              {cfg.nf_ie && <Linha rotulo="Inscrição estadual" valor={cfg.nf_ie} />}
-              {cfg.nf_im && <Linha rotulo="Inscrição municipal" valor={cfg.nf_im} />}
-              <Linha rotulo="Endereço" valor={nf.endereco} />
-              {cfg.nf_email && <Linha rotulo="Enviar a NF para" valor={cfg.nf_email} />}
-              {cfg.nf_observacoes && <p className="mt-1.5 text-[12px] text-muted">{cfg.nf_observacoes}</p>}
-            </div>
+          <Secao n="5" titulo="Nota fiscal">
+            {exigeNotaFiscal ? (
+              <>
+                <p className="mb-2 text-[13px] text-ink">
+                  <strong>É obrigatória a emissão de nota fiscal</strong> para os dados abaixo.
+                </p>
+                <div className="rounded border border-line bg-ivory px-4 py-3">
+                  <Linha rotulo="Destinatário" valor={nf.nome} />
+                  <Linha rotulo="CNPJ / CPF" valor={nf.documento} />
+                  {cfg.nf_ie && <Linha rotulo="Inscrição estadual" valor={cfg.nf_ie} />}
+                  {cfg.nf_im && <Linha rotulo="Inscrição municipal" valor={cfg.nf_im} />}
+                  <Linha rotulo="Endereço" valor={nf.endereco} />
+                  {cfg.nf_email && <Linha rotulo="Enviar a NF para" valor={cfg.nf_email} />}
+                  {cfg.nf_observacoes && <p className="mt-1.5 text-[12px] text-muted">{cfg.nf_observacoes}</p>}
+                </div>
+              </>
+            ) : (
+              <p className="text-[13px] text-ink">
+                Este item foi acordado <strong>sem emissão de nota fiscal</strong>. Recibo simples é
+                suficiente para a nossa prestação de contas.
+              </p>
+            )}
           </Secao>
 
           {(contrato.observacoes || cfg.condicoes_gerais) && (

@@ -41,6 +41,8 @@ export interface DespesaEditavel {
   valor_total_cents: number | null;
   observacao: string | null;
   categoria: string | null;
+  exige_nota_fiscal: boolean;
+  prazo_contratacao: string | null;
 }
 
 /**
@@ -144,7 +146,19 @@ export function DespesaRow({
                     <option key={c} value={c} />
                   ))}
                 </datalist>
+                <div className="flex flex-col gap-1">
+                  <label className="field-label">Prazo para contratar</label>
+                  <input
+                    name="prazo_contratacao"
+                    type="date"
+                    defaultValue={d.prazo_contratacao ?? ""}
+                    className="field-input py-1.5 text-sm"
+                  />
+                </div>
                 <input name="observacao" defaultValue={d.observacao ?? ""} placeholder="Observação" className="field-input py-1.5 text-sm" />
+                <label className="flex items-center gap-2 text-xs text-muted">
+                  <input type="checkbox" name="exige_nota_fiscal" defaultChecked={d.exige_nota_fiscal} /> Exigir nota fiscal
+                </label>
                 <label className="flex items-center gap-2 text-xs text-muted">
                   <input type="checkbox" name="gratuito" defaultChecked={d.gratuito} /> É gratuito / cortesia
                 </label>

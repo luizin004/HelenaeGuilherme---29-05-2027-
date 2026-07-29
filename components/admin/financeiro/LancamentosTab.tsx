@@ -111,6 +111,8 @@ export async function LancamentosTab() {
                 valor_total_cents: e.valor_total_cents,
                 observacao: e.observacao,
                 categoria: e.categoria,
+                exige_nota_fiscal: e.exige_nota_fiscal,
+                prazo_contratacao: e.prazo_contratacao,
               },
               classificacaoNome: (e.classification_id && nomeClass.get(e.classification_id)) || e.categoria || "—",
               classificacaoAtual: e.classification_id,

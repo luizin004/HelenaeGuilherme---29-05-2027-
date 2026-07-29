@@ -9,7 +9,7 @@ import { excluirComprovante } from "@/app/actions/comprovantes";
 import {
   listContracts,
   listSuppliers,
-  listComprovantes,
+  listItensContratados,
   getDadosContratacao,
   type ContractRow,
 } from "@/lib/admin-data";
@@ -75,7 +75,7 @@ export default async function ContratosPage() {
   const [contracts, suppliers, itens, dadosContratacao] = await Promise.all([
     listContracts(),
     listSuppliers(),
-    listComprovantes(),
+    listItensContratados(),
     getDadosContratacao(),
   ]);
   const dadosPreenchidos = !!(dadosContratacao.contratante_nome && dadosContratacao.contratante_documento);
@@ -114,17 +114,18 @@ export default async function ContratosPage() {
       {!isSupabaseConfigured && <Notice>Conecte o Supabase para cadastrar contratos e anexar comprovantes.</Notice>}
 
       <Notice>
-        Tudo em um só lugar: itens marcados como <strong>contratado</strong> (ou <strong>pago</strong>) no{" "}
-        <Link href="/admin/financeiro" className="text-olive underline">Financeiro</Link> aparecem
-        aqui com o <strong>arquivo do contrato</strong> e os <strong>comprovantes de pagamento</strong>{" "}
-        (armazenamento <strong>privado</strong>, links de download expiram em 1h). Ao vincular um
-        comprovante a uma <strong>parcela</strong>, ela é marcada como paga automaticamente.
-        Use <strong>gerar autorização</strong> para emitir a aprovação de orçamento — o documento
-        que formaliza escopo, valor, cronograma de pagamento e dados de nota fiscal para o
-        fornecedor devolver o contrato.
+        Esta tela mostra <strong>apenas o que já foi fechado</strong> — itens marcados como{" "}
+        <strong>contratado</strong> ou <strong>pago</strong> no{" "}
+        <Link href="/admin/financeiro" className="text-olive underline">Financeiro</Link>. Para cada
+        um: o <strong>PDF da autorização</strong> (escopo, forma de pagamento e dados de nota fiscal
+        para enviar ao fornecedor), o <strong>contrato assinado</strong> e os{" "}
+        <strong>comprovantes de pagamento</strong> — tudo em armazenamento privado, com links de
+        download que expiram em 1h. Ao vincular um comprovante a uma <strong>parcela</strong>, ela é
+        marcada como paga automaticamente.
       </Notice>
 
       <KpiGrid>
+        <Kpi label="Itens contratados" value={itens.length} />
         <Kpi label="Contratos" value={contracts.length} />
         <Kpi label="Comprovantes" value={totalComp} />
         <Kpi label="Valor comprovado" value={formatCents(valorComprovado)} hint="soma dos comprovantes com valor" />
@@ -141,7 +142,11 @@ export default async function ContratosPage() {
       </Panel>
 
       {itens.length === 0 && standaloneContracts.length === 0 && (
-        <Notice>Nenhuma despesa com valor definido ainda. Defina valores no Financeiro para começar.</Notice>
+        <Notice>
+          Nenhum item contratado ainda. Marque uma despesa como &quot;contratado&quot; no{" "}
+          <Link href="/admin/financeiro" className="text-olive underline">Financeiro</Link> e ela
+          aparece aqui.
+        </Notice>
       )}
 
       <div className="grid gap-6">
@@ -149,6 +154,25 @@ export default async function ContratosPage() {
           <Panel
             key={item.id}
             title={`${item.descricao}${item.categoria ? ` · ${item.categoria}` : ""} · ${formatCents(item.valor_total_cents)}`}
+            action={
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  className={`rounded-full px-3 py-0.5 text-[11px] uppercase tracking-wide ${
+                    item.exige_nota_fiscal ? "bg-[#e6efe0] text-success" : "bg-cream text-muted"
+                  }`}
+                >
+                  {item.exige_nota_fiscal ? "com nota fiscal" : "sem nota fiscal"}
+                </span>
+                {contractByExpense.has(item.id) && (
+                  <Link
+                    href={`/admin/contratos/${contractByExpense.get(item.id)!.id}/autorizacao`}
+                    className="btn btn-dark px-4 py-1.5 text-xs"
+                  >
+                    PDF da autorização
+                  </Link>
+                )}
+              </div>
+            }
           >
             <div className="space-y-5 p-6">
               <div>

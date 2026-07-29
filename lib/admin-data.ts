@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Guest } from "@/lib/database.types";
 import { normalizarFaixa } from "@/domain/convites/caixas";
+import { agendaContratacao, type AgendaContratacao } from "@/domain/evania/contratacao";
+import { diasAte, hojeISO } from "@/lib/format";
 
 export interface ExpenseRow {
   id: string;
@@ -12,6 +14,8 @@ export interface ExpenseRow {
   categoria: string | null;
   cost_center_id: string | null;
   classification_id: string | null;
+  exige_nota_fiscal: boolean;
+  prazo_contratacao: string | null;
 }
 
 export interface Option {
@@ -210,12 +214,22 @@ export interface EvaniaAgenda {
   itensSemValor: number;
   comValorSemParcela: number;
   fornecedoresSemContrato: number;
+  /** Prazos de CONTRATAÇÃO (o passo antes do pagamento). */
+  contratacao: AgendaContratacao;
+  /** Data de referência usada nos cálculos (ISO, America/Sao_Paulo). */
+  hojeISO: string;
 }
 
 /** O que a Evania "vê" hoje — agenda + diagnósticos, calculado do banco. */
 export async function getEvaniaAgenda(): Promise<EvaniaAgenda> {
   const supabase = createClient();
-  const vazio: EvaniaAgenda = { hoje: [], semana: [], mes: [], vencidas: [], pagasSemComprovante: [], itensSemValor: 0, comValorSemParcela: 0, fornecedoresSemContrato: 0 };
+  const semContratacao: AgendaContratacao = { vencidos: [], hoje: [], semana: [], mes: [], semPrazo: [], pendentes: 0 };
+  const hojeRef = hojeISO();
+  const vazio: EvaniaAgenda = {
+    hoje: [], semana: [], mes: [], vencidas: [], pagasSemComprovante: [],
+    itensSemValor: 0, comValorSemParcela: 0, fornecedoresSemContrato: 0,
+    contratacao: semContratacao, hojeISO: hojeRef,
+  };
   if (!supabase) return vazio;
 
   const [parcelas, expenses, contracts, suppliers, { data: comps }] = await Promise.all([
@@ -226,14 +240,8 @@ export async function getEvaniaAgenda(): Promise<EvaniaAgenda> {
     supabase.from("hg_comprovantes").select("installment_id").is("deleted_at", null).not("installment_id", "is", null),
   ]);
 
-  const hojeISO = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  const ymAtual = hojeISO.slice(0, 7);
-  const dias = (iso: string | null): number | null => {
-    if (!iso) return null;
-    const a = Date.parse(`${iso.slice(0, 10)}T00:00:00-03:00`);
-    const b = Date.parse(`${hojeISO}T00:00:00-03:00`);
-    return Number.isNaN(a) || Number.isNaN(b) ? null : Math.round((a - b) / 86_400_000);
-  };
+  const ymAtual = hojeRef.slice(0, 7);
+  const dias = (iso: string | null): number | null => diasAte(iso, hojeRef);
 
   const agenda: EvaniaAgenda = { ...vazio, hoje: [], semana: [], mes: [], vencidas: [], pagasSemComprovante: [] };
   const comComprovante = new Set((comps ?? []).map((c) => c.installment_id));
@@ -256,6 +264,18 @@ export async function getEvaniaAgenda(): Promise<EvaniaAgenda> {
   agenda.comValorSemParcela = naoGrat.filter((e) => e.valor_total_cents !== null && !comParcela.has(e.id)).length;
   const fornecedoresComContrato = new Set(contracts.map((c) => c.supplier_id).filter(Boolean));
   agenda.fornecedoresSemContrato = suppliers.filter((s) => !fornecedoresComContrato.has(s.id)).length;
+
+  agenda.contratacao = agendaContratacao(
+    expenses.map((e) => ({
+      id: e.id,
+      descricao: e.descricao,
+      categoria: e.categoria,
+      estado: e.estado,
+      gratuito: e.gratuito,
+      prazo_contratacao: e.prazo_contratacao,
+    })),
+    hojeRef,
+  );
 
   return agenda;
 }
@@ -1115,20 +1135,27 @@ export interface ComprovanteExpenseRow {
   descricao: string;
   categoria: string | null;
   valor_total_cents: number;
+  estado: string;
+  exige_nota_fiscal: boolean;
   comprovantes: ComprovanteItem[];
   parcelasAbertas: ParcelaAberta[];
 }
 
-/** Despesas com valor definido + comprovantes anexados + parcelas em aberto. */
-export async function listComprovantes(): Promise<ComprovanteExpenseRow[]> {
+/**
+ * Itens já fechados (contratado/pago) com comprovantes e parcelas em aberto.
+ * É o que a tela de Contratos mostra: só o que virou compromisso de verdade —
+ * itens previstos/orçados ainda vivem no Financeiro.
+ */
+export async function listItensContratados(): Promise<ComprovanteExpenseRow[]> {
   const supabase = createClient();
   if (!supabase) return [];
 
   const { data: expenses } = await supabase
     .from("hg_expenses")
-    .select("id, descricao, categoria, valor_total_cents")
+    .select("id, descricao, categoria, valor_total_cents, estado, exige_nota_fiscal")
     .is("deleted_at", null)
     .eq("gratuito", false)
+    .in("estado", ["contratado", "pago"])
     .not("valor_total_cents", "is", null)
     .order("descricao");
   if (!expenses || expenses.length === 0) return [];
@@ -1173,6 +1200,8 @@ export async function listComprovantes(): Promise<ComprovanteExpenseRow[]> {
     descricao: e.descricao,
     categoria: e.categoria,
     valor_total_cents: Number(e.valor_total_cents),
+    estado: e.estado,
+    exige_nota_fiscal: e.exige_nota_fiscal ?? true,
     comprovantes: compByExp.get(e.id) ?? [],
     parcelasAbertas: parcByExp.get(e.id) ?? [],
   }));
@@ -1265,6 +1294,7 @@ export interface AutorizacaoData {
   /** Escopo da proposta escolhida (usado quando o contrato não tem escopo próprio). */
   incluiCotacao: string | null;
   categoria: string | null;
+  exigeNotaFiscal: boolean;
 }
 
 export async function getAutorizacao(contractId: string): Promise<AutorizacaoData | null> {
@@ -1304,11 +1334,24 @@ export async function getAutorizacao(contractId: string): Promise<AutorizacaoDat
           .then((r) => (r.data?.inclui ?? null) as string | null)
       : Promise.resolve(null),
     c.expense_id
-      ? supabase.from("hg_expenses").select("categoria").eq("id", c.expense_id).maybeSingle().then((r) => r.data?.categoria ?? null)
+      ? supabase
+          .from("hg_expenses")
+          .select("categoria, exige_nota_fiscal")
+          .eq("id", c.expense_id)
+          .maybeSingle()
+          .then((r) => r.data ?? null)
       : Promise.resolve(null),
   ]);
 
-  return { contrato: c, fornecedor, dados, parcelas, incluiCotacao: cotacao, categoria: despesa };
+  return {
+    contrato: c,
+    fornecedor,
+    dados,
+    parcelas,
+    incluiCotacao: cotacao,
+    categoria: despesa?.categoria ?? null,
+    exigeNotaFiscal: despesa?.exige_nota_fiscal ?? true,
+  };
 }
 
 export interface AuditRow {

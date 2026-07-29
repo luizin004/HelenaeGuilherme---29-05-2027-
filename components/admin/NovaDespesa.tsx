@@ -60,10 +60,21 @@ export function NovaDespesa({ fornecedores = [] }: { fornecedores?: string[] }) 
           ))}
         </datalist>
       </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="d-prazo" className="field-label">Prazo para contratar</label>
+        <input id="d-prazo" name="prazo_contratacao" type="date" className="field-input" />
+        <span className="text-xs text-muted">
+          A Evania lembra vocês do que está vencendo ou já venceu sem contratação.
+        </span>
+      </div>
       <div className="flex flex-col gap-1 md:col-span-2">
         <label htmlFor="d-obs" className="field-label">Observação (opcional)</label>
         <input id="d-obs" name="observacao" placeholder="Condições de pagamento, detalhes…" className="field-input" />
       </div>
+      <label className="flex items-center gap-2 text-sm text-muted md:col-span-2">
+        <input type="checkbox" name="exige_nota_fiscal" defaultChecked /> Exigir nota fiscal (para os dados de
+        faturamento cadastrados em Contratos)
+      </label>
       <label className="flex items-center gap-2 text-sm text-muted md:col-span-2">
         <input type="checkbox" name="gratuito" /> É gratuito / cortesia (não gera valor nem parcela)
       </label>
