@@ -55,6 +55,8 @@ export async function atualizarFornecedor(
   const email = String(formData.get("email") ?? "").trim();
   const status = String(formData.get("status") ?? "prospeccao");
   const observacoes = String(formData.get("observacoes") ?? "").trim();
+  const documento = String(formData.get("documento") ?? "").trim();
+  const endereco = String(formData.get("endereco") ?? "").trim();
 
   if (!id) return { ok: false, message: "Fornecedor inválido." };
   if (!nome) return { ok: false, message: "Informe o nome." };
@@ -73,6 +75,8 @@ export async function atualizarFornecedor(
       email: email || null,
       status,
       observacoes: observacoes || null,
+      documento: documento || null,
+      endereco: endereco || null,
     })
     .eq("id", id)
     .is("deleted_at", null);
@@ -81,6 +85,7 @@ export async function atualizarFornecedor(
 
   await logAudit(supabase, { modulo: "fornecedores", acao: "update", registro: `hg_suppliers:${id}`, valorNovo: { nome, status } });
   revalidatePath("/admin/fornecedores");
+  revalidatePath("/admin/contratos");
   return { ok: true, message: `${nome} atualizado.` };
 }
 

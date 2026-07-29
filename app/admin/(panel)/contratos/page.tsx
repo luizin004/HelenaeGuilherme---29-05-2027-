@@ -4,9 +4,17 @@ import { NovoContrato } from "@/components/admin/NovoContrato";
 import { ContratoActions } from "@/components/admin/ContratoActions";
 import { UploadContrato } from "@/components/admin/UploadContrato";
 import { UploadComprovante } from "@/components/admin/UploadComprovante";
+import { DadosContratacaoForm } from "@/components/admin/DadosContratacaoForm";
 import { excluirComprovante } from "@/app/actions/comprovantes";
-import { listContracts, listSuppliers, listComprovantes, type ContractRow } from "@/lib/admin-data";
+import {
+  listContracts,
+  listSuppliers,
+  listComprovantes,
+  getDadosContratacao,
+  type ContractRow,
+} from "@/lib/admin-data";
 import { formatCents, sumCents } from "@/domain/money";
+import { numeroAutorizacao } from "@/domain/contratacao/autorizacao";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,6 +62,9 @@ function BlocoContrato({
           baixar contrato
         </a>
       )}
+      <Link href={`/admin/contratos/${contrato.id}/autorizacao`} className="text-xs text-olive underline">
+        {contrato.autorizacao_seq === null ? "gerar autorização" : `autorização ${numeroAutorizacao(contrato.autorizacao_seq, contrato.autorizacao_emitida_em)}`}
+      </Link>
       <UploadContrato contractId={contrato.id} temArquivo={!!contrato.arquivo_url} />
       <ContratoActions c={contrato} fornecedores={fornecedores} />
     </div>
@@ -61,7 +72,13 @@ function BlocoContrato({
 }
 
 export default async function ContratosPage() {
-  const [contracts, suppliers, itens] = await Promise.all([listContracts(), listSuppliers(), listComprovantes()]);
+  const [contracts, suppliers, itens, dadosContratacao] = await Promise.all([
+    listContracts(),
+    listSuppliers(),
+    listComprovantes(),
+    getDadosContratacao(),
+  ]);
+  const dadosPreenchidos = !!(dadosContratacao.contratante_nome && dadosContratacao.contratante_documento);
   const supplierName = new Map(suppliers.map((s) => [s.id, s.nome]));
   const fornecedoresOpcoes = suppliers.map((s) => ({ id: s.id, nome: s.nome }));
   const contractByExpense = new Map(contracts.filter((c) => c.expense_id).map((c) => [c.expense_id as string, c]));
@@ -102,6 +119,9 @@ export default async function ContratosPage() {
         aqui com o <strong>arquivo do contrato</strong> e os <strong>comprovantes de pagamento</strong>{" "}
         (armazenamento <strong>privado</strong>, links de download expiram em 1h). Ao vincular um
         comprovante a uma <strong>parcela</strong>, ela é marcada como paga automaticamente.
+        Use <strong>gerar autorização</strong> para emitir a aprovação de orçamento — o documento
+        que formaliza escopo, valor, cronograma de pagamento e dados de nota fiscal para o
+        fornecedor devolver o contrato.
       </Notice>
 
       <KpiGrid>
@@ -109,6 +129,10 @@ export default async function ContratosPage() {
         <Kpi label="Comprovantes" value={totalComp} />
         <Kpi label="Valor comprovado" value={formatCents(valorComprovado)} hint="soma dos comprovantes com valor" />
       </KpiGrid>
+
+      <Panel title="Dados para contratação e nota fiscal">
+        <DadosContratacaoForm d={dadosContratacao} preenchido={dadosPreenchidos} />
+      </Panel>
 
       <Panel title="Novo contrato">
         <div className="p-6">
@@ -209,6 +233,9 @@ export default async function ContratosPage() {
                       baixar
                     </a>
                   )}
+                  <Link href={`/admin/contratos/${c.id}/autorizacao`} className="text-xs text-olive underline">
+                    {c.autorizacao_seq === null ? "gerar autorização" : `autorização ${numeroAutorizacao(c.autorizacao_seq, c.autorizacao_emitida_em)}`}
+                  </Link>
                   <UploadContrato contractId={c.id} temArquivo={!!c.arquivo_url} />
                   <ContratoActions c={c} fornecedores={fornecedoresOpcoes} />
                 </div>

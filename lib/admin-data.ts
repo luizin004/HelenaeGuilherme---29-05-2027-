@@ -920,6 +920,8 @@ export interface SupplierRow {
   email: string | null;
   status: string;
   observacoes: string | null;
+  documento: string | null;
+  endereco: string | null;
 }
 
 export async function listSuppliers(): Promise<SupplierRow[]> {
@@ -1185,6 +1187,10 @@ export interface ContractRow {
   status: string;
   arquivo_url: string | null;
   expense_id: string | null;
+  escopo: string | null;
+  observacoes: string | null;
+  autorizacao_seq: number | null;
+  autorizacao_emitida_em: string | null;
 }
 
 export async function listContracts(): Promise<ContractRow[]> {
@@ -1196,6 +1202,113 @@ export async function listContracts(): Promise<ContractRow[]> {
     .is("deleted_at", null)
     .order("criado_em");
   return (data ?? []) as ContractRow[];
+}
+
+/** Dados fixos dos contratantes e de faturamento (linha única, id = 1). */
+export interface DadosContratacao {
+  contratante_nome: string | null;
+  contratante_documento: string | null;
+  contratante_rg: string | null;
+  contratante_email: string | null;
+  contratante_telefone: string | null;
+  contratante2_nome: string | null;
+  contratante2_documento: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  nf_destinatario: string | null;
+  nf_documento: string | null;
+  nf_ie: string | null;
+  nf_im: string | null;
+  nf_endereco: string | null;
+  nf_email: string | null;
+  nf_observacoes: string | null;
+  condicoes_gerais: string | null;
+}
+
+const DADOS_CONTRATACAO_VAZIO: DadosContratacao = {
+  contratante_nome: null,
+  contratante_documento: null,
+  contratante_rg: null,
+  contratante_email: null,
+  contratante_telefone: null,
+  contratante2_nome: null,
+  contratante2_documento: null,
+  endereco: null,
+  cidade: null,
+  uf: null,
+  cep: null,
+  nf_destinatario: null,
+  nf_documento: null,
+  nf_ie: null,
+  nf_im: null,
+  nf_endereco: null,
+  nf_email: null,
+  nf_observacoes: null,
+  condicoes_gerais: null,
+};
+
+export async function getDadosContratacao(): Promise<DadosContratacao> {
+  const supabase = createClient();
+  if (!supabase) return DADOS_CONTRATACAO_VAZIO;
+  const { data } = await supabase.from("hg_contratacao_config").select("*").eq("id", 1).maybeSingle();
+  return { ...DADOS_CONTRATACAO_VAZIO, ...(data ?? {}) } as DadosContratacao;
+}
+
+/** Tudo que a autorização de contratação precisa imprimir, num pacote só. */
+export interface AutorizacaoData {
+  contrato: ContractRow;
+  fornecedor: SupplierRow | null;
+  dados: DadosContratacao;
+  parcelas: InstallmentItem[];
+  /** Escopo da proposta escolhida (usado quando o contrato não tem escopo próprio). */
+  incluiCotacao: string | null;
+  categoria: string | null;
+}
+
+export async function getAutorizacao(contractId: string): Promise<AutorizacaoData | null> {
+  const supabase = createClient();
+  if (!supabase) return null;
+
+  const { data: contrato } = await supabase
+    .from("hg_contracts")
+    .select("*")
+    .eq("id", contractId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!contrato) return null;
+
+  const c = contrato as ContractRow;
+  const [fornecedor, dados, parcelas, cotacao, despesa] = await Promise.all([
+    c.supplier_id
+      ? supabase.from("hg_suppliers").select("*").eq("id", c.supplier_id).maybeSingle().then((r) => r.data as SupplierRow | null)
+      : Promise.resolve(null),
+    getDadosContratacao(),
+    c.expense_id
+      ? supabase
+          .from("hg_expense_installments")
+          .select("id, numero, valor_cents, vencimento, pago, pago_em")
+          .eq("expense_id", c.expense_id)
+          .order("numero")
+          .then((r) => (r.data ?? []) as InstallmentItem[])
+      : Promise.resolve([] as InstallmentItem[]),
+    c.expense_id
+      ? supabase
+          .from("hg_quotes")
+          .select("inclui")
+          .eq("expense_id", c.expense_id)
+          .eq("escolhida", true)
+          .is("deleted_at", null)
+          .maybeSingle()
+          .then((r) => (r.data?.inclui ?? null) as string | null)
+      : Promise.resolve(null),
+    c.expense_id
+      ? supabase.from("hg_expenses").select("categoria").eq("id", c.expense_id).maybeSingle().then((r) => r.data?.categoria ?? null)
+      : Promise.resolve(null),
+  ]);
+
+  return { contrato: c, fornecedor, dados, parcelas, incluiCotacao: cotacao, categoria: despesa };
 }
 
 export interface AuditRow {

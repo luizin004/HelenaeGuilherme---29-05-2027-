@@ -15,6 +15,8 @@ export interface FornecedorEditavel {
   email: string | null;
   status: string;
   observacoes: string | null;
+  documento: string | null;
+  endereco: string | null;
 }
 
 function SaveButton() {
@@ -68,6 +70,11 @@ export function FornecedorActions({ f }: { f: FornecedorEditavel }) {
               <option value="cancelado">Cancelado</option>
             </select>
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input name="documento" defaultValue={f.documento ?? ""} placeholder="CNPJ / CPF" className="field-input py-1.5 text-sm" />
+            <input name="endereco" defaultValue={f.endereco ?? ""} placeholder="Endereço" className="field-input py-1.5 text-sm" />
+          </div>
+          <span className="text-[11px] text-muted">CNPJ e endereço qualificam o contratado na autorização de contratação.</span>
           <input name="observacoes" defaultValue={f.observacoes ?? ""} placeholder="Observações" className="field-input py-1.5 text-sm" />
           <div className="flex items-center gap-3">
             <SaveButton />

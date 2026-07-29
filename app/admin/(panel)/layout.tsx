@@ -23,10 +23,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex min-h-screen bg-ivory">
-      <Sidebar />
-      <div className="flex flex-1 flex-col transition-[margin] md:ml-[var(--sb,250px)]">
-        <header className="sticky top-0 z-40 flex items-center justify-end gap-4 border-b border-line bg-white px-6 py-3.5">
+    <div className="flex min-h-screen bg-ivory print:block print:min-h-0 print:bg-white">
+      <div className="print:hidden">
+        <Sidebar />
+      </div>
+      <div className="flex flex-1 flex-col transition-[margin] md:ml-[var(--sb,250px)] print:ml-0">
+        <header className="sticky top-0 z-40 flex items-center justify-end gap-4 border-b border-line bg-white px-6 py-3.5 print:hidden">
           {!isSupabaseConfigured && (
             <span className="rounded-full bg-gold-soft px-3 py-1 text-xs text-moss">
               modo demonstração
@@ -41,7 +43,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             </form>
           )}
         </header>
-        <div className="mx-auto w-full max-w-6xl p-6">{children}</div>
+        <div className="mx-auto w-full max-w-6xl p-6 print:max-w-none print:p-0">{children}</div>
       </div>
     </div>
   );
