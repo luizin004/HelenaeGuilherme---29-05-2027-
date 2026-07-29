@@ -17,7 +17,7 @@ const TELAS_FINANCEIRAS = [
   "/admin/financeiro-dashboard",
   "/admin/calendario",
   "/admin/relatorios",
-  "/admin/comprovantes",
+  "/admin/contratos",
 ];
 
 function revalidarFinanceiro() {

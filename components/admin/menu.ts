@@ -38,13 +38,12 @@ export const ADMIN_MENU: MenuEntry[] = [
 
   { section: "Análises e documentos" },
   { label: "Relatórios", ico: "chart", href: "/admin/relatorios" },
-  { label: "Comprovantes", ico: "receipt", href: "/admin/comprovantes" },
   { label: "Documentação & cotação", ico: "folder", href: "/admin/documentos" },
 
   { section: "Configurações financeiras" },
   { label: "Classificações financeiras", ico: "tag", href: "/admin/classificacoes" },
   { label: "Fornecedores", ico: "handshake", href: "/admin/fornecedores" },
-  { label: "Contratos", ico: "file-text", href: "/admin/contratos" },
+  { label: "Contratos & comprovantes", ico: "file-text", href: "/admin/contratos" },
   { label: "Métodos de pagamento", ico: "card", href: "/admin/metodos-pagamento" },
   { label: "Contas financeiras", ico: "bank", href: "/admin/contas-financeiras" },
   { label: "Divisão por responsável", ico: "percent", href: "/admin/divisao" },

@@ -82,7 +82,7 @@ export default async function EvaniaPage() {
 
   const diagnosticos = [
     { label: "Parcelas vencidas", n: agenda.vencidas.length, href: "/admin/contas-a-pagar", cor: "text-danger" },
-    { label: "Pagas sem comprovante", n: agenda.pagasSemComprovante.length, href: "/admin/comprovantes", cor: "text-warn" },
+    { label: "Pagas sem comprovante", n: agenda.pagasSemComprovante.length, href: "/admin/contratos", cor: "text-warn" },
     { label: "Itens sem valor (a cotar)", n: agenda.itensSemValor, href: "/admin/financeiro?t=cotacoes", cor: "text-warn" },
     { label: "Com valor, sem parcelas", n: agenda.comValorSemParcela, href: "/admin/financeiro?t=contas&sec=parcelas", cor: "text-warn" },
     { label: "Fornecedores sem contrato", n: agenda.fornecedoresSemContrato, href: "/admin/contratos", cor: "text-muted" },

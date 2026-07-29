@@ -123,7 +123,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
               )}
             </Panel>
 
-            <Panel title="Últimas movimentações" action={<Link href="/admin/comprovantes" className="text-xs text-olive underline">comprovantes</Link>}>
+            <Panel title="Últimas movimentações" action={<Link href="/admin/contratos" className="text-xs text-olive underline">comprovantes</Link>}>
               {dash.ultimosPagamentos.length === 0 ? (
                 <EmptyState title="Nenhum pagamento registrado ainda.">
                   Registre pagamentos em <Link href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" className="underline">Contas a pagar</Link> — inclusive parciais.

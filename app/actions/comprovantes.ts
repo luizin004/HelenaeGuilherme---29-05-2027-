@@ -66,7 +66,7 @@ export async function registrarComprovante(_prev: ComprovanteState, formData: Fo
     registro: `hg_expenses:${expenseId}`,
     valorNovo: { valorCents, installmentId: installmentId || null },
   });
-  revalidatePath("/admin/comprovantes");
+  revalidatePath("/admin/contratos");
   revalidatePath("/admin/financeiro");
   return { ok: true, message: "Comprovante anexado." + (installmentId ? " Parcela marcada como paga." : "") };
 }
@@ -89,5 +89,5 @@ export async function excluirComprovante(formData: FormData): Promise<void> {
 
   if (path) await supabase.storage.from(BUCKET).remove([path]);
   await logAudit(supabase, { modulo: "comprovantes", acao: "delete", registro: `hg_comprovantes:${id}` });
-  revalidatePath("/admin/comprovantes");
+  revalidatePath("/admin/contratos");
 }
