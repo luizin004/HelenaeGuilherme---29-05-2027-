@@ -14,13 +14,15 @@ import { MoneyInput } from "@/components/admin/MoneyInput";
 
 const initial: ExpenseFormState = { ok: false, message: "" };
 
-const ESTADO_BADGE: Record<string, string> = {
+export const ESTADO_BADGE: Record<string, string> = {
+  previsto: "bg-[#f6ecd6] text-warn",
   orcado: "bg-[#eef1e6] text-olive",
   contratado: "bg-[#e6efe0] text-success",
   pago: "bg-[#e6efe0] text-success",
-  previsto: "bg-[#f6ecd6] text-warn",
   gratuito: "bg-gold-soft text-moss",
 };
+
+export const ESTADOS_LANCAMENTO = Object.keys(ESTADO_BADGE);
 
 function SaveButton() {
   const { pending } = useFormStatus();
