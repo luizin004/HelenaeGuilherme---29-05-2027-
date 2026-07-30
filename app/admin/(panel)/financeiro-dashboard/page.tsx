@@ -29,6 +29,7 @@ export default async function FinanceiroDashboardPage({ searchParams }: { search
         actions={
           <>
             <Link href="/admin/financeiro" className="btn btn-outline text-xs">Lançamentos</Link>
+            <Link href="/admin/financeiro-dashboard/relatorio" className="btn btn-outline text-xs">Baixar relatório (PDF)</Link>
             <Link href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" className="btn btn-dark text-xs">Contas a pagar</Link>
           </>
         }

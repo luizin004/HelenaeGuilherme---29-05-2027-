@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AutorizacaoActions } from "@/components/admin/AutorizacaoActions";
+import { DocumentoActions } from "@/components/admin/DocumentoActions";
 import { EscopoContratoForm } from "@/components/admin/EscopoContratoForm";
 import { emitirAutorizacao } from "@/app/actions/contratacao";
 import { getAutorizacao, getModeloDocumento } from "@/lib/admin-data";
@@ -186,7 +186,7 @@ export default async function AutorizacaoPage({ params }: { params: { id: string
               {emitida ? "reemitir (atualiza a data)" : "Emitir e numerar"}
             </button>
           </form>
-          <AutorizacaoActions texto={texto} />
+          <DocumentoActions texto={texto} />
         </div>
       </div>
 

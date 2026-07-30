@@ -6,7 +6,7 @@ import { useState } from "react";
  * Ações do documento: imprimir/salvar em PDF (usa o diálogo do navegador) e
  * copiar a versão em texto, pronta para colar no WhatsApp ou no e-mail.
  */
-export function AutorizacaoActions({ texto }: { texto: string }) {
+export function DocumentoActions({ texto }: { texto: string }) {
   const [copiado, setCopiado] = useState(false);
 
   async function copiar() {
