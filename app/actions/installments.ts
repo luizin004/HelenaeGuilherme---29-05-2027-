@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
-import { buildSchedule } from "@/domain/finance/installments";
-import { gerarDatas } from "@/domain/finance/schedule";
+import { buildSchedule, reequilibrarParcelas } from "@/domain/finance/installments";
+import { gerarDatas, gerarDatasAte } from "@/domain/finance/schedule";
+import { parseBRLToCents } from "@/domain/money";
+import { WEDDING } from "@/lib/constants";
 
 export interface InstallmentState {
   ok: boolean;
@@ -39,13 +41,24 @@ export async function gerarParcelas(_prev: InstallmentState, formData: FormData)
   const primeiroVenc = String(formData.get("primeiro_vencimento") ?? "").trim();
   const motivo = String(formData.get("motivo") ?? "").trim();
   // Condição de pagamento (referência): intervalo em dias OU mensal; responsável; forma.
-  const mensal = String(formData.get("mensal") ?? "") === "on";
-  const intervaloDias = Number(formData.get("intervalo_dias") ?? 30);
   const responsavelPayerId = String(formData.get("responsavel_payer_id") ?? "").trim();
   const metodoId = String(formData.get("metodo_id") ?? "").trim();
+  // Ritmo do cronograma: intervalo fixo em dias, mensal, ou espalhado até o casamento.
+  const ritmo = String(formData.get("ritmo") ?? "intervalo");
+  const mensal = ritmo === "mensal";
+  const ateCasamento = ritmo === "ate_casamento";
+  const intervaloDias = Number(formData.get("intervalo_dias") ?? 30);
+  // Entrada em % (padrão de casamento: 30% na assinatura, saldo até o dia).
+  const entradaPct = Number(formData.get("entrada_pct") ?? 0);
 
   if (!expenseId) return { ok: false, message: "Despesa inválida." };
   if (!Number.isInteger(n) || n < 1 || n > 60) return { ok: false, message: "Número de parcelas entre 1 e 60." };
+  if (!Number.isFinite(entradaPct) || entradaPct < 0 || entradaPct > 100) {
+    return { ok: false, message: "Entrada deve ser entre 0% e 100%." };
+  }
+  if (entradaPct > 0 && n < 2) {
+    return { ok: false, message: "Com entrada, use pelo menos 2 parcelas (entrada + saldo)." };
+  }
 
   const supabase = createClient();
   if (!supabase) return { ok: false, message: "Backend não configurado." };
@@ -61,12 +74,21 @@ export async function gerarParcelas(_prev: InstallmentState, formData: FormData)
   if (expense.gratuito) return { ok: false, message: "Item gratuito não gera parcelas." };
   if (expense.valor_total_cents === null) return { ok: false, message: "Defina o valor total antes de parcelar." };
 
-  // Datas do cronograma (1º vencimento + intervalo em dias, ou mensal no mesmo dia).
-  const datas = gerarDatas(primeiroVenc, n, { mensal, intervaloDias });
+  // Datas do cronograma: intervalo/mensal, ou espalhadas até a data do casamento.
+  let dataCasamento = WEDDING.dataISO.slice(0, 10);
+  if (ateCasamento) {
+    const { data: cfg } = await supabase.from("hg_wedding_settings").select("data_casamento").eq("id", 1).maybeSingle();
+    if (cfg?.data_casamento) dataCasamento = String(cfg.data_casamento).slice(0, 10);
+  }
+  const datas = ateCasamento
+    ? gerarDatasAte(primeiroVenc, n, dataCasamento)
+    : gerarDatas(primeiroVenc, n, { mensal, intervaloDias });
+
   const schedule = buildSchedule({
     totalCents: Number(expense.valor_total_cents),
     n,
     vencimentos: datas,
+    entradaPct,
   });
 
   // Forma de pagamento padrão da despesa (pré-preenche o registro de pagamento).
@@ -128,11 +150,75 @@ export async function gerarParcelas(_prev: InstallmentState, formData: FormData)
     modulo: "financeiro",
     acao: atuais && atuais.length > 0 ? "renegociar_parcelas" : "gerar_parcelas",
     registro: `hg_expenses:${expenseId}`,
-    valorNovo: { n, primeiroVenc: primeiroVenc || null, mensal, intervaloDias, responsavelPayerId: responsavelPayerId || null, motivo: motivo || null },
+    valorNovo: { n, primeiroVenc: primeiroVenc || null, ritmo, intervaloDias, entradaPct, responsavelPayerId: responsavelPayerId || null, motivo: motivo || null },
   });
   revalidarFinanceiro();
-  const como = primeiroVenc ? (mensal ? "mensal" : `a cada ${intervaloDias} dias`) : "sem datas";
-  return { ok: true, message: `Cronograma de ${n}× (${como}) salvo para ${expense.descricao}.` };
+
+  const como = !primeiroVenc
+    ? "sem datas"
+    : ateCasamento
+      ? "até o casamento"
+      : mensal
+        ? "mensal"
+        : `a cada ${intervaloDias} dias`;
+  const comEntrada = entradaPct > 0 ? ` com entrada de ${entradaPct}%` : "";
+  return { ok: true, message: `Cronograma de ${n}×${comEntrada} (${como}) salvo para ${expense.descricao}.` };
+}
+
+/**
+ * Edita o valor de UMA parcela. A diferença é redistribuída nas parcelas
+ * seguintes ainda não pagas, para o cronograma continuar fechando exatamente o
+ * total (regra 1) — nunca se altera o valor da despesa por aqui.
+ */
+export async function atualizarValorParcela(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "").trim();
+  const expenseId = String(formData.get("expense_id") ?? "").trim();
+  const raw = String(formData.get("valor") ?? "").trim();
+  if (!id || !expenseId || !raw) return;
+
+  let novoValor: number;
+  try {
+    novoValor = parseBRLToCents(raw);
+  } catch {
+    return;
+  }
+
+  const supabase = createClient();
+  if (!supabase) return;
+
+  const { data: parcelas } = await supabase
+    .from("hg_expense_installments")
+    .select("id, numero, valor_cents, pago")
+    .eq("expense_id", expenseId)
+    .order("numero");
+  if (!parcelas || parcelas.length === 0) return;
+
+  const indice = parcelas.findIndex((p) => p.id === id);
+  if (indice === -1) return;
+
+  const novos = reequilibrarParcelas(
+    parcelas.map((p) => Number(p.valor_cents)),
+    indice,
+    novoValor,
+    parcelas.map((p) => !!p.pago),
+  );
+
+  // Só grava o que realmente mudou.
+  await Promise.all(
+    parcelas.map((p, i) =>
+      Number(p.valor_cents) === novos[i]
+        ? Promise.resolve()
+        : supabase.from("hg_expense_installments").update({ valor_cents: novos[i] }).eq("id", p.id),
+    ),
+  );
+
+  await logAudit(supabase, {
+    modulo: "financeiro",
+    acao: "ajustar_valor_parcela",
+    registro: `hg_expense_installments:${id}`,
+    valorNovo: { valorCents: novos[indice] },
+  });
+  revalidarFinanceiro();
 }
 
 /** Ajusta o vencimento de UMA parcela (para o cronograma nunca virar um problema). */

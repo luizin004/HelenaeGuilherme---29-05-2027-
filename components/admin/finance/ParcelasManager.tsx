@@ -56,7 +56,13 @@ export function ParcelasManager({
           return (
             <Panel key={r.id} title={`${r.descricao} · ${formatCents(r.valor_total_cents)}${r.versoes > 0 ? ` · v${r.versoes + 1}` : ""}`}>
               <div className="space-y-4 p-6">
-                <GerarParcelas expenseId={r.id} temParcelas={r.parcelas.length > 0} metodos={metodos} responsaveis={responsaveis} />
+                <GerarParcelas
+                  expenseId={r.id}
+                  temParcelas={r.parcelas.length > 0}
+                  metodos={metodos}
+                  responsaveis={responsaveis}
+                  totalCents={r.valor_total_cents}
+                />
 
                 {r.parcelas.length === 0 ? (
                   <p className="text-sm text-muted">Sem cronograma. Gere as parcelas acima.</p>

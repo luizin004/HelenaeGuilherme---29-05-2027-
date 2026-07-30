@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { atualizarDespesa, excluirDespesa, type ExpenseFormState } from "@/app/actions/expenses";
-import { atualizarVencimentoParcela } from "@/app/actions/installments";
+import { atualizarVencimentoParcela, atualizarValorParcela } from "@/app/actions/installments";
 import { ClassificarDespesa } from "@/components/admin/ClassificarDespesa";
 import { GerarParcelas } from "@/components/admin/GerarParcelas";
 import { CATEGORIAS } from "@/domain/orcamento/catalogo";
@@ -178,33 +178,64 @@ export function DespesaRow({
                   <p className="text-sm text-muted">Defina o valor ao lado para poder agendar os pagamentos.</p>
                 ) : (
                   <div className="grid gap-3">
-                    <GerarParcelas expenseId={d.id} temParcelas={temParcelas} metodos={metodos} responsaveis={responsaveis} />
+                    <GerarParcelas
+                      expenseId={d.id}
+                      temParcelas={temParcelas}
+                      metodos={metodos}
+                      responsaveis={responsaveis}
+                      totalCents={d.valor_total_cents}
+                    />
                     {parcelas.length > 0 && (
                       <ul className="grid gap-1.5">
                         {parcelas
                           .slice()
                           .sort((a, b) => a.numero - b.numero)
                           .map((p) => (
-                            <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-ivory px-3 py-1.5 text-sm">
-                              <span className="text-moss">
-                                {p.numero}º pagamento — {formatCents(p.valor_cents)}
-                                {p.vencimento && <span className="ml-2 text-xs text-muted">({fmtDateBR(p.vencimento)})</span>}
+                            <li key={p.id} className="grid gap-2 rounded-md bg-ivory px-3 py-2 text-sm sm:grid-cols-[auto_1fr]">
+                              <span className="self-center whitespace-nowrap text-moss">
+                                {p.numero}º pagamento
+                                {p.pago && (
+                                  <span className="ml-2 rounded-full bg-[#e6efe0] px-2 py-0.5 text-[10px] uppercase text-success">
+                                    pago
+                                  </span>
+                                )}
                               </span>
-                              <form action={atualizarVencimentoParcela} className="flex items-center gap-1">
-                                <input type="hidden" name="id" value={p.id} />
-                                <input
-                                  type="date"
-                                  name="vencimento"
-                                  defaultValue={p.vencimento ?? ""}
-                                  className="field-input py-1 text-xs"
-                                  aria-label={`Data do ${p.numero}º pagamento`}
-                                />
-                                <button type="submit" className="text-xs text-olive underline">salvar</button>
-                              </form>
+                              <div className="flex flex-wrap items-center justify-end gap-2">
+                                {p.pago ? (
+                                  <span className="font-serif text-moss">{formatCents(p.valor_cents)}</span>
+                                ) : (
+                                  <form action={atualizarValorParcela} className="flex items-center gap-1">
+                                    <input type="hidden" name="id" value={p.id} />
+                                    <input type="hidden" name="expense_id" value={d.id} />
+                                    <MoneyInput
+                                      name="valor"
+                                      defaultValueCents={p.valor_cents}
+                                      className="field-input w-32 py-1 text-xs"
+                                      aria-label={`Valor do ${p.numero}º pagamento`}
+                                    />
+                                    <button type="submit" className="text-xs text-olive underline">valor</button>
+                                  </form>
+                                )}
+                                <form action={atualizarVencimentoParcela} className="flex items-center gap-1">
+                                  <input type="hidden" name="id" value={p.id} />
+                                  <input
+                                    type="date"
+                                    name="vencimento"
+                                    defaultValue={p.vencimento ?? ""}
+                                    className="field-input py-1 text-xs"
+                                    aria-label={`Data do ${p.numero}º pagamento`}
+                                  />
+                                  <button type="submit" className="text-xs text-olive underline">data</button>
+                                </form>
+                              </div>
                             </li>
                           ))}
                       </ul>
                     )}
+                    <p className="text-[11px] text-muted">
+                      Ao mudar o valor de uma parcela, a diferença é redistribuída nas parcelas
+                      seguintes ainda não pagas — o total da despesa nunca muda por aqui.
+                    </p>
                   </div>
                 )}
               </div>

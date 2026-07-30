@@ -34,6 +34,29 @@ export function addDays(iso: string, days: number): string {
  * condição (mensal ou intervalo em dias). Retorna `n` datas ISO. Sem 1º
  * vencimento → `n` nulos (parcelas sem data não ficam vencidas).
  */
+/** Dias inteiros entre duas datas ISO (negativo se `ate` for antes de `de`). */
+export function diasEntre(de: string, ate: string): number {
+  const [ya, ma, da] = de.split("-").map(Number);
+  const [yb, mb, db] = ate.split("-").map(Number);
+  return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / 86_400_000);
+}
+
+/**
+ * Espalha `n` vencimentos entre `primeiroISO` e `finalISO` (inclusive) —
+ * o padrão de casamento: entrada hoje e o saldo distribuído até o dia.
+ * A última parcela cai exatamente em `finalISO`. Datas inválidas ou final
+ * anterior ao primeiro degradam para uma única data no primeiro vencimento.
+ */
+export function gerarDatasAte(primeiroISO: string, n: number, finalISO: string): (string | null)[] {
+  if (!primeiroISO || !finalISO) return Array.from({ length: n }, () => null);
+  if (n <= 1) return [primeiroISO];
+  const vao = diasEntre(primeiroISO, finalISO);
+  if (vao <= 0) return Array.from({ length: n }, () => primeiroISO);
+  return Array.from({ length: n }, (_, i) =>
+    i === n - 1 ? finalISO : addDays(primeiroISO, Math.round((vao * i) / (n - 1))),
+  );
+}
+
 export function gerarDatas(primeiroISO: string, n: number, cond: CondicaoDatas): (string | null)[] {
   if (!primeiroISO) return Array.from({ length: n }, () => null);
   const dias = Number.isFinite(cond.intervaloDias) && cond.intervaloDias > 0 ? Math.floor(cond.intervaloDias) : 30;
