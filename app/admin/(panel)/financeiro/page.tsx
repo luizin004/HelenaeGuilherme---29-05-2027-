@@ -5,6 +5,7 @@ import { CotacoesTab } from "@/components/admin/financeiro/CotacoesTab";
 import { LancamentosTab } from "@/components/admin/financeiro/LancamentosTab";
 import { ContasTab } from "@/components/admin/financeiro/ContasTab";
 import { FluxoCaixaTab } from "@/components/admin/financeiro/FluxoCaixaTab";
+import { CalendarioTab } from "@/components/admin/financeiro/CalendarioTab";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ const ABAS = [
   { key: "lancamentos", label: "Lançamentos" },
   { key: "contas", label: "Contas" },
   { key: "fluxo", label: "Fluxo de caixa" },
+  { key: "calendario", label: "Calendário" },
 ] as const;
 type Aba = (typeof ABAS)[number]["key"];
 
@@ -23,6 +25,7 @@ const DESCRICAO: Record<Aba, string> = {
   lancamentos: "Cadastre os custos, classifique e defina a condição de pagamento de cada um.",
   contas: "Acompanhe o que está a pagar, vencendo, pago — e os cronogramas de parcelas.",
   fluxo: "Entradas × saídas mês a mês — calculado sozinho a partir dos lançamentos e aportes.",
+  calendario: "Agenda do dinheiro: vencimentos, pagamentos e aportes na linha do tempo.",
 };
 
 /**
@@ -33,7 +36,11 @@ const DESCRICAO: Record<Aba, string> = {
  * não perde contexto. Um custo lançado em Lançamentos aparece sozinho em
  * Contas e no Fluxo — nunca é digitado de novo.
  */
-export default async function FinanceiroPage({ searchParams }: { searchParams: { t?: string; aba?: string; sec?: string; modo?: string } }) {
+export default async function FinanceiroPage({
+  searchParams,
+}: {
+  searchParams: { t?: string; aba?: string; sec?: string; modo?: string; tipo?: string };
+}) {
   const aba = (ABAS.some((a) => a.key === searchParams.t) ? searchParams.t : "lancamentos") as Aba;
 
   return (
@@ -42,6 +49,12 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: {
         title="Financeiro"
         description={DESCRICAO[aba]}
         crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Orçamento, cotações, contas e fluxo", href: "/admin/financeiro" }]}
+        actions={
+          <>
+            <Link href="/admin/relatorios/pdf" className="btn btn-dark text-xs">Relatório consolidado (PDF)</Link>
+            <Link href="/admin/financeiro/relatorio" className="btn btn-outline text-xs">Relatório detalhado (PDF)</Link>
+          </>
+        }
       />
 
       <div className="mb-6 flex flex-wrap gap-1.5" role="tablist" aria-label="Abas do financeiro">
@@ -65,6 +78,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: {
       {aba === "lancamentos" && <LancamentosTab />}
       {aba === "contas" && <ContasTab searchParams={searchParams} />}
       {aba === "fluxo" && <FluxoCaixaTab searchParams={searchParams} />}
+      {aba === "calendario" && <CalendarioTab searchParams={searchParams} />}
     </>
   );
 }

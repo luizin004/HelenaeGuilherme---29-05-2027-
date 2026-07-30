@@ -135,7 +135,8 @@ export async function loadFinance(): Promise<FinanceData> {
     supabase.from("hg_payment_methods").select("id, chave, nome, ativo").order("ordem"),
     supabase.from("hg_financial_accounts").select("id, nome, tipo, saldo_inicial_cents, ativo").order("ordem"),
     supabase.from("hg_suppliers").select("id, nome").is("deleted_at", null),
-    supabase.from("hg_aportes").select("id, responsavel_nome, valor_cents, data").is("deleted_at", null),
+    // O aporte guarda OU um responsável cadastrado (payer_id) OU um nome avulso.
+    supabase.from("hg_aportes").select("id, responsavel_nome, payer_id, valor_cents, data, hg_payers(nome)").is("deleted_at", null),
   ]);
 
   const hoje = hojeISO();
@@ -238,9 +239,23 @@ export async function loadFinance(): Promise<FinanceData> {
     classificacoes,
     metodos: (metQ.data ?? []) as MetodoPagamento[],
     contasFinanceiras: (accQ.data ?? []) as ContaFinanceira[],
-    aportes: ((apQ.data ?? []) as { id: string; responsavel_nome: string; valor_cents: number; data: string | null }[]).map(
-      (a) => ({ id: a.id, responsavel: a.responsavel_nome, valorCents: a.valor_cents, data: a.data }),
-    ),
+    aportes: (
+      (apQ.data ?? []) as {
+        id: string;
+        responsavel_nome: string | null;
+        valor_cents: number;
+        data: string | null;
+        hg_payers: { nome: string } | { nome: string }[] | null;
+      }[]
+    ).map((a) => {
+      const cadastrado = Array.isArray(a.hg_payers) ? a.hg_payers[0]?.nome : a.hg_payers?.nome;
+      return {
+        id: a.id,
+        responsavel: a.responsavel_nome ?? cadastrado ?? "Sem responsável",
+        valorCents: a.valor_cents,
+        data: a.data,
+      };
+    }),
   };
 }
 

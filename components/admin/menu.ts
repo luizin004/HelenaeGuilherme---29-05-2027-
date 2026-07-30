@@ -28,7 +28,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { section: "Financeiro" },
   { label: "Dashboard financeiro", ico: "dashboard", href: "/admin/financeiro-dashboard" },
   { label: "Orçamento, cotações, contas e fluxo", ico: "wallet", href: "/admin/financeiro" },
-  { label: "Calendário financeiro", ico: "calendar-check", href: "/admin/calendario" },
+  { label: "Calendário financeiro", ico: "calendar-check", href: "/admin/financeiro?t=calendario" },
   { label: "Evania (assistente)", ico: "heart", href: "/admin/evania" },
 
   { section: "Movimentações especiais" },

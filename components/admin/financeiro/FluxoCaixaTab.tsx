@@ -74,7 +74,7 @@ export async function FluxoCaixaTab({ searchParams }: { searchParams: { modo?: s
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr>
-                    {["Mês", "Entradas", "Saídas", "Saldo do mês", "Acumulado"].map((h) => (
+                    {["Mês", "Entradas", "Saídas", "Saldo disponível", "Acumulado"].map((h) => (
                       <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">{h}</th>
                     ))}
                   </tr>

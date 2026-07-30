@@ -1,162 +1,207 @@
-import { Kpi, KpiGrid, Notice, PageTitle, Panel } from "@/components/admin/ui";
-import { listExpenses, listParcelasDetalhado, getExpensePayers, getPayers, getResponsavelResumo } from "@/lib/admin-data";
+import Link from "next/link";
+import { Notice, Panel } from "@/components/admin/ui";
+import { PageHeader, SummaryCard } from "@/components/admin/finance/ui";
+import { carregarConsolidado } from "@/lib/relatorio-consolidado";
 import { formatCents } from "@/domain/money";
+import { fmtDateBR } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
-interface Agg {
-  previsto: number;
-  contratado: number;
-  pago: number;
-}
+const TOM_SITUACAO = {
+  coberto: { classe: "bg-[#e6efe0] text-success", rotulo: "Caixa coberto" },
+  apertado: { classe: "bg-[#f6ecd6] text-warn", rotulo: "Caixa apertado" },
+  descoberto: { classe: "bg-[#f4e2dc] text-danger", rotulo: "Caixa descoberto" },
+} as const;
 
-const zero = (): Agg => ({ previsto: 0, contratado: 0, pago: 0 });
-const CONTRATADO = new Set(["contratado", "pago"]);
-
-function Tabela({ titulo, linhas }: { titulo: string; linhas: [string, Agg][] }) {
-  const total = linhas.reduce<Agg>((t, [, a]) => ({ previsto: t.previsto + a.previsto, contratado: t.contratado + a.contratado, pago: t.pago + a.pago }), zero());
-  return (
-    <Panel title={titulo}>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr>
-              {["", "Previsto", "Contratado", "Pago", "Em aberto"].map((h) => (
-                <th key={h} className="whitespace-nowrap bg-cream px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-moss">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {linhas.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-muted">Sem dados ainda.</td></tr>}
-            {linhas.map(([nome, a]) => (
-              <tr key={nome} className="border-t border-line hover:bg-ivory">
-                <td className="px-4 py-2.5 font-medium">{nome}</td>
-                <td className="px-4 py-2.5 text-muted">{formatCents(a.previsto)}</td>
-                <td className="px-4 py-2.5 text-moss">{formatCents(a.contratado)}</td>
-                <td className="px-4 py-2.5 text-success">{formatCents(a.pago)}</td>
-                <td className="px-4 py-2.5 text-warn">{formatCents(Math.max(0, a.contratado - a.pago))}</td>
-              </tr>
-            ))}
-          </tbody>
-          {linhas.length > 0 && (
-            <tfoot>
-              <tr className="border-t-2 border-line bg-cream font-medium">
-                <td className="px-4 py-3">Total</td>
-                <td className="px-4 py-3">{formatCents(total.previsto)}</td>
-                <td className="px-4 py-3 text-moss">{formatCents(total.contratado)}</td>
-                <td className="px-4 py-3 text-success">{formatCents(total.pago)}</td>
-                <td className="px-4 py-3 text-warn">{formatCents(Math.max(0, total.contratado - total.pago))}</td>
-              </tr>
-            </tfoot>
-          )}
-        </table>
-      </div>
-    </Panel>
-  );
-}
-
-function ResponsavelLinha({ label, valor, cor }: { label: string; valor: number; cor?: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted">{label}</dt>
-      <dd className={`font-serif ${cor ?? "text-moss"}`}>{formatCents(valor)}</dd>
-    </div>
-  );
-}
-
+/**
+ * Relatórios = a visão CONSOLIDADA. É o espelho do PDF consolidado: cruza
+ * Lançamentos, Contas, Fluxo e prazos de contratação e responde o que decide —
+ * o caixa cobre o que já foi assumido? o que está vencido? onde o dinheiro
+ * está concentrado? O detalhe item a item fica no relatório detalhado.
+ */
 export default async function RelatoriosPage() {
-  const [expenses, parcelas, expensePayers, payers, respResumo] = await Promise.all([
-    listExpenses(),
-    listParcelasDetalhado(),
-    getExpensePayers(),
-    getPayers(),
-    getResponsavelResumo(),
-  ]);
-  const payerNome = new Map(payers.map((p) => [p.id, p.nome]));
-
-  // Pago por despesa (das parcelas).
-  const pagoPorExpense = new Map<string, number>();
-  for (const p of parcelas) if (p.pago) pagoPorExpense.set(p.expense_id, (pagoPorExpense.get(p.expense_id) ?? 0) + p.valor_cents);
-
-  const porCategoria = new Map<string, Agg>();
-  const porResponsavel = new Map<string, Agg>();
-  let cortesias = 0;
-
-  for (const e of expenses) {
-    if (e.gratuito) { cortesias += 1; continue; }
-    const valor = e.valor_total_cents ?? 0;
-    const pago = pagoPorExpense.get(e.id) ?? 0;
-    const contratado = CONTRATADO.has(e.estado) ? valor : 0;
-    const cat = e.categoria || "Sem categoria";
-    const resp = (expensePayers[e.id] && payerNome.get(expensePayers[e.id])) || "Não atribuído";
-
-    const ac = porCategoria.get(cat) ?? zero();
-    ac.previsto += valor; ac.contratado += contratado; ac.pago += pago; porCategoria.set(cat, ac);
-    const ar = porResponsavel.get(resp) ?? zero();
-    ar.previsto += valor; ar.contratado += contratado; ar.pago += pago; porResponsavel.set(resp, ar);
-  }
-
-  const linhasCat = [...porCategoria.entries()].sort((a, b) => b[1].previsto - a[1].previsto);
-  const ordemResp = ["Helena", "Guilherme", "Toninho"];
-  const linhasResp = [...porResponsavel.entries()].sort((a, b) => {
-    const ia = ordemResp.indexOf(a[0]), ib = ordemResp.indexOf(b[0]);
-    if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-    return b[1].previsto - a[1].previsto;
-  });
-
-  const totPrev = expenses.filter((e) => !e.gratuito).reduce((n, e) => n + (e.valor_total_cents ?? 0), 0);
-  const totPago = [...pagoPorExpense.values()].reduce((n, v) => n + v, 0);
+  const dados = await carregarConsolidado();
+  const c = dados.consolidado;
+  const tom = TOM_SITUACAO[c.situacao];
 
   return (
     <>
-      <PageTitle>Relatórios</PageTitle>
+      <PageHeader
+        title="Relatórios"
+        description="Visão consolidada para decidir — os mesmos números das abas do Financeiro, cruzados e resumidos."
+        crumbs={[{ label: "Financeiro", href: "/admin/financeiro-dashboard" }, { label: "Relatórios", href: "/admin/relatorios" }]}
+        actions={
+          <>
+            <Link href="/admin/relatorios/pdf" className="btn btn-dark text-xs">Relatório consolidado (PDF)</Link>
+            <Link href="/admin/financeiro/relatorio" className="btn btn-outline text-xs">Relatório detalhado (PDF)</Link>
+          </>
+        }
+      />
 
       {!isSupabaseConfigured && <Notice>Conecte o Supabase e faça login para ver os relatórios.</Notice>}
 
-      <KpiGrid>
-        <Kpi label="Previsto (com valor)" value={formatCents(totPrev)} />
-        <Kpi label="Pago" value={formatCents(totPago)} />
-        <Kpi label="Em aberto" value={formatCents(Math.max(0, totPrev - totPago))} />
-        <Kpi label="Cortesias" value={cortesias} hint="itens gratuitos" />
-      </KpiGrid>
-
-      <Notice>
-        Previsto = valor informado da despesa; Contratado = itens em estado contratado/pago; Pago =
-        soma das parcelas quitadas. Presentes ficam <strong>fora</strong> destes números.
-      </Notice>
-
-      <div className="grid gap-6">
-        <Tabela titulo="Por categoria" linhas={linhasCat} />
-        <Tabela titulo="Por responsável" linhas={linhasResp} />
+      {/* Leitura do caixa — a frase que resume tudo */}
+      <div className={`mb-6 rounded-lg px-5 py-4 ${tom.classe}`}>
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em]">{tom.rotulo}</p>
+        <p className="mt-1 text-sm leading-relaxed">{dados.leitura}</p>
       </div>
 
-      <Panel title="Responsáveis — visão detalhada">
-        <div className="p-6">
-          <p className="mb-4 text-sm text-muted">
-            Consolidado por responsável (Helena, Guilherme, Toninho): quanto cada um assumiu nas parcelas,
-            o que já pagou, o que está em aberto, o que vence este mês e no próximo, e os aportes registrados.
-          </p>
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {respResumo.map((r) => (
-              <div key={r.nome} className="rounded-lg border border-line bg-white p-6 shadow-card">
-                <h3 className="mb-3 font-serif text-2xl text-moss">{r.nome}</h3>
-                <dl className="space-y-1.5 text-sm">
-                  <ResponsavelLinha label="Assumido" valor={r.assumidoCents} />
-                  <ResponsavelLinha label="Pago" valor={r.pagoCents} cor="text-success" />
-                  <ResponsavelLinha label="Em aberto" valor={r.abertoCents} cor="text-warn" />
-                  <ResponsavelLinha label="Vence este mês" valor={r.esteMesCents} />
-                  <ResponsavelLinha label="Próximo mês" valor={r.proxMesCents} />
-                  <div className="mt-2 border-t border-line pt-2">
-                    <ResponsavelLinha label="Aportes" valor={r.aportesCents} cor="text-olive" />
-                  </div>
-                </dl>
-              </div>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard label="Aportes (entradas)" value={formatCents(c.aportesCents)} tooltip="Tudo que os responsáveis já colocaram." href="/admin/aportes" />
+        <SummaryCard label="Custo conhecido" value={formatCents(c.custoConhecidoCents)} tooltip="Soma dos itens com valor definido (sem cortesias)." href="/admin/financeiro" />
+        <SummaryCard label="Pago" value={formatCents(c.pagoCents)} tone="success" tooltip={`${c.execucaoPct}% do custo conhecido já quitado.`} href="/admin/financeiro?t=contas&sec=contas&aba=pagas" />
+        <SummaryCard
+          label="Sobra após tudo pago"
+          value={formatCents(c.saldoAposCompromissosCents)}
+          tone={c.saldoAposCompromissosCents < 0 ? "danger" : "success"}
+          tooltip="Aportes − custo conhecido. É o que resta se todo o assumido for pago."
+          href="/admin/financeiro?t=fluxo"
+        />
+        <SummaryCard label="Contratado" value={formatCents(c.contratadoCents)} tooltip="Itens já fechados com fornecedor." href="/admin/contratos" />
+        <SummaryCard label="Falta contratar" value={formatCents(c.aContratarCents)} tone="warn" tooltip="Custo conhecido que ainda não virou contrato." href="/admin/financeiro?t=cotacoes" />
+        <SummaryCard label="Em aberto" value={formatCents(c.pendenteCents)} tone="warn" tooltip="Saldo das contas ainda não pagas." href="/admin/financeiro?t=contas&sec=contas&aba=a_pagar" />
+        <SummaryCard label="Vencido" value={formatCents(c.vencidoCents)} tone={c.vencidoCents > 0 ? "danger" : "default"} tooltip="Contas com vencimento no passado." href="/admin/financeiro?t=contas&sec=contas&aba=vencidas" />
+      </div>
+
+      {dados.avisos.length > 0 && (
+        <Panel title="Pontos de atenção">
+          <ul className="divide-y divide-line">
+            {dados.avisos.map((a, i) => (
+              <li key={i} className="flex items-start gap-3 px-6 py-3 text-sm">
+                <span className="mt-0.5 text-gold">•</span>
+                <span className="text-ink">{a}</span>
+              </li>
             ))}
-            {respResumo.length === 0 && <p className="text-sm text-muted">Nenhum responsável configurado.</p>}
-          </div>
+          </ul>
+        </Panel>
+      )}
+
+      <Notice>
+        <strong>{c.itens.total} itens</strong> no orçamento: {c.itens.comValor} com valor,{" "}
+        <strong>{c.itens.semValor} ainda sem valor</strong> (não contam como R$ 0 — o custo total tende
+        a subir) e {c.itens.gratuitos} cortesias, que representam {formatCents(c.economiaCents)} de
+        economia.
+      </Notice>
+
+      <Panel title="Onde o dinheiro está — por classificação">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                {["Classificação", "Previsto", "%", "Contratado", "Pago", "Em aberto"].map((h, i) => (
+                  <th
+                    key={h}
+                    className={`whitespace-nowrap bg-cream px-4 py-3 text-xs font-medium uppercase tracking-wide text-moss ${i > 0 ? "text-right" : "text-left"}`}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dados.porClassificacao.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted">Sem contas classificadas ainda.</td></tr>
+              )}
+              {dados.porClassificacao.map((l) => (
+                <tr key={l.nome} className="border-t border-line hover:bg-ivory">
+                  <td className="px-4 py-2.5 font-medium">{l.nome}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{formatCents(l.previstoCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-muted">{l.pct}%</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-moss">{formatCents(l.contratadoCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-success">{formatCents(l.pagoCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-warn">{formatCents(l.abertoCents)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Panel>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel
+          title={`Próximos vencimentos (${dados.proximas.length})`}
+          action={<Link href="/admin/financeiro?t=calendario" className="text-xs text-olive underline">calendário</Link>}
+        >
+          {dados.proximas.length === 0 ? (
+            <p className="px-6 py-5 text-sm text-muted">Nada vencendo em breve.</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {dados.proximas.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 px-6 py-3 text-sm">
+                  <span>
+                    <span className="font-medium text-moss">{p.descricao}{p.numero ? ` · ${p.numero}/${p.totalParcelas}` : ""}</span>
+                    <span className="ml-2 text-xs text-muted">{p.vencimento ? fmtDateBR(p.vencimento) : "—"}</span>
+                  </span>
+                  <span className="font-serif text-moss">{formatCents(p.saldoCents)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          title={`Falta contratar (${dados.contratacao.pendentes})`}
+          action={<Link href="/admin/evania" className="text-xs text-olive underline">lembretes</Link>}
+        >
+          <ul className="divide-y divide-line">
+            <li className="flex items-center justify-between px-6 py-3 text-sm">
+              <span className="text-muted">Passaram do prazo</span>
+              <span className={`font-serif ${dados.contratacao.vencidos.length > 0 ? "text-danger" : "text-moss"}`}>
+                {dados.contratacao.vencidos.length}
+              </span>
+            </li>
+            <li className="flex items-center justify-between px-6 py-3 text-sm">
+              <span className="text-muted">Vencem em até 7 dias</span>
+              <span className="font-serif text-moss">{dados.contratacao.semana.length}</span>
+            </li>
+            <li className="flex items-center justify-between px-6 py-3 text-sm">
+              <span className="text-muted">Sem prazo definido</span>
+              <span className="font-serif text-moss">{dados.contratacao.semPrazo.length}</span>
+            </li>
+          </ul>
+        </Panel>
+      </div>
+
+      <Panel title="Por responsável">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                {["Responsável", "Assumido", "Pago", "Em aberto", "Vence este mês", "Próximo mês", "Aportes"].map((h, i) => (
+                  <th
+                    key={h}
+                    className={`whitespace-nowrap bg-cream px-4 py-3 text-xs font-medium uppercase tracking-wide text-moss ${i > 0 ? "text-right" : "text-left"}`}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dados.porResponsavel.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted">Nenhum responsável configurado.</td></tr>
+              )}
+              {dados.porResponsavel.map((r) => (
+                <tr key={r.nome} className="border-t border-line hover:bg-ivory">
+                  <td className="px-4 py-2.5 font-medium">{r.nome}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{formatCents(r.assumidoCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-success">{formatCents(r.pagoCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-warn">{formatCents(r.abertoCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{formatCents(r.esteMesCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{formatCents(r.proxMesCents)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-olive">{formatCents(r.aportesCents)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+
+      <Notice>
+        Presentes ficam <strong>fora</strong> destes números — entram como receita à parte em
+        Presentes. Cortesias contam como economia, nunca como saída de caixa.
+      </Notice>
     </>
   );
 }
