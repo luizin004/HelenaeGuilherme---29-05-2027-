@@ -6,12 +6,33 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { Logo } from "@/components/public/Logo";
 
+/** Traço 24×24, mesmo estilo dos ícones do painel. */
+function OlhoAberto() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </svg>
+  );
+}
+
+function OlhoFechado() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
+      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="2.8" />
+      <path d="m4 20 16-16" />
+    </svg>
+  );
+}
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const acessoNegado = params.get("erro") === "sem_acesso";
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [verSenha, setVerSenha] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,7 +78,26 @@ function LoginForm() {
         </div>
         <div className="mb-5 flex flex-col gap-1.5">
           <label htmlFor="senha" className="field-label">Senha</label>
-          <input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} className="field-input" required={isSupabaseConfigured} />
+          <div className="relative">
+            <input
+              id="senha"
+              type={verSenha ? "text" : "password"}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="field-input pr-11"
+              required={isSupabaseConfigured}
+            />
+            <button
+              type="button"
+              onClick={() => setVerSenha((v) => !v)}
+              aria-label={verSenha ? "Ocultar senha" : "Mostrar senha"}
+              aria-pressed={verSenha}
+              title={verSenha ? "Ocultar senha" : "Mostrar senha"}
+              className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-2 text-muted transition hover:text-moss focus:outline-none focus:ring-2 focus:ring-olive/40"
+            >
+              {verSenha ? <OlhoFechado /> : <OlhoAberto />}
+            </button>
+          </div>
         </div>
 
         {acessoNegado && (
