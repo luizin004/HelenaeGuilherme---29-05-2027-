@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { confirmarPresencaGrupo, type RsvpState } from "@/app/actions/rsvp";
+import { RecadoMidia } from "@/components/public/RecadoMidia";
 
 const initial: RsvpState = { ok: false, message: "" };
 
@@ -47,13 +49,24 @@ export function RsvpConfirm({
 
   if (state.message) {
     return (
-      <p className={`text-center font-serif text-2xl ${state.ok ? "text-olive" : "text-danger"}`}>
-        {state.message}
-      </p>
+      <div className="grid gap-5 text-center">
+        <p className={`font-serif text-2xl ${state.ok ? "text-olive" : "text-danger"}`}>{state.message}</p>
+        {state.conviteToken && (
+          <>
+            <Link href={`/rsvp/${state.conviteToken}/convite`} className="btn btn-dark">
+              Ver meu convite com QR Code
+            </Link>
+            <p className="text-sm text-muted">
+              É o seu passe de entrada — mostre na portaria pelo celular ou impresso.
+            </p>
+          </>
+        )}
+      </div>
     );
   }
 
   const grupo = integrantes.length > 1;
+  const jaConfirmados = integrantes.filter((i) => i.status === "confirmado");
 
   return (
     <form action={formAction} className="grid gap-5 text-left">
@@ -64,6 +77,16 @@ export function RsvpConfirm({
           : "Confirme sua presença:"}
       </p>
 
+      {/* Alguém do grupo já respondeu — todos veem o mesmo estado. */}
+      {jaConfirmados.length > 0 && (
+        <div className="rounded-lg bg-[#e6efe0] px-4 py-3 text-center text-sm text-success">
+          {jaConfirmados.length === 1
+            ? `${jaConfirmados[0].nome} já está confirmado(a) neste convite.`
+            : `${jaConfirmados.length} pessoas deste convite já estão confirmadas.`}{" "}
+          <Link href={`/rsvp/${token}/convite`} className="underline">ver o QR de entrada</Link>
+        </div>
+      )}
+
       <div className="grid gap-4">
         {integrantes.map((g) => {
           const defaultSim = g.status === "confirmado";
@@ -73,6 +96,16 @@ export function RsvpConfirm({
               <legend className="px-1 font-serif text-lg text-moss">
                 {g.nome}
                 {g.eh_crianca ? <span className="ml-2 text-xs uppercase tracking-wide text-olive">criança</span> : null}
+                {defaultSim && (
+                  <span className="ml-2 rounded-full bg-[#e6efe0] px-2 py-0.5 text-[10px] uppercase tracking-wide text-success">
+                    confirmado
+                  </span>
+                )}
+                {defaultNao && (
+                  <span className="ml-2 rounded-full bg-cream px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted">
+                    não vai
+                  </span>
+                )}
               </legend>
               <div className="mt-1 flex flex-wrap gap-4">
                 <label className="flex cursor-pointer items-center gap-2 text-base text-muted">
@@ -197,10 +230,27 @@ export function RsvpConfirm({
           <option value="nao_definiu">Ainda não definimos</option>
         </select>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="mensagem" className="field-label">Mensagem para os noivos (opcional)</label>
-        <textarea id="mensagem" name="mensagem" rows={3} placeholder="Deixe um recado carinhoso" className="field-input" />
+      <div className="grid gap-3 rounded-lg border border-gold/40 bg-gold-soft/40 p-3">
+        <div>
+          <p className="font-serif text-lg text-moss">Deixe um recado para nós 💌</p>
+          <p className="text-xs text-muted">
+            É a parte que a gente mais vai guardar. Escreva, grave um áudio ou mande um vídeo —
+            pode ser tudo junto.
+          </p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="mensagem" className="field-label">Escrever</label>
+          <textarea
+            id="mensagem"
+            name="mensagem"
+            rows={3}
+            placeholder="Um conselho, uma lembrança, um desejo para a gente…"
+            className="field-input"
+          />
+        </div>
+        <RecadoMidia token={token} />
       </div>
+
       <SubmitButton />
     </form>
   );

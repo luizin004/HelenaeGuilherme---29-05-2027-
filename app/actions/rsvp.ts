@@ -6,6 +6,41 @@ import { logger } from "@/lib/logger";
 export interface RsvpState {
   ok: boolean;
   message: string;
+  /** Preenchido quando alguém do grupo ficou confirmado: leva às credenciais. */
+  conviteToken?: string;
+}
+
+/**
+ * Registra os recados deixados no RSVP (texto, áudio e vídeo). Cada um vira uma
+ * linha em `hg_recados` pela função SECURITY DEFINER — o convidado nunca toca a
+ * tabela. Falha de recado não derruba a confirmação: a presença é o que importa.
+ */
+async function registrarRecados(
+  supabase: NonNullable<ReturnType<typeof createClient>>,
+  token: string,
+  formData: FormData,
+): Promise<void> {
+  const mensagem = String(formData.get("mensagem") ?? "").trim();
+  const audioPath = String(formData.get("recado_audio_path") ?? "").trim();
+  const audioDuracao = Number(formData.get("recado_audio_duracao") ?? 0);
+  const videoPath = String(formData.get("recado_video_path") ?? "").trim();
+
+  const recados: { tipo: string; mensagem?: string; arquivo?: string; duracao?: number }[] = [];
+  if (mensagem) recados.push({ tipo: "texto", mensagem });
+  if (audioPath) recados.push({ tipo: "audio", arquivo: audioPath, duracao: audioDuracao || undefined });
+  if (videoPath) recados.push({ tipo: "video", arquivo: videoPath });
+
+  for (const r of recados) {
+    const { error } = await supabase.rpc("hg_rsvp_recado", {
+      p_token: token,
+      p_tipo: r.tipo,
+      p_mensagem: r.mensagem ?? null,
+      p_arquivo: r.arquivo ?? null,
+      p_mime: null,
+      p_duracao: r.duracao ?? null,
+    });
+    if (error) logger.error("Falha ao registrar recado do convidado", { tipo: r.tipo, code: error.code });
+  }
 }
 
 /**
@@ -98,6 +133,9 @@ export async function confirmarPresencaGrupo(_prev: RsvpState, formData: FormDat
     }
   }
 
+  // Recados (texto, áudio, vídeo) — depois da confirmação, para nunca bloqueá-la.
+  await registrarRecados(supabase, token, formData);
+
   const total = Number(data ?? 0);
   const sufixoKids = criancasRegistradas > 0 ? ` ${criancasRegistradas} criança(s) no espaço infantil.` : "";
   return {
@@ -105,5 +143,6 @@ export async function confirmarPresencaGrupo(_prev: RsvpState, formData: FormDat
     message: anyConfirmado
       ? `Presença registrada para ${total} convidado(s).${sufixoKids} Obrigado! 🤍`
       : `Ausência registrada. Vamos sentir sua falta — obrigado por avisar!`,
+    ...(anyConfirmado ? { conviteToken: token } : {}),
   };
 }
