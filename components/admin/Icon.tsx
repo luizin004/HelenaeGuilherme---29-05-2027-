@@ -44,6 +44,12 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M4 12h16" />
     </>
   ),
+  camera: (
+    <>
+      <path d="M3 8.5A2 2 0 0 1 5 6.5h2l1.3-2h7.4L17 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <circle cx="12" cy="13" r="3.6" />
+    </>
+  ),
   megaphone: (
     <>
       <path d="M3 11v3a1 1 0 0 0 1 1h2l3 4v-14l-3 4H4a1 1 0 0 0-1 1z" />

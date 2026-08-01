@@ -75,6 +75,7 @@ export const NAV_LINKS: NavItem[] = [
       { href: "/duvidas", label: "Dúvidas" },
     ],
   },
+  { href: "/nossa-festa", label: "Nossa Festa" },
   { href: "/presentes", label: "Presentes" },
   { href: "/rancho", label: "O espaço (Rancho)" },
 ];

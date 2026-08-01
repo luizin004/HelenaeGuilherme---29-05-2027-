@@ -15,6 +15,7 @@ export const ADMIN_MENU: MenuEntry[] = [
   { label: "Grupos familiares", ico: "users", href: "/admin/grupos" },
   { label: "Espaço infantil", ico: "child", href: "/admin/infantil" },
   { label: "Recados dos convidados", ico: "heart", href: "/admin/recados" },
+  { label: "Nossa Festa (fotos)", ico: "camera", href: "/admin/nossa-festa" },
   { label: "Transporte", ico: "bus", href: "/admin/transporte" },
   { label: "Check-in", ico: "scan", href: "/admin/checkin" },
 

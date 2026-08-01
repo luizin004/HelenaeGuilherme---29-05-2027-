@@ -85,6 +85,18 @@ resolução, solução temporária, procedimento para concluir, módulo afetado.
 - **Procedimento:** definir provedor (ex.: Resend, WhatsApp Cloud API) e chaves.
 - **Módulo:** comunicação/notificações.
 
+## PEND-010 · Número de WhatsApp da aba "Nossa Festa"
+- **Descrição:** o número para o qual os convidados podem mandar as fotos pelo WhatsApp
+  não foi informado — e não é o mesmo do canal oficial da Evania (PEND-006), que é de
+  disparo automatizado.
+- **Impacto:** BAIXO — o envio pelo site funciona normalmente; só a alternativa por
+  WhatsApp fica indisponível.
+- **Solução temporária:** o campo nasce vazio em `hg_festa_config.whatsapp_numero` e o
+  botão **não aparece** na página pública enquanto não houver número — nada inventado.
+- **Procedimento:** painel → **Nossa Festa (fotos)** → *Configuração da aba* → informar
+  DDI + DDD + número (ex.: `5531999999999`) e salvar. O botão passa a aparecer sozinho.
+- **Módulo:** nossa-festa.
+
 ## PEND-007 · Domínio de produção
 - **Descrição:** domínio próprio (ex.: helenaeguilherme.com.br) não informado.
 - **Impacto:** BAIXO.
