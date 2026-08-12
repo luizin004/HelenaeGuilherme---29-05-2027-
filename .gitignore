@@ -43,3 +43,8 @@ Thumbs.db
 /test-results
 /playwright-report
 /.playwright
+
+# claude code — instalacoes locais pesadas do stack (ver .claude/README.md)
+.agents/
+skills-lock.json
+.claude/settings.local.json
